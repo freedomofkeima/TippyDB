@@ -28,7 +28,7 @@ By: Iskandar Setiadi (freedomofkeima)
 
 ## How to Run
 
--
+- Run the ```Makefile``` by running ```make all``` command.
 
 ## Additional Information
 

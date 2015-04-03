@@ -7,6 +7,7 @@
 # Tool configuration
 #--------------------------------------------
 CC = g++
+MAKE = make
 LEVELDB = ~/Desktop/leveldb-1.15.0
 LINKER = $(CC)
 EXT = cpp
@@ -37,6 +38,7 @@ OBJS := ${MODULES:src/%.$(EXT)=bin/%.o}
 #--------------------------------------------
 all: mkdir $(OBJS)
 	$(LINKER) -o $(BINDIR)/$(TARGET) $(OBJS) $(LIB) $(LDFLAGS)
+	cd if && $(MAKE)
 
 mkdir: 
 	$(MKDIR) $(BINDIR)
@@ -47,5 +49,7 @@ run:
 
 # Cleaning compilation
 clean:
+	rm -rf bin/*.o
 	rm -rf $(BINDIR)/*.o
 	rm -rf $(BINDIR)/*~
+	cd if && $(MAKE) clean

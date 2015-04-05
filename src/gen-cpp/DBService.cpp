@@ -142,6 +142,65 @@ uint32_t DBService_ping_presult::read(::apache::thrift::protocol::TProtocol* ipr
   return xfer;
 }
 
+
+DBService_zip_args::~DBService_zip_args() throw() {
+}
+
+
+uint32_t DBService_zip_args::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    xfer += iprot->skip(ftype);
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t DBService_zip_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  oprot->incrementRecursionDepth();
+  xfer += oprot->writeStructBegin("DBService_zip_args");
+
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  oprot->decrementRecursionDepth();
+  return xfer;
+}
+
+
+DBService_zip_pargs::~DBService_zip_pargs() throw() {
+}
+
+
+uint32_t DBService_zip_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  oprot->incrementRecursionDepth();
+  xfer += oprot->writeStructBegin("DBService_zip_pargs");
+
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  oprot->decrementRecursionDepth();
+  return xfer;
+}
+
 void DBServiceClient::ping()
 {
   send_ping();
@@ -192,6 +251,24 @@ void DBServiceClient::recv_ping()
   iprot_->getTransport()->readEnd();
 
   return;
+}
+
+void DBServiceClient::zip()
+{
+  send_zip();
+}
+
+void DBServiceClient::send_zip()
+{
+  int32_t cseqid = 0;
+  oprot_->writeMessageBegin("zip", ::apache::thrift::protocol::T_ONEWAY, cseqid);
+
+  DBService_zip_pargs args;
+  args.write(oprot_);
+
+  oprot_->writeMessageEnd();
+  oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
 }
 
 bool DBServiceProcessor::dispatchCall(::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, const std::string& fname, int32_t seqid, void* callContext) {
@@ -264,6 +341,43 @@ void DBServiceProcessor::process_ping(int32_t seqid, ::apache::thrift::protocol:
   if (this->eventHandler_.get() != NULL) {
     this->eventHandler_->postWrite(ctx, "DBService.ping", bytes);
   }
+}
+
+void DBServiceProcessor::process_zip(int32_t, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol*, void* callContext)
+{
+  void* ctx = NULL;
+  if (this->eventHandler_.get() != NULL) {
+    ctx = this->eventHandler_->getContext("DBService.zip", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(this->eventHandler_.get(), ctx, "DBService.zip");
+
+  if (this->eventHandler_.get() != NULL) {
+    this->eventHandler_->preRead(ctx, "DBService.zip");
+  }
+
+  DBService_zip_args args;
+  args.read(iprot);
+  iprot->readMessageEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (this->eventHandler_.get() != NULL) {
+    this->eventHandler_->postRead(ctx, "DBService.zip", bytes);
+  }
+
+  try {
+    iface_->zip();
+  } catch (const std::exception&) {
+    if (this->eventHandler_.get() != NULL) {
+      this->eventHandler_->handlerError(ctx, "DBService.zip");
+    }
+    return;
+  }
+
+  if (this->eventHandler_.get() != NULL) {
+    this->eventHandler_->asyncComplete(ctx, "DBService.zip");
+  }
+
+  return;
 }
 
 ::boost::shared_ptr< ::apache::thrift::TProcessor > DBServiceProcessorFactory::getProcessor(const ::apache::thrift::TConnectionInfo& connInfo) {

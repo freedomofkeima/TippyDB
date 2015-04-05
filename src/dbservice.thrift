@@ -28,6 +28,8 @@ struct Exception {
 
 service DBService {
 
-   void ping(),
+	void ping(),
+
+	oneway void zip()
 
 }

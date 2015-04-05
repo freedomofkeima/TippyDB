@@ -15,6 +15,7 @@
 #include <thrift/TToString.h>
 
 #include <iostream>
+#include <cstring>
 
 #include "./gen-cpp/DBService.h"
 #include "./db/database.h"
@@ -35,6 +36,10 @@ class DBServiceHandler : virtual public DBServiceIf {
 
   void ping() {
     printf("ping\n");
+  }
+
+  void zip() {
+    printf("zip\n");
   }
 
 };

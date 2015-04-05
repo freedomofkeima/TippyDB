@@ -27,6 +27,11 @@ class DBServiceHandler : virtual public DBServiceIf {
     printf("ping\n");
   }
 
+  void zip() {
+    // Your implementation goes here
+    printf("zip\n");
+  }
+
 };
 
 int main(int argc, char **argv) {

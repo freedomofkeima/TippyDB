@@ -16,6 +16,7 @@ class DBServiceIf {
  public:
   virtual ~DBServiceIf() {}
   virtual void ping() = 0;
+  virtual void zip() = 0;
 };
 
 class DBServiceIfFactory {
@@ -46,6 +47,9 @@ class DBServiceNull : virtual public DBServiceIf {
  public:
   virtual ~DBServiceNull() {}
   void ping() {
+    return;
+  }
+  void zip() {
     return;
   }
 };
@@ -140,6 +144,51 @@ class DBService_ping_presult {
   friend std::ostream& operator<<(std::ostream& out, const DBService_ping_presult& obj);
 };
 
+
+class DBService_zip_args {
+ public:
+
+  static const char* ascii_fingerprint; // = "99914B932BD37A50B983C5E7C90AE93B";
+  static const uint8_t binary_fingerprint[16]; // = {0x99,0x91,0x4B,0x93,0x2B,0xD3,0x7A,0x50,0xB9,0x83,0xC5,0xE7,0xC9,0x0A,0xE9,0x3B};
+
+  DBService_zip_args(const DBService_zip_args&);
+  DBService_zip_args& operator=(const DBService_zip_args&);
+  DBService_zip_args() {
+  }
+
+  virtual ~DBService_zip_args() throw();
+
+  bool operator == (const DBService_zip_args & /* rhs */) const
+  {
+    return true;
+  }
+  bool operator != (const DBService_zip_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const DBService_zip_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_zip_args& obj);
+};
+
+
+class DBService_zip_pargs {
+ public:
+
+  static const char* ascii_fingerprint; // = "99914B932BD37A50B983C5E7C90AE93B";
+  static const uint8_t binary_fingerprint[16]; // = {0x99,0x91,0x4B,0x93,0x2B,0xD3,0x7A,0x50,0xB9,0x83,0xC5,0xE7,0xC9,0x0A,0xE9,0x3B};
+
+
+  virtual ~DBService_zip_pargs() throw();
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_zip_pargs& obj);
+};
+
 class DBServiceClient : virtual public DBServiceIf {
  public:
   DBServiceClient(boost::shared_ptr< ::apache::thrift::protocol::TProtocol> prot) {
@@ -168,6 +217,8 @@ class DBServiceClient : virtual public DBServiceIf {
   void ping();
   void send_ping();
   void recv_ping();
+  void zip();
+  void send_zip();
  protected:
   boost::shared_ptr< ::apache::thrift::protocol::TProtocol> piprot_;
   boost::shared_ptr< ::apache::thrift::protocol::TProtocol> poprot_;
@@ -184,10 +235,12 @@ class DBServiceProcessor : public ::apache::thrift::TDispatchProcessor {
   typedef std::map<std::string, ProcessFunction> ProcessMap;
   ProcessMap processMap_;
   void process_ping(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_zip(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
  public:
   DBServiceProcessor(boost::shared_ptr<DBServiceIf> iface) :
     iface_(iface) {
     processMap_["ping"] = &DBServiceProcessor::process_ping;
+    processMap_["zip"] = &DBServiceProcessor::process_zip;
   }
 
   virtual ~DBServiceProcessor() {}
@@ -223,6 +276,15 @@ class DBServiceMultiface : virtual public DBServiceIf {
       ifaces_[i]->ping();
     }
     ifaces_[i]->ping();
+  }
+
+  void zip() {
+    size_t sz = ifaces_.size();
+    size_t i = 0;
+    for (; i < (sz - 1); ++i) {
+      ifaces_[i]->zip();
+    }
+    ifaces_[i]->zip();
   }
 
 };

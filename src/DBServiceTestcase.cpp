@@ -11,8 +11,11 @@
 #include <thrift/transport/TSocket.h>
 #include <thrift/transport/TTransportUtils.h>
 
+#include <boost/lexical_cast.hpp>
+#include <assert.h>
 #include <iostream>
-#include <ctime>
+#include <unistd.h>
+#include <cstring>
 
 #include "./gen-cpp/DBService.h"
 
@@ -25,7 +28,7 @@ using boost::shared_ptr;
 
 using namespace dbservice;
 
-long long max_iteration;
+long long max_iteration, counter;
 uint64_t t1, t2, total, one_second, one_us;
 // Constants, the minimum number of cycles required for calling RDTSC_START and RDTSC_STOP
 uint64_t rdtscp_cycle = 50;
@@ -71,13 +74,12 @@ void print_result(uint64_t cycle) {
 
 void init() {
 	RDTSC_START(t1);
-	sleep(1); // sleep for 1 second
+	usleep(1000000); // sleep for 1 second
 	RDTSC_STOP(t2);
 	one_second = t2 - t1 - rdtscp_cycle;
 	cout << "Approximate number of cycles in 1 second: " << one_second << endl;
 	one_us = one_second / 1e6;
 }
-
 
 int main(int argc, char** argv) {
   shared_ptr<TTransport> socket(new TSocket("localhost", 9090));
@@ -90,23 +92,40 @@ int main(int argc, char** argv) {
   cout << "** Starting the client **" << endl << endl;
   try {
     transport->open();
+	max_iteration = 10;
 
     /** PING operation **/
     cout << "--PING--" << endl;
-    max_iteration = 1;
-    total = 0;
-    RDTSC_START(t1); // start operation
-    client.ping();
-    RDTSC_STOP(t2); // stop operation
-    total += t2 - t1 - rdtscp_cycle;
+	counter = 0; total = 0;
+    while (counter < max_iteration) {
+		RDTSC_START(t1); // start operation
+		client.ping();
+		RDTSC_STOP(t2); // stop operation
+		total += t2 - t1 - rdtscp_cycle;
+		counter++;
+	}
     print_result(total);
     /** End of PING operation **/
+
+    /** ZIP operation **/
+    cout << "--ZIP (oneway sending)--" << endl;
+	counter = 0; total = 0;
+    while (counter < max_iteration) {
+		RDTSC_START(t1); // start operation
+		client.zip();
+		RDTSC_STOP(t2); // stop operation
+		total += t2 - t1 - rdtscp_cycle;
+		counter++;
+	}
+    print_result(total);
+    /** End of ZIP operation **/
 
   } catch (TException& tx) {
     cout << "ERROR: " << tx.what() << endl;
   }
   cout << "** Done **" << endl;
 
+  return 0;
 }
 
 

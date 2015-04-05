@@ -6,50 +6,47 @@
 #--------------------------------------------
 # Tool configuration
 #--------------------------------------------
-CC = g++
-MAKE = make
-LEVELDB = ~/Desktop/leveldb-1.15.0
-LINKER = $(CC)
-EXT = cpp
-LIB = $(LEVELDB)/libleveldb.a
-MKDIR = mkdir -p
-CFLAGS += -I $(LEVELDB)/include -O2
-LDFLAGS = -lpthread
+LEVELDB =~/Desktop/leveldb-1.15.0
+INCS_DIRS  =-I/usr/local/include/thrift -I /usr/include/boost
+LEVELDB_INCS_DIRS =-I $(LEVELDB)/include
+LIBS_DIRS  =-L/usr/local/lib 
+LEVELDB_LIBS_DIRS =$(LEVELDB)/libleveldb.a
+CPP_DEFS   =-D=HAVE_CONFIG_H
+CPP_OPTS   =-Wall -O2
+LIBS       =-lthrift 
+LEVELDB_LIBS =-lpthread
 
 #--------------------------------------------
 # Path configuration
 #--------------------------------------------
-MODULES = $(wildcard src/*.$(EXT))
 SOURCEDIR = src
 BINDIR = bin
-TARGET = main
+DATABASEDIR = src/db
 
 #--------------------------------------------
-# Suffix
+# Thrift generated files
 #--------------------------------------------
-$(BINDIR)/%.o : $(SOURCEDIR)/%.$(EXT)
-	$(CC) -c $< -o $@ $(CFLAGS)
-
-# Compiling main
-OBJS := ${MODULES:src/%.$(EXT)=bin/%.o}
+GEN_SRC    = $(SOURCEDIR)/gen-cpp/dbservice_types.cpp \
+             $(SOURCEDIR)/gen-cpp/DBService.cpp
+GEN_INC    = -I$(SOURCEDIR)/gen-cpp
 
 #--------------------------------------------
 # target
 #--------------------------------------------
-all: mkdir $(OBJS)
-	$(LINKER) -o $(BINDIR)/$(TARGET) $(OBJS) $(LIB) $(LDFLAGS)
-	cd if && $(MAKE)
+default: server testcase
 
-mkdir: 
-	$(MKDIR) $(BINDIR)
+server: $(SOURCEDIR)/DBServiceServer.cpp
+	g++ ${CPP_OPTS} ${CPP_DEFS} -o $(BINDIR)/server ${GEN_INC} ${INCS_DIRS} ${LEVELDB_INCS_DIRS} $(DATABASEDIR)/*.cpp $(SOURCEDIR)/DBServiceServer.cpp ${GEN_SRC} ${LIBS_DIRS} ${LEVELDB_LIBS_DIRS} ${LIBS} ${LEVELDB_LIBS}
 
-# Run
+testcase: $(SOURCEDIR)/DBServiceTestcase.cpp
+	g++ ${CPP_OPTS} ${CPP_DEFS} -o $(BINDIR)/testcase ${GEN_INC} ${INCS_DIRS} $(SOURCEDIR)/DBServiceTestcase.cpp ${GEN_SRC} ${LIBS_DIRS} ${LIBS}
+
+#Run (Server)
 run:
-	$(BINDIR)/$(TARGET)
+	$(BINDIR)/server
 
-# Cleaning compilation
 clean:
-	rm -rf bin/*.o
-	rm -rf $(BINDIR)/*.o
-	rm -rf $(BINDIR)/*~
-	cd if && $(MAKE) clean
+	rm -rf $(SOURCEDIR)/*.o
+	rm -rf $(SOURCEDIR)/*.~
+	rm -rf $(SOURCEDIR)/gen-cpp/*.o
+	rm -rf $(SOURCEDIR)/gen-cpp/*.~

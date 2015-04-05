@@ -4,13 +4,13 @@
  * DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING
  *  @generated
  */
-#include "shared_constants.h"
+#include "dbservice_constants.h"
 
-namespace shared {
+namespace dbservice {
 
-const sharedConstants g_shared_constants;
+const dbserviceConstants g_dbservice_constants;
 
-sharedConstants::sharedConstants() {
+dbserviceConstants::dbserviceConstants() {
 }
 
 } // namespace

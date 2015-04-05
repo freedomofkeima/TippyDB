@@ -1,11 +1,22 @@
+/**
+  * Iskandar Setiadi 13511073@std.stei.itb.ac.id
+  * Institut Teknologi Bandung (ITB) - Indonesia
+  * Final Project (c) 2015
+  * http://freedomofkeima.com/
+  * database.cpp
+  *
+  */
+#include "database.h"
+
 #include <assert.h>
 #include <iostream>
+
 #include "leveldb/comparator.h"
 #include "leveldb/db.h"
 
 using namespace std;
 
-int main() {
+void test() {
 	leveldb::DB* db;
 	leveldb::Options options;
 	options.create_if_missing = true;
@@ -47,6 +58,4 @@ int main() {
 	
 	assert(it->status().ok()); // Check for any errors during scan
 	delete it;
-
-	return 0;
 }

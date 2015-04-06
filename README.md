@@ -30,6 +30,8 @@ By: Iskandar Setiadi (freedomofkeima)
 
 - Run the ```Makefile``` by running ```make all``` command.
 
+- Setup your distributed database environments by specifying all machines at ```db.config```
+
 ## Additional Information
 
 This project is using RDTSC & RDTSCP for measuring average running time. ( Reference: https://idea.popcount.org/2013-01-28-counting-cycles---rdtsc/ )

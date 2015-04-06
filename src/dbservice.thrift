@@ -30,6 +30,14 @@ service DBService {
 
 	void ping(),
 
+    bool put(1:string key, 2:string value) throws (1:Exception exception),
+
+    bool update(1:string key, 2:string value) throws (1:Exception exception),
+
+    string get(1:string key) throws (1:Exception exception),
+
+    bool delete(1:string key) throws (1:Exception exception),
+
 	oneway void zip()
 
 }

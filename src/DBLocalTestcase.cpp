@@ -86,14 +86,14 @@ int main(int argc, char** argv) {
   string value;
 
   cout << "** Starting local benchmarking **" << endl << endl;
-  cout << "Key length: " << 8 << " byte(s)" << endl;
-  cout << "Value length: " << 8 << " byte(s)" << endl << endl;
-  max_iteration = 100;
+  cout << "Key length: " << 10 << " byte(s)" << endl;
+  cout << "Value length: " << 10 << " byte(s)" << endl << endl;
+  max_iteration = 100; //TODO: Change to 100000
 
-  /** FILLRANDOM (local) operation **/
-  cout << "--FILLRANDOM (local)--" << endl;
-  counter = 10000; total = 0;
-  while (counter < max_iteration + 10000) {
+  /** FILL (local) operation **/
+  cout << "--FILL (local)--" << endl;
+  counter = 10000000; total = 0;
+  while (counter < max_iteration + 10000000) {
     value = "val" + boost::lexical_cast<std::string>(counter);
 	leveldb::Slice key("key" + boost::lexical_cast<std::string>(counter));
     // cout << "Key: " << key.ToString() << " ; " << "Value: " << value << endl;
@@ -104,12 +104,12 @@ int main(int argc, char** argv) {
 	counter++;
   }
   print_result(total);
-  /** End of FILLRANDOM (local) operation **/
+  /** End of FILL (local) operation **/
 
   /** FILLSYNC (local) operation **/
   cout << "--FILLSYNC (local)--" << endl;
-  counter = 10000; total = 0;
-  while (counter < max_iteration + 10000) {
+  counter = 10000000; total = 0;
+  while (counter < max_iteration + 10000000) {
     value = "value" + boost::lexical_cast<std::string>(counter);
 	leveldb::Slice key("keysync" + boost::lexical_cast<std::string>(counter));
     // cout << "Key: " << key.ToString() << " ; " << "Value: " << value << endl;
@@ -124,8 +124,8 @@ int main(int argc, char** argv) {
 
   /** OVERWRITE (local) operation **/
   cout << "--OVERWRITE (local)--" << endl;
-  counter = 10000; total = 0;
-  while (counter < max_iteration + 10000) {
+  counter = 10000000; total = 0;
+  while (counter < max_iteration + 10000000) {
     value = "value" + boost::lexical_cast<std::string>(counter);
 	leveldb::Slice key("key" + boost::lexical_cast<std::string>(counter));
     // cout << "Key: " << key.ToString() << " ; " << "Value: " << value << endl;
@@ -140,8 +140,8 @@ int main(int argc, char** argv) {
 
   /** READ (local) operation **/
   cout << "--READ (local)--" << endl;
-  counter = 10000; total = 0;
-  while (counter < max_iteration + 10000) {
+  counter = 10000000; total = 0;
+  while (counter < max_iteration + 10000000) {
     leveldb::Slice key("key" + boost::lexical_cast<std::string>(counter));
 	RDTSC_START(t1); // start operation
 	status = db->Get(read_options, key, &value);
@@ -155,8 +155,8 @@ int main(int argc, char** argv) {
 
   /** DELETE (local) operation **/
   cout << "--DELETE (local)--" << endl;
-  counter = 10000; total = 0;
-  while (counter < max_iteration + 10000) {
+  counter = 10000000; total = 0;
+  while (counter < max_iteration + 10000000) {
 	leveldb::Slice key("key" + boost::lexical_cast<std::string>(counter));
 	// cout << "Key: " << key.ToString() << endl;
 	RDTSC_START(t1); // start operation

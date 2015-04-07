@@ -12,6 +12,8 @@ By: Iskandar Setiadi (freedomofkeima)
 
 - Apache Thrift 0.9.2
 
+- MongoDB 3.0.1 & Mongo-cxx-driver 1.0.1
+
 ## Requirements
 
 ** LevelDB **

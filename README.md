@@ -12,7 +12,7 @@ By: Iskandar Setiadi (freedomofkeima)
 
 - Apache Thrift 0.9.2
 
-- MongoDB 3.0.1 & Mongo-cxx-driver 1.0.1
+- MongoDB 3.0.1 & PyMongo 3.0
 
 ## Requirements
 
@@ -33,6 +33,8 @@ By: Iskandar Setiadi (freedomofkeima)
 - Run the ```Makefile``` by running ```make all``` command.
 
 - Setup your distributed database environments by specifying all machines at ```db.config```. You should set ```own``` as ```true``` for the specified machine's address.
+
+- To run the benchmarking for MongoDB, you could simply use ```python mongodb/mongodb_local_testcase.py```
 
 ## Additional Information
 

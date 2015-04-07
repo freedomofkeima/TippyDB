@@ -120,9 +120,22 @@ int main(int argc, char** argv) {
     print_result(total);
     /** End of ZIP operation **/
 
+    /** PUTDATA operation */
+    cout << "--PUTDATA (correctness)--" << endl;
+    string result;
+    cout << "Key: dummy ; Value: test" << endl;
+    Data d;
+    d.key = "dummy";
+    d.value = "test";
+    client.putData(result, d);
+    cout << "Sharded key: " << result << endl;
+    /** End of PUTDATA operation **/
+
   } catch (TException& tx) {
     cout << "ERROR: " << tx.what() << endl;
   }
+
+  cout << endl;
   cout << "** Done **" << endl;
 
   return 0;

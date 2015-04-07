@@ -21,22 +21,29 @@ struct Data {
   2: string value,
 }
 
-struct Exception {
-  1: i32 error_code,
-  2: string description
+typedef list<Data> Shard
+
+struct ShardContent {
+  1: Shard data
 }
 
 service DBService {
 
 	void ping(),
 
-    bool put(1:string key, 2:string value) throws (1:Exception exception),
+	string putData(1:Data d),
 
-    bool update(1:string key, 2:string value) throws (1:Exception exception),
+	bool updateData(1:Data d),
 
-    string get(1:string key) throws (1:Exception exception),
+	string getData(1:string sharded_key),
 
-    bool delete(1:string key) throws (1:Exception exception),
+	bool deleteData(1:string sharded_key),
+
+    /**
+      * resyncData
+      * Retrieve all shard contents where region = remote_region && node = remote_node
+      */
+    ShardContent resyncData(1:i32 remote_region, 2:i32 remote_node),
 
 	oneway void zip()
 

@@ -16,24 +16,41 @@
 
 using namespace std;
 
-void test() {
-	leveldb::DB* db;
+/** Global variable (Single DAO) */
+leveldb::DB* db;
+leveldb::Status status;
+leveldb::WriteOptions write_options;
+leveldb::WriteOptions write_options2;
+leveldb::ReadOptions read_options;
+leveldb::Slice counter_key = "counter"; // reserved key
+string counter_value = "0";
+
+string log_filepath = "../data/app.log";
+
+void initDB() {
 	leveldb::Options options;
 	options.create_if_missing = true;
-	leveldb::Status status = leveldb::DB::Open(options, "/tmp/testdb", &db);
+	status = leveldb::DB::Open(options, "/tmp/testdb", &db);
 	assert(status.ok());
 	cout << status.ToString() << endl;
 
+	leveldb::Status local_status;
+	local_status = db->Get(read_options, counter_key, &counter_value);
+	if (!local_status.ok()) { // initialize counter if it hasn't been initialized
+		db->Put(write_options, counter_key, counter_value);
+	}
+
+	write_options2.sync = true;
+}
+
+void test() {
 	/** Write a pair of key and value to database */
 	leveldb::Slice key = "IF3230";
 	string value = "This is a test string.";
-	leveldb::WriteOptions write_options;
-	// write_options.sync = true;
 	status = db->Put(write_options, key, value);
 
 	/** Read non-existing key */
 	leveldb::Slice dummy_key = "dummy";
-	leveldb::ReadOptions read_options;
 	string result;
 	status = db->Get(read_options, dummy_key, &result);
 	cout << "Non-existing key: " << result << endl;
@@ -51,11 +68,12 @@ void test() {
 		cout <<  k.ToString() << " " << v.ToString() << endl;
 	}
 
+	assert(it->status().ok()); // Check for any errors during scan
+	delete it;
+
 	/** Compare */
 	leveldb::Slice a = std::string("aaaaa");
 	leveldb::Slice b = std::string("aaaa");
+    leveldb::Options options;
 	cout << options.comparator->Compare(a, b) << endl;
-	
-	assert(it->status().ok()); // Check for any errors during scan
-	delete it;
 }

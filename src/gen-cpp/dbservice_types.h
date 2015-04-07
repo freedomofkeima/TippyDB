@@ -19,9 +19,11 @@
 
 namespace dbservice {
 
+typedef std::vector<class Data>  Shard;
+
 class Data;
 
-class Exception;
+class ShardContent;
 
 typedef struct _Data__isset {
   _Data__isset() : key(false), value(false) {}
@@ -72,54 +74,48 @@ class Data {
 
 void swap(Data &a, Data &b);
 
-typedef struct _Exception__isset {
-  _Exception__isset() : error_code(false), description(false) {}
-  bool error_code :1;
-  bool description :1;
-} _Exception__isset;
+typedef struct _ShardContent__isset {
+  _ShardContent__isset() : data(false) {}
+  bool data :1;
+} _ShardContent__isset;
 
-class Exception {
+class ShardContent {
  public:
 
-  static const char* ascii_fingerprint; // = "3F5FC93B338687BC7235B1AB103F47B3";
-  static const uint8_t binary_fingerprint[16]; // = {0x3F,0x5F,0xC9,0x3B,0x33,0x86,0x87,0xBC,0x72,0x35,0xB1,0xAB,0x10,0x3F,0x47,0xB3};
+  static const char* ascii_fingerprint; // = "006EFB9C0A4E436459CDFDF617590BB4";
+  static const uint8_t binary_fingerprint[16]; // = {0x00,0x6E,0xFB,0x9C,0x0A,0x4E,0x43,0x64,0x59,0xCD,0xFD,0xF6,0x17,0x59,0x0B,0xB4};
 
-  Exception(const Exception&);
-  Exception& operator=(const Exception&);
-  Exception() : error_code(0), description() {
+  ShardContent(const ShardContent&);
+  ShardContent& operator=(const ShardContent&);
+  ShardContent() {
   }
 
-  virtual ~Exception() throw();
-  int32_t error_code;
-  std::string description;
+  virtual ~ShardContent() throw();
+  Shard data;
 
-  _Exception__isset __isset;
+  _ShardContent__isset __isset;
 
-  void __set_error_code(const int32_t val);
+  void __set_data(const Shard& val);
 
-  void __set_description(const std::string& val);
-
-  bool operator == (const Exception & rhs) const
+  bool operator == (const ShardContent & rhs) const
   {
-    if (!(error_code == rhs.error_code))
-      return false;
-    if (!(description == rhs.description))
+    if (!(data == rhs.data))
       return false;
     return true;
   }
-  bool operator != (const Exception &rhs) const {
+  bool operator != (const ShardContent &rhs) const {
     return !(*this == rhs);
   }
 
-  bool operator < (const Exception & ) const;
+  bool operator < (const ShardContent & ) const;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
-  friend std::ostream& operator<<(std::ostream& out, const Exception& obj);
+  friend std::ostream& operator<<(std::ostream& out, const ShardContent& obj);
 };
 
-void swap(Exception &a, Exception &b);
+void swap(ShardContent &a, ShardContent &b);
 
 } // namespace
 

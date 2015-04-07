@@ -16,6 +16,7 @@
 
 #include <iostream>
 #include <cstring>
+#include <vector>
 
 #include "./gen-cpp/DBService.h"
 #include "./db/database.h"
@@ -30,12 +31,64 @@ using boost::shared_ptr;
 
 using namespace dbservice;
 
+/** Own configuration */
+string server_ip;
+int server_port;
+int server_region;
+int server_node;
+
+struct Member {
+  int region;
+  int node;
+  string ip;
+  int port;
+  int distance;
+};
+
+vector<Member> members;
+
+void loadMembers() {
+
+}
+
 class DBServiceHandler : virtual public DBServiceIf {
  public:
   DBServiceHandler() {}
 
   void ping() {
     printf("ping\n");
+  }
+
+  void putData(std::string& _return, const Data& d) {
+    // Your implementation goes here
+    _return = d.key;
+  }
+
+  bool updateData(const Data& d) {
+    // Your implementation goes here
+    return true;
+  }
+
+  void getData(std::string& _return, const std::string& sharded_key) {
+    // Your implementation goes here
+    printf("getData\n");
+  }
+
+  bool deleteData(const std::string& sharded_key) {
+    // Your implementation goes here
+    return true;
+  }
+
+  /**
+   * resyncData
+   * Retrieve all shard contents where region = remote_region && node = remote_node
+   * 
+   * @param remote_region
+   * @param remote_node
+   */
+  void resyncData(ShardContent& _return, const int32_t remote_region, const int32_t remote_node) {
+    // Your implementation goes here
+    printf("resyncData\n");
   }
 
   void zip() {
@@ -58,7 +111,13 @@ int main(int argc, char **argv) {
                          transportFactory,
                          protocolFactory);
 
+  // Load members configuration
+  loadMembers();
+
+  // Create one thread for each member
+
   // Test leveldb
+  initDB();
   test();
 
   cout << "** Starting the server **" << endl;

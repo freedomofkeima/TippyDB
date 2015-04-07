@@ -16,6 +16,19 @@ class DBServiceIf {
  public:
   virtual ~DBServiceIf() {}
   virtual void ping() = 0;
+  virtual void putData(std::string& _return, const Data& d) = 0;
+  virtual bool updateData(const Data& d) = 0;
+  virtual void getData(std::string& _return, const std::string& sharded_key) = 0;
+  virtual bool deleteData(const std::string& sharded_key) = 0;
+
+  /**
+   * resyncData
+   * Retrieve all shard contents where region = remote_region && node = remote_node
+   * 
+   * @param remote_region
+   * @param remote_node
+   */
+  virtual void resyncData(ShardContent& _return, const int32_t remote_region, const int32_t remote_node) = 0;
   virtual void zip() = 0;
 };
 
@@ -47,6 +60,23 @@ class DBServiceNull : virtual public DBServiceIf {
  public:
   virtual ~DBServiceNull() {}
   void ping() {
+    return;
+  }
+  void putData(std::string& /* _return */, const Data& /* d */) {
+    return;
+  }
+  bool updateData(const Data& /* d */) {
+    bool _return = false;
+    return _return;
+  }
+  void getData(std::string& /* _return */, const std::string& /* sharded_key */) {
+    return;
+  }
+  bool deleteData(const std::string& /* sharded_key */) {
+    bool _return = false;
+    return _return;
+  }
+  void resyncData(ShardContent& /* _return */, const int32_t /* remote_region */, const int32_t /* remote_node */) {
     return;
   }
   void zip() {
@@ -144,6 +174,613 @@ class DBService_ping_presult {
   friend std::ostream& operator<<(std::ostream& out, const DBService_ping_presult& obj);
 };
 
+typedef struct _DBService_putData_args__isset {
+  _DBService_putData_args__isset() : d(false) {}
+  bool d :1;
+} _DBService_putData_args__isset;
+
+class DBService_putData_args {
+ public:
+
+  static const char* ascii_fingerprint; // = "A756D3DBE614FB13F70BF7F7B6EB3D73";
+  static const uint8_t binary_fingerprint[16]; // = {0xA7,0x56,0xD3,0xDB,0xE6,0x14,0xFB,0x13,0xF7,0x0B,0xF7,0xF7,0xB6,0xEB,0x3D,0x73};
+
+  DBService_putData_args(const DBService_putData_args&);
+  DBService_putData_args& operator=(const DBService_putData_args&);
+  DBService_putData_args() {
+  }
+
+  virtual ~DBService_putData_args() throw();
+  Data d;
+
+  _DBService_putData_args__isset __isset;
+
+  void __set_d(const Data& val);
+
+  bool operator == (const DBService_putData_args & rhs) const
+  {
+    if (!(d == rhs.d))
+      return false;
+    return true;
+  }
+  bool operator != (const DBService_putData_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const DBService_putData_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_putData_args& obj);
+};
+
+
+class DBService_putData_pargs {
+ public:
+
+  static const char* ascii_fingerprint; // = "A756D3DBE614FB13F70BF7F7B6EB3D73";
+  static const uint8_t binary_fingerprint[16]; // = {0xA7,0x56,0xD3,0xDB,0xE6,0x14,0xFB,0x13,0xF7,0x0B,0xF7,0xF7,0xB6,0xEB,0x3D,0x73};
+
+
+  virtual ~DBService_putData_pargs() throw();
+  const Data* d;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_putData_pargs& obj);
+};
+
+typedef struct _DBService_putData_result__isset {
+  _DBService_putData_result__isset() : success(false) {}
+  bool success :1;
+} _DBService_putData_result__isset;
+
+class DBService_putData_result {
+ public:
+
+  static const char* ascii_fingerprint; // = "9A73381FEFD6B67F432E717102246330";
+  static const uint8_t binary_fingerprint[16]; // = {0x9A,0x73,0x38,0x1F,0xEF,0xD6,0xB6,0x7F,0x43,0x2E,0x71,0x71,0x02,0x24,0x63,0x30};
+
+  DBService_putData_result(const DBService_putData_result&);
+  DBService_putData_result& operator=(const DBService_putData_result&);
+  DBService_putData_result() : success() {
+  }
+
+  virtual ~DBService_putData_result() throw();
+  std::string success;
+
+  _DBService_putData_result__isset __isset;
+
+  void __set_success(const std::string& val);
+
+  bool operator == (const DBService_putData_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    return true;
+  }
+  bool operator != (const DBService_putData_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const DBService_putData_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_putData_result& obj);
+};
+
+typedef struct _DBService_putData_presult__isset {
+  _DBService_putData_presult__isset() : success(false) {}
+  bool success :1;
+} _DBService_putData_presult__isset;
+
+class DBService_putData_presult {
+ public:
+
+  static const char* ascii_fingerprint; // = "9A73381FEFD6B67F432E717102246330";
+  static const uint8_t binary_fingerprint[16]; // = {0x9A,0x73,0x38,0x1F,0xEF,0xD6,0xB6,0x7F,0x43,0x2E,0x71,0x71,0x02,0x24,0x63,0x30};
+
+
+  virtual ~DBService_putData_presult() throw();
+  std::string* success;
+
+  _DBService_putData_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_putData_presult& obj);
+};
+
+typedef struct _DBService_updateData_args__isset {
+  _DBService_updateData_args__isset() : d(false) {}
+  bool d :1;
+} _DBService_updateData_args__isset;
+
+class DBService_updateData_args {
+ public:
+
+  static const char* ascii_fingerprint; // = "A756D3DBE614FB13F70BF7F7B6EB3D73";
+  static const uint8_t binary_fingerprint[16]; // = {0xA7,0x56,0xD3,0xDB,0xE6,0x14,0xFB,0x13,0xF7,0x0B,0xF7,0xF7,0xB6,0xEB,0x3D,0x73};
+
+  DBService_updateData_args(const DBService_updateData_args&);
+  DBService_updateData_args& operator=(const DBService_updateData_args&);
+  DBService_updateData_args() {
+  }
+
+  virtual ~DBService_updateData_args() throw();
+  Data d;
+
+  _DBService_updateData_args__isset __isset;
+
+  void __set_d(const Data& val);
+
+  bool operator == (const DBService_updateData_args & rhs) const
+  {
+    if (!(d == rhs.d))
+      return false;
+    return true;
+  }
+  bool operator != (const DBService_updateData_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const DBService_updateData_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_updateData_args& obj);
+};
+
+
+class DBService_updateData_pargs {
+ public:
+
+  static const char* ascii_fingerprint; // = "A756D3DBE614FB13F70BF7F7B6EB3D73";
+  static const uint8_t binary_fingerprint[16]; // = {0xA7,0x56,0xD3,0xDB,0xE6,0x14,0xFB,0x13,0xF7,0x0B,0xF7,0xF7,0xB6,0xEB,0x3D,0x73};
+
+
+  virtual ~DBService_updateData_pargs() throw();
+  const Data* d;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_updateData_pargs& obj);
+};
+
+typedef struct _DBService_updateData_result__isset {
+  _DBService_updateData_result__isset() : success(false) {}
+  bool success :1;
+} _DBService_updateData_result__isset;
+
+class DBService_updateData_result {
+ public:
+
+  static const char* ascii_fingerprint; // = "D9D3B4421B1F23CB4063C80B484E7909";
+  static const uint8_t binary_fingerprint[16]; // = {0xD9,0xD3,0xB4,0x42,0x1B,0x1F,0x23,0xCB,0x40,0x63,0xC8,0x0B,0x48,0x4E,0x79,0x09};
+
+  DBService_updateData_result(const DBService_updateData_result&);
+  DBService_updateData_result& operator=(const DBService_updateData_result&);
+  DBService_updateData_result() : success(0) {
+  }
+
+  virtual ~DBService_updateData_result() throw();
+  bool success;
+
+  _DBService_updateData_result__isset __isset;
+
+  void __set_success(const bool val);
+
+  bool operator == (const DBService_updateData_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    return true;
+  }
+  bool operator != (const DBService_updateData_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const DBService_updateData_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_updateData_result& obj);
+};
+
+typedef struct _DBService_updateData_presult__isset {
+  _DBService_updateData_presult__isset() : success(false) {}
+  bool success :1;
+} _DBService_updateData_presult__isset;
+
+class DBService_updateData_presult {
+ public:
+
+  static const char* ascii_fingerprint; // = "D9D3B4421B1F23CB4063C80B484E7909";
+  static const uint8_t binary_fingerprint[16]; // = {0xD9,0xD3,0xB4,0x42,0x1B,0x1F,0x23,0xCB,0x40,0x63,0xC8,0x0B,0x48,0x4E,0x79,0x09};
+
+
+  virtual ~DBService_updateData_presult() throw();
+  bool* success;
+
+  _DBService_updateData_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_updateData_presult& obj);
+};
+
+typedef struct _DBService_getData_args__isset {
+  _DBService_getData_args__isset() : sharded_key(false) {}
+  bool sharded_key :1;
+} _DBService_getData_args__isset;
+
+class DBService_getData_args {
+ public:
+
+  static const char* ascii_fingerprint; // = "EFB929595D312AC8F305D5A794CFEDA1";
+  static const uint8_t binary_fingerprint[16]; // = {0xEF,0xB9,0x29,0x59,0x5D,0x31,0x2A,0xC8,0xF3,0x05,0xD5,0xA7,0x94,0xCF,0xED,0xA1};
+
+  DBService_getData_args(const DBService_getData_args&);
+  DBService_getData_args& operator=(const DBService_getData_args&);
+  DBService_getData_args() : sharded_key() {
+  }
+
+  virtual ~DBService_getData_args() throw();
+  std::string sharded_key;
+
+  _DBService_getData_args__isset __isset;
+
+  void __set_sharded_key(const std::string& val);
+
+  bool operator == (const DBService_getData_args & rhs) const
+  {
+    if (!(sharded_key == rhs.sharded_key))
+      return false;
+    return true;
+  }
+  bool operator != (const DBService_getData_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const DBService_getData_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_getData_args& obj);
+};
+
+
+class DBService_getData_pargs {
+ public:
+
+  static const char* ascii_fingerprint; // = "EFB929595D312AC8F305D5A794CFEDA1";
+  static const uint8_t binary_fingerprint[16]; // = {0xEF,0xB9,0x29,0x59,0x5D,0x31,0x2A,0xC8,0xF3,0x05,0xD5,0xA7,0x94,0xCF,0xED,0xA1};
+
+
+  virtual ~DBService_getData_pargs() throw();
+  const std::string* sharded_key;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_getData_pargs& obj);
+};
+
+typedef struct _DBService_getData_result__isset {
+  _DBService_getData_result__isset() : success(false) {}
+  bool success :1;
+} _DBService_getData_result__isset;
+
+class DBService_getData_result {
+ public:
+
+  static const char* ascii_fingerprint; // = "9A73381FEFD6B67F432E717102246330";
+  static const uint8_t binary_fingerprint[16]; // = {0x9A,0x73,0x38,0x1F,0xEF,0xD6,0xB6,0x7F,0x43,0x2E,0x71,0x71,0x02,0x24,0x63,0x30};
+
+  DBService_getData_result(const DBService_getData_result&);
+  DBService_getData_result& operator=(const DBService_getData_result&);
+  DBService_getData_result() : success() {
+  }
+
+  virtual ~DBService_getData_result() throw();
+  std::string success;
+
+  _DBService_getData_result__isset __isset;
+
+  void __set_success(const std::string& val);
+
+  bool operator == (const DBService_getData_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    return true;
+  }
+  bool operator != (const DBService_getData_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const DBService_getData_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_getData_result& obj);
+};
+
+typedef struct _DBService_getData_presult__isset {
+  _DBService_getData_presult__isset() : success(false) {}
+  bool success :1;
+} _DBService_getData_presult__isset;
+
+class DBService_getData_presult {
+ public:
+
+  static const char* ascii_fingerprint; // = "9A73381FEFD6B67F432E717102246330";
+  static const uint8_t binary_fingerprint[16]; // = {0x9A,0x73,0x38,0x1F,0xEF,0xD6,0xB6,0x7F,0x43,0x2E,0x71,0x71,0x02,0x24,0x63,0x30};
+
+
+  virtual ~DBService_getData_presult() throw();
+  std::string* success;
+
+  _DBService_getData_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_getData_presult& obj);
+};
+
+typedef struct _DBService_deleteData_args__isset {
+  _DBService_deleteData_args__isset() : sharded_key(false) {}
+  bool sharded_key :1;
+} _DBService_deleteData_args__isset;
+
+class DBService_deleteData_args {
+ public:
+
+  static const char* ascii_fingerprint; // = "EFB929595D312AC8F305D5A794CFEDA1";
+  static const uint8_t binary_fingerprint[16]; // = {0xEF,0xB9,0x29,0x59,0x5D,0x31,0x2A,0xC8,0xF3,0x05,0xD5,0xA7,0x94,0xCF,0xED,0xA1};
+
+  DBService_deleteData_args(const DBService_deleteData_args&);
+  DBService_deleteData_args& operator=(const DBService_deleteData_args&);
+  DBService_deleteData_args() : sharded_key() {
+  }
+
+  virtual ~DBService_deleteData_args() throw();
+  std::string sharded_key;
+
+  _DBService_deleteData_args__isset __isset;
+
+  void __set_sharded_key(const std::string& val);
+
+  bool operator == (const DBService_deleteData_args & rhs) const
+  {
+    if (!(sharded_key == rhs.sharded_key))
+      return false;
+    return true;
+  }
+  bool operator != (const DBService_deleteData_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const DBService_deleteData_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_deleteData_args& obj);
+};
+
+
+class DBService_deleteData_pargs {
+ public:
+
+  static const char* ascii_fingerprint; // = "EFB929595D312AC8F305D5A794CFEDA1";
+  static const uint8_t binary_fingerprint[16]; // = {0xEF,0xB9,0x29,0x59,0x5D,0x31,0x2A,0xC8,0xF3,0x05,0xD5,0xA7,0x94,0xCF,0xED,0xA1};
+
+
+  virtual ~DBService_deleteData_pargs() throw();
+  const std::string* sharded_key;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_deleteData_pargs& obj);
+};
+
+typedef struct _DBService_deleteData_result__isset {
+  _DBService_deleteData_result__isset() : success(false) {}
+  bool success :1;
+} _DBService_deleteData_result__isset;
+
+class DBService_deleteData_result {
+ public:
+
+  static const char* ascii_fingerprint; // = "D9D3B4421B1F23CB4063C80B484E7909";
+  static const uint8_t binary_fingerprint[16]; // = {0xD9,0xD3,0xB4,0x42,0x1B,0x1F,0x23,0xCB,0x40,0x63,0xC8,0x0B,0x48,0x4E,0x79,0x09};
+
+  DBService_deleteData_result(const DBService_deleteData_result&);
+  DBService_deleteData_result& operator=(const DBService_deleteData_result&);
+  DBService_deleteData_result() : success(0) {
+  }
+
+  virtual ~DBService_deleteData_result() throw();
+  bool success;
+
+  _DBService_deleteData_result__isset __isset;
+
+  void __set_success(const bool val);
+
+  bool operator == (const DBService_deleteData_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    return true;
+  }
+  bool operator != (const DBService_deleteData_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const DBService_deleteData_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_deleteData_result& obj);
+};
+
+typedef struct _DBService_deleteData_presult__isset {
+  _DBService_deleteData_presult__isset() : success(false) {}
+  bool success :1;
+} _DBService_deleteData_presult__isset;
+
+class DBService_deleteData_presult {
+ public:
+
+  static const char* ascii_fingerprint; // = "D9D3B4421B1F23CB4063C80B484E7909";
+  static const uint8_t binary_fingerprint[16]; // = {0xD9,0xD3,0xB4,0x42,0x1B,0x1F,0x23,0xCB,0x40,0x63,0xC8,0x0B,0x48,0x4E,0x79,0x09};
+
+
+  virtual ~DBService_deleteData_presult() throw();
+  bool* success;
+
+  _DBService_deleteData_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_deleteData_presult& obj);
+};
+
+typedef struct _DBService_resyncData_args__isset {
+  _DBService_resyncData_args__isset() : remote_region(false), remote_node(false) {}
+  bool remote_region :1;
+  bool remote_node :1;
+} _DBService_resyncData_args__isset;
+
+class DBService_resyncData_args {
+ public:
+
+  static const char* ascii_fingerprint; // = "989D1F1AE8D148D5E2119FFEC4BBBEE3";
+  static const uint8_t binary_fingerprint[16]; // = {0x98,0x9D,0x1F,0x1A,0xE8,0xD1,0x48,0xD5,0xE2,0x11,0x9F,0xFE,0xC4,0xBB,0xBE,0xE3};
+
+  DBService_resyncData_args(const DBService_resyncData_args&);
+  DBService_resyncData_args& operator=(const DBService_resyncData_args&);
+  DBService_resyncData_args() : remote_region(0), remote_node(0) {
+  }
+
+  virtual ~DBService_resyncData_args() throw();
+  int32_t remote_region;
+  int32_t remote_node;
+
+  _DBService_resyncData_args__isset __isset;
+
+  void __set_remote_region(const int32_t val);
+
+  void __set_remote_node(const int32_t val);
+
+  bool operator == (const DBService_resyncData_args & rhs) const
+  {
+    if (!(remote_region == rhs.remote_region))
+      return false;
+    if (!(remote_node == rhs.remote_node))
+      return false;
+    return true;
+  }
+  bool operator != (const DBService_resyncData_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const DBService_resyncData_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_resyncData_args& obj);
+};
+
+
+class DBService_resyncData_pargs {
+ public:
+
+  static const char* ascii_fingerprint; // = "989D1F1AE8D148D5E2119FFEC4BBBEE3";
+  static const uint8_t binary_fingerprint[16]; // = {0x98,0x9D,0x1F,0x1A,0xE8,0xD1,0x48,0xD5,0xE2,0x11,0x9F,0xFE,0xC4,0xBB,0xBE,0xE3};
+
+
+  virtual ~DBService_resyncData_pargs() throw();
+  const int32_t* remote_region;
+  const int32_t* remote_node;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_resyncData_pargs& obj);
+};
+
+typedef struct _DBService_resyncData_result__isset {
+  _DBService_resyncData_result__isset() : success(false) {}
+  bool success :1;
+} _DBService_resyncData_result__isset;
+
+class DBService_resyncData_result {
+ public:
+
+  static const char* ascii_fingerprint; // = "CBFF6EB1EDB1D2381B07A6FDC62945B3";
+  static const uint8_t binary_fingerprint[16]; // = {0xCB,0xFF,0x6E,0xB1,0xED,0xB1,0xD2,0x38,0x1B,0x07,0xA6,0xFD,0xC6,0x29,0x45,0xB3};
+
+  DBService_resyncData_result(const DBService_resyncData_result&);
+  DBService_resyncData_result& operator=(const DBService_resyncData_result&);
+  DBService_resyncData_result() {
+  }
+
+  virtual ~DBService_resyncData_result() throw();
+  ShardContent success;
+
+  _DBService_resyncData_result__isset __isset;
+
+  void __set_success(const ShardContent& val);
+
+  bool operator == (const DBService_resyncData_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    return true;
+  }
+  bool operator != (const DBService_resyncData_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const DBService_resyncData_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_resyncData_result& obj);
+};
+
+typedef struct _DBService_resyncData_presult__isset {
+  _DBService_resyncData_presult__isset() : success(false) {}
+  bool success :1;
+} _DBService_resyncData_presult__isset;
+
+class DBService_resyncData_presult {
+ public:
+
+  static const char* ascii_fingerprint; // = "CBFF6EB1EDB1D2381B07A6FDC62945B3";
+  static const uint8_t binary_fingerprint[16]; // = {0xCB,0xFF,0x6E,0xB1,0xED,0xB1,0xD2,0x38,0x1B,0x07,0xA6,0xFD,0xC6,0x29,0x45,0xB3};
+
+
+  virtual ~DBService_resyncData_presult() throw();
+  ShardContent* success;
+
+  _DBService_resyncData_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_resyncData_presult& obj);
+};
+
 
 class DBService_zip_args {
  public:
@@ -217,6 +854,21 @@ class DBServiceClient : virtual public DBServiceIf {
   void ping();
   void send_ping();
   void recv_ping();
+  void putData(std::string& _return, const Data& d);
+  void send_putData(const Data& d);
+  void recv_putData(std::string& _return);
+  bool updateData(const Data& d);
+  void send_updateData(const Data& d);
+  bool recv_updateData();
+  void getData(std::string& _return, const std::string& sharded_key);
+  void send_getData(const std::string& sharded_key);
+  void recv_getData(std::string& _return);
+  bool deleteData(const std::string& sharded_key);
+  void send_deleteData(const std::string& sharded_key);
+  bool recv_deleteData();
+  void resyncData(ShardContent& _return, const int32_t remote_region, const int32_t remote_node);
+  void send_resyncData(const int32_t remote_region, const int32_t remote_node);
+  void recv_resyncData(ShardContent& _return);
   void zip();
   void send_zip();
  protected:
@@ -235,11 +887,21 @@ class DBServiceProcessor : public ::apache::thrift::TDispatchProcessor {
   typedef std::map<std::string, ProcessFunction> ProcessMap;
   ProcessMap processMap_;
   void process_ping(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_putData(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_updateData(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_getData(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_deleteData(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_resyncData(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_zip(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
  public:
   DBServiceProcessor(boost::shared_ptr<DBServiceIf> iface) :
     iface_(iface) {
     processMap_["ping"] = &DBServiceProcessor::process_ping;
+    processMap_["putData"] = &DBServiceProcessor::process_putData;
+    processMap_["updateData"] = &DBServiceProcessor::process_updateData;
+    processMap_["getData"] = &DBServiceProcessor::process_getData;
+    processMap_["deleteData"] = &DBServiceProcessor::process_deleteData;
+    processMap_["resyncData"] = &DBServiceProcessor::process_resyncData;
     processMap_["zip"] = &DBServiceProcessor::process_zip;
   }
 
@@ -276,6 +938,54 @@ class DBServiceMultiface : virtual public DBServiceIf {
       ifaces_[i]->ping();
     }
     ifaces_[i]->ping();
+  }
+
+  void putData(std::string& _return, const Data& d) {
+    size_t sz = ifaces_.size();
+    size_t i = 0;
+    for (; i < (sz - 1); ++i) {
+      ifaces_[i]->putData(_return, d);
+    }
+    ifaces_[i]->putData(_return, d);
+    return;
+  }
+
+  bool updateData(const Data& d) {
+    size_t sz = ifaces_.size();
+    size_t i = 0;
+    for (; i < (sz - 1); ++i) {
+      ifaces_[i]->updateData(d);
+    }
+    return ifaces_[i]->updateData(d);
+  }
+
+  void getData(std::string& _return, const std::string& sharded_key) {
+    size_t sz = ifaces_.size();
+    size_t i = 0;
+    for (; i < (sz - 1); ++i) {
+      ifaces_[i]->getData(_return, sharded_key);
+    }
+    ifaces_[i]->getData(_return, sharded_key);
+    return;
+  }
+
+  bool deleteData(const std::string& sharded_key) {
+    size_t sz = ifaces_.size();
+    size_t i = 0;
+    for (; i < (sz - 1); ++i) {
+      ifaces_[i]->deleteData(sharded_key);
+    }
+    return ifaces_[i]->deleteData(sharded_key);
+  }
+
+  void resyncData(ShardContent& _return, const int32_t remote_region, const int32_t remote_node) {
+    size_t sz = ifaces_.size();
+    size_t i = 0;
+    for (; i < (sz - 1); ++i) {
+      ifaces_[i]->resyncData(_return, remote_region, remote_node);
+    }
+    ifaces_[i]->resyncData(_return, remote_region, remote_node);
+    return;
   }
 
   void zip() {

@@ -124,22 +124,18 @@ std::ostream& operator<<(std::ostream& out, const Data& obj) {
 }
 
 
-Exception::~Exception() throw() {
+ShardContent::~ShardContent() throw() {
 }
 
 
-void Exception::__set_error_code(const int32_t val) {
-  this->error_code = val;
+void ShardContent::__set_data(const Shard& val) {
+  this->data = val;
 }
 
-void Exception::__set_description(const std::string& val) {
-  this->description = val;
-}
+const char* ShardContent::ascii_fingerprint = "006EFB9C0A4E436459CDFDF617590BB4";
+const uint8_t ShardContent::binary_fingerprint[16] = {0x00,0x6E,0xFB,0x9C,0x0A,0x4E,0x43,0x64,0x59,0xCD,0xFD,0xF6,0x17,0x59,0x0B,0xB4};
 
-const char* Exception::ascii_fingerprint = "3F5FC93B338687BC7235B1AB103F47B3";
-const uint8_t Exception::binary_fingerprint[16] = {0x3F,0x5F,0xC9,0x3B,0x33,0x86,0x87,0xBC,0x72,0x35,0xB1,0xAB,0x10,0x3F,0x47,0xB3};
-
-uint32_t Exception::read(::apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ShardContent::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
@@ -160,17 +156,21 @@ uint32_t Exception::read(::apache::thrift::protocol::TProtocol* iprot) {
     switch (fid)
     {
       case 1:
-        if (ftype == ::apache::thrift::protocol::T_I32) {
-          xfer += iprot->readI32(this->error_code);
-          this->__isset.error_code = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      case 2:
-        if (ftype == ::apache::thrift::protocol::T_STRING) {
-          xfer += iprot->readString(this->description);
-          this->__isset.description = true;
+        if (ftype == ::apache::thrift::protocol::T_LIST) {
+          {
+            this->data.clear();
+            uint32_t _size2;
+            ::apache::thrift::protocol::TType _etype5;
+            xfer += iprot->readListBegin(_etype5, _size2);
+            this->data.resize(_size2);
+            uint32_t _i6;
+            for (_i6 = 0; _i6 < _size2; ++_i6)
+            {
+              xfer += this->data[_i6].read(iprot);
+            }
+            xfer += iprot->readListEnd();
+          }
+          this->__isset.data = true;
         } else {
           xfer += iprot->skip(ftype);
         }
@@ -187,17 +187,21 @@ uint32_t Exception::read(::apache::thrift::protocol::TProtocol* iprot) {
   return xfer;
 }
 
-uint32_t Exception::write(::apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ShardContent::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   oprot->incrementRecursionDepth();
-  xfer += oprot->writeStructBegin("Exception");
+  xfer += oprot->writeStructBegin("ShardContent");
 
-  xfer += oprot->writeFieldBegin("error_code", ::apache::thrift::protocol::T_I32, 1);
-  xfer += oprot->writeI32(this->error_code);
-  xfer += oprot->writeFieldEnd();
-
-  xfer += oprot->writeFieldBegin("description", ::apache::thrift::protocol::T_STRING, 2);
-  xfer += oprot->writeString(this->description);
+  xfer += oprot->writeFieldBegin("data", ::apache::thrift::protocol::T_LIST, 1);
+  {
+    xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRUCT, static_cast<uint32_t>(this->data.size()));
+    std::vector<Data> ::const_iterator _iter7;
+    for (_iter7 = this->data.begin(); _iter7 != this->data.end(); ++_iter7)
+    {
+      xfer += (*_iter7).write(oprot);
+    }
+    xfer += oprot->writeListEnd();
+  }
   xfer += oprot->writeFieldEnd();
 
   xfer += oprot->writeFieldStop();
@@ -206,29 +210,25 @@ uint32_t Exception::write(::apache::thrift::protocol::TProtocol* oprot) const {
   return xfer;
 }
 
-void swap(Exception &a, Exception &b) {
+void swap(ShardContent &a, ShardContent &b) {
   using ::std::swap;
-  swap(a.error_code, b.error_code);
-  swap(a.description, b.description);
+  swap(a.data, b.data);
   swap(a.__isset, b.__isset);
 }
 
-Exception::Exception(const Exception& other2) {
-  error_code = other2.error_code;
-  description = other2.description;
-  __isset = other2.__isset;
+ShardContent::ShardContent(const ShardContent& other8) {
+  data = other8.data;
+  __isset = other8.__isset;
 }
-Exception& Exception::operator=(const Exception& other3) {
-  error_code = other3.error_code;
-  description = other3.description;
-  __isset = other3.__isset;
+ShardContent& ShardContent::operator=(const ShardContent& other9) {
+  data = other9.data;
+  __isset = other9.__isset;
   return *this;
 }
-std::ostream& operator<<(std::ostream& out, const Exception& obj) {
+std::ostream& operator<<(std::ostream& out, const ShardContent& obj) {
   using apache::thrift::to_string;
-  out << "Exception(";
-  out << "error_code=" << to_string(obj.error_code);
-  out << ", " << "description=" << to_string(obj.description);
+  out << "ShardContent(";
+  out << "data=" << to_string(obj.data);
   out << ")";
   return out;
 }

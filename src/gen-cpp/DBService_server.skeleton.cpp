@@ -27,6 +27,38 @@ class DBServiceHandler : virtual public DBServiceIf {
     printf("ping\n");
   }
 
+  void putData(std::string& _return, const Data& d) {
+    // Your implementation goes here
+    printf("putData\n");
+  }
+
+  bool updateData(const Data& d) {
+    // Your implementation goes here
+    printf("updateData\n");
+  }
+
+  void getData(std::string& _return, const std::string& sharded_key) {
+    // Your implementation goes here
+    printf("getData\n");
+  }
+
+  bool deleteData(const std::string& sharded_key) {
+    // Your implementation goes here
+    printf("deleteData\n");
+  }
+
+  /**
+   * resyncData
+   * Retrieve all shard contents where region = remote_region && node = remote_node
+   * 
+   * @param remote_region
+   * @param remote_node
+   */
+  void resyncData(ShardContent& _return, const int32_t remote_region, const int32_t remote_node) {
+    // Your implementation goes here
+    printf("resyncData\n");
+  }
+
   void zip() {
     // Your implementation goes here
     printf("zip\n");

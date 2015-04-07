@@ -30,7 +30,7 @@ By: Iskandar Setiadi (freedomofkeima)
 
 - Run the ```Makefile``` by running ```make all``` command.
 
-- Setup your distributed database environments by specifying all machines at ```db.config```
+- Setup your distributed database environments by specifying all machines at ```db.config```. You should set ```own``` as ```true``` for the specified machine's address.
 
 ## Additional Information
 

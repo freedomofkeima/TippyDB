@@ -11,6 +11,10 @@
 #include <thrift/transport/TSocket.h>
 #include <thrift/transport/TTransportUtils.h>
 
+#include "rapidjson/document.h"
+#include "rapidjson/writer.h"
+#include "rapidjson/stringbuffer.h"
+
 #include <boost/lexical_cast.hpp>
 #include <assert.h>
 #include <iostream>
@@ -25,6 +29,8 @@ using namespace apache::thrift::protocol;
 using namespace apache::thrift::transport;
 
 using boost::shared_ptr;
+
+using namespace rapidjson;
 
 using namespace dbservice;
 

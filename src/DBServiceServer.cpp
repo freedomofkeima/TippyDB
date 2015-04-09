@@ -14,6 +14,10 @@
 #include <thrift/transport/TBufferTransports.h>
 #include <thrift/TToString.h>
 
+#include "rapidjson/document.h"
+#include "rapidjson/writer.h"
+#include "rapidjson/stringbuffer.h"
+
 #include <iostream>
 #include <cstring>
 #include <vector>
@@ -28,6 +32,8 @@ using namespace apache::thrift::transport;
 using namespace apache::thrift::server;
 
 using boost::shared_ptr;
+
+using namespace rapidjson;
 
 using namespace dbservice;
 
@@ -110,6 +116,17 @@ int main(int argc, char **argv) {
                          serverTransport,
                          transportFactory,
                          protocolFactory);
+  // Rapidjson test
+  string json_str = "{\"project\":\"rapidjson\", \"stars\": 10}";
+  const char* json = json_str.c_str();
+  Document d;
+  d.Parse(json);
+  Value& s = d["stars"];
+  s.SetInt(s.GetInt() + 1);
+  StringBuffer buffer;
+  Writer<StringBuffer> writer(buffer);
+  d.Accept(writer);
+  cout << buffer.GetString() << endl;
 
   // Load members configuration
   loadMembers();

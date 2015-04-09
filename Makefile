@@ -6,8 +6,8 @@
 #--------------------------------------------
 # Tool configuration
 #--------------------------------------------
-LEVELDB =~/Desktop/leveldb-1.15.0
-INCS_DIRS  =-I/usr/local/include/thrift -I /usr/include/boost
+LEVELDB =~/leveldb-1.15.0
+INCS_DIRS  =-I/usr/local/include/thrift -I /usr/include/boost -I ./include
 LEVELDB_INCS_DIRS =-I $(LEVELDB)/include
 LIBS_DIRS  =-L/usr/local/lib 
 LEVELDB_LIBS_DIRS =$(LEVELDB)/libleveldb.a

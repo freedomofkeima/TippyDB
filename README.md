@@ -22,7 +22,7 @@ By: Iskandar Setiadi (freedomofkeima)
 
 1. Install LevelDB
 
-2. Put your levelDB dependency at ```Makefile```. For example, if your levelDB is located at ```~/Desktop/leveldb-1.15.0```, put it as ```LEVELDB = ~/Desktop/leveldb-1.15.0```
+2. Put your levelDB dependency at ```Makefile```. For example, if your levelDB is located at ```~/leveldb-1.15.0```, put it as ```LEVELDB = ~/leveldb-1.15.0```
 
 
 ** Apache Thrift **

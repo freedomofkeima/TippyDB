@@ -3,7 +3,7 @@
 # Iskandar Setiadi 13511073@std.stei.itb.ac.id
 # Institut Teknologi Bandung (ITB) - Indonesia
 # Final Project (c) 2015
-# mongodb_local_testcase.py
+# mongodb_testcase.py
 
 __author__ = 'freedomofkeima'
 
@@ -21,7 +21,7 @@ def main(args):
 	client = MongoClient('localhost', 27017)
 	db = client['tests-database']
 	tests = db['tests-collection']
-	tests.insert(SEED_DATA)
+	tests.insert_many(SEED_DATA)
 	cursor = tests.find()
 	for doc in cursor:
 		print ('Title: %s' % (doc['title']))

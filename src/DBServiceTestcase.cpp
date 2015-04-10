@@ -19,7 +19,7 @@
 #include <assert.h>
 #include <iostream>
 #include <unistd.h>
-#include <cstring>
+#include <string>
 
 #include "./gen-cpp/DBService.h"
 

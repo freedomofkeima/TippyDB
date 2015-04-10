@@ -11,7 +11,7 @@
 #include <assert.h>
 #include <iostream>
 #include <unistd.h>
-#include <cstring>
+#include <string>
 
 #include "leveldb/comparator.h"
 #include "leveldb/db.h"

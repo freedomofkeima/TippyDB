@@ -18,9 +18,12 @@
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
 
+#include <cstdio>
 #include <iostream>
-#include <cstring>
+#include <string>
 #include <vector>
+#include <fstream>
+#include <streambuf>
 
 #include "./gen-cpp/DBService.h"
 #include "./db/database.h"
@@ -38,6 +41,9 @@ using namespace rapidjson;
 using namespace dbservice;
 
 /** Own configuration */
+int replication_factors = 1; // default (own)
+
+string global_id;
 string server_ip;
 int server_port;
 int server_region;
@@ -48,13 +54,83 @@ struct Member {
   int node;
   string ip;
   int port;
-  int distance;
+  vector<int> distance;
 };
 
 vector<Member> members;
 
-void loadMembers() {
+void printMembers() {
+  int size = (int) members.size();
+  for (int i = 0; i < size; i++) {
+      cout << "Member #" << (i+1) << ": " << endl;
+      cout << "Region: " << members[i].region << endl;
+      cout << "Node: " << members[i].node << endl;
+      cout << "IP: " << members[i].ip << endl;
+      cout << "Port: " << members[i].port << endl;
+      cout << "Distance: ";
+      int size2 = (int) members[i].distance.size();
+      for (int j = 0; j < size2; j++) {
+          cout << members[i].distance[j];
+          if (j != size2 - 1) cout << ", ";
+      }
+      cout << endl;
+  }
+}
 
+void loadMembers() {
+  /** Read json from file */
+  ifstream t("db.config");
+  string str;
+
+  t.seekg(0, ios::end);
+  str.reserve(t.tellg());
+  t.seekg(0, ios::beg);
+
+  str.assign((istreambuf_iterator<char>(t)), istreambuf_iterator<char>());
+
+  // Value& s = d["stars"];
+  // s.SetInt(s.GetInt() + 1);
+
+  /** Convert string to json */
+  const char* json = str.c_str();
+  Document d;
+  d.Parse(json);
+
+  global_id = d["id"].GetString();
+  uint32_t num_members = d["numberRegions"].GetInt();
+  replication_factors = (int) d["replicationFactors"].GetInt();
+  const Value& distances = d["distance"];
+
+  for (SizeType i = 0; i < num_members; i++) {
+      Member m;
+      const Value& distance = distances[i];
+      for (SizeType j = 0; j < num_members; j++) {
+           m.distance.push_back(distance[SizeType(j)].GetInt());
+      }
+      members.push_back(m); // add new member
+  }
+
+  const Value& ms = d["members"];
+  for (SizeType i = 0; i < num_members; i++) {
+      const Value& info = ms[i];
+      members[i].region = (int) info["region"].GetInt();
+      members[i].node = (int) info["node"].GetInt();
+      members[i].ip = info["ip"].GetString();
+      members[i].port = info["port"].GetInt();
+
+     // add additional info for self
+     if (info["own"].GetBool()) {
+         server_ip = members[i].ip;
+         server_port = members[i].port;
+         server_region = members[i].region;
+         server_node = members[i].node;
+     }
+  }
+
+  // StringBuffer buffer;
+  // Writer<StringBuffer> writer(buffer);
+  // d.Accept(writer);
+  // cout << buffer.GetString() << endl;
 }
 
 class DBServiceHandler : virtual public DBServiceIf {
@@ -87,7 +163,7 @@ class DBServiceHandler : virtual public DBServiceIf {
 
   /**
    * resyncData
-   * Retrieve all shard contents where region = remote_region && node = remote_node
+   * Retrieve all newest shard contents where region = remote_region && node = remote_node
    * 
    * @param remote_region
    * @param remote_node
@@ -116,20 +192,10 @@ int main(int argc, char **argv) {
                          serverTransport,
                          transportFactory,
                          protocolFactory);
-  // Rapidjson test
-  string json_str = "{\"project\":\"rapidjson\", \"stars\": 10}";
-  const char* json = json_str.c_str();
-  Document d;
-  d.Parse(json);
-  Value& s = d["stars"];
-  s.SetInt(s.GetInt() + 1);
-  StringBuffer buffer;
-  Writer<StringBuffer> writer(buffer);
-  d.Accept(writer);
-  cout << buffer.GetString() << endl;
 
   // Load members configuration
   loadMembers();
+  printMembers();
 
   // Create one thread for each member
 

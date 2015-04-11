@@ -29,7 +29,7 @@ extern string counter_value;
 
 extern string log_filepath;
 
-void initDB();
+void initDB(string path);
 
 string putDB(const string key, const string value);
 

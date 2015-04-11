@@ -88,7 +88,13 @@ void init() {
 }
 
 int main(int argc, char** argv) {
-  shared_ptr<TTransport> socket(new TSocket("localhost", 9090));
+  if (argc != 2) {
+    cout << "Usage: ./application_name port_number" << endl;
+    return 1;
+  }
+  cout << "Port number: " << argv[1] << endl;
+
+  shared_ptr<TTransport> socket(new TSocket("localhost", atoi(argv[1])));
   shared_ptr<TTransport> transport(new TBufferedTransport(socket));
   shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
   DBServiceClient client(protocol);

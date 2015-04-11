@@ -49,7 +49,7 @@ local_testcase: $(SOURCEDIR)/DBLocalTestcase.cpp
 
 #Run (Server)
 run:
-	$(BINDIR)/server
+	$(BINDIR)/server 9090 /tmp/testdb
 
 clean:
 	rm -rf $(SOURCEDIR)/*.o

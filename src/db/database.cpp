@@ -27,10 +27,10 @@ string counter_value = "0";
 
 string log_filepath = "../data/app.log";
 
-void initDB() {
+void initDB(string path) {
 	leveldb::Options options;
 	options.create_if_missing = true;
-	status = leveldb::DB::Open(options, "/tmp/testdb", &db);
+	status = leveldb::DB::Open(options, path, &db);
 	assert(status.ok());
 	cout << status.ToString() << endl;
 

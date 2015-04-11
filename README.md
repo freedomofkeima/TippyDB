@@ -39,12 +39,12 @@ By: Iskandar Setiadi (freedomofkeima)
 
 - Set your distributed database environments by specifying all machines at ```db.config```. You should set ```own``` as ```true``` for the specified machine's address. The value of ```replicationFactors``` should be smaller than or equal to the number of running nodes.
 
-- To run the prototype server, you could simply use ```make run``` or ```bin/server```. You could also use ```bin/testcase``` which provides several testcases.
+- To run the prototype server, you could simply use ```./application_name port_number db_path```, such as ```bin/server 9090 /tmp/testdb```. You could also use ```./application_name port_number```, such as ```bin/testcase 9090``` which provides several testcases.
 
 
 ** Benchmark **
 
-- To run the benchmarking for LevelDB, you could simply use ```bin/local_testcase```.
+- To run the benchmarking for LevelDB, you could simply use ```./application_name db_path```, such as ```bin/local_testcase /tmp/testdb```.
 
 - To run the benchmarking for MongoDB, you could simply use ```python mongodb/mongodb_testcase.py```. See http://docs.mongodb.org/manual/tutorial/deploy-replica-set to have a better understanding in deploying multiple nodes with MongoDB.
 

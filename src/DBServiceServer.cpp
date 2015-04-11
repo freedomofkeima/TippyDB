@@ -180,7 +180,14 @@ class DBServiceHandler : virtual public DBServiceIf {
 };
 
 int main(int argc, char **argv) {
-  int port = 9090;
+  if (argc != 3) {
+    cout << "Usage: ./application_name port_number db_path" << endl;
+    return 1;
+  }
+  cout << "Port number: " << argv[1] << endl;
+  cout << "DB path: " << argv[2] << endl;
+
+  int port = atoi(argv[1]);
   shared_ptr<DBServiceHandler> handler(new DBServiceHandler());
   shared_ptr<TProcessor> processor(new DBServiceProcessor(handler));
   shared_ptr<TServerTransport> serverTransport(new TServerSocket(port));
@@ -200,7 +207,7 @@ int main(int argc, char **argv) {
   // Create one thread for each member
 
   // Test leveldb
-  initDB();
+  initDB(argv[2]);
   test();
 
   cout << "** Starting the server **" << endl;

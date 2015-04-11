@@ -72,6 +72,12 @@ void init() {
 }
 
 int main(int argc, char** argv) {
+  if (argc != 2) {
+    cout << "Usage: ./application_name db_path" << endl;
+    return 1;
+  }
+  cout << "DB path: " << argv[1] << endl;
+
   init();
 
   leveldb::DB* db;
@@ -81,7 +87,7 @@ int main(int argc, char** argv) {
   write_options2.sync = true;
   leveldb::ReadOptions read_options;
   options.create_if_missing = true;
-  leveldb::Status status = leveldb::DB::Open(options, "/tmp/testdb", &db);
+  leveldb::Status status = leveldb::DB::Open(options, argv[1], &db);
   // leveldb::Slice key = "";
   string value;
 

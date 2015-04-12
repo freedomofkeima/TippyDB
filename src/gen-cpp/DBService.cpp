@@ -168,9 +168,9 @@ uint32_t DBService_putData_args::read(::apache::thrift::protocol::TProtocol* ipr
     switch (fid)
     {
       case 1:
-        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
-          xfer += this->d.read(iprot);
-          this->__isset.d = true;
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->value);
+          this->__isset.value = true;
         } else {
           xfer += iprot->skip(ftype);
         }
@@ -192,8 +192,8 @@ uint32_t DBService_putData_args::write(::apache::thrift::protocol::TProtocol* op
   oprot->incrementRecursionDepth();
   xfer += oprot->writeStructBegin("DBService_putData_args");
 
-  xfer += oprot->writeFieldBegin("d", ::apache::thrift::protocol::T_STRUCT, 1);
-  xfer += this->d.write(oprot);
+  xfer += oprot->writeFieldBegin("value", ::apache::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeString(this->value);
   xfer += oprot->writeFieldEnd();
 
   xfer += oprot->writeFieldStop();
@@ -212,8 +212,8 @@ uint32_t DBService_putData_pargs::write(::apache::thrift::protocol::TProtocol* o
   oprot->incrementRecursionDepth();
   xfer += oprot->writeStructBegin("DBService_putData_pargs");
 
-  xfer += oprot->writeFieldBegin("d", ::apache::thrift::protocol::T_STRUCT, 1);
-  xfer += (*(this->d)).write(oprot);
+  xfer += oprot->writeFieldBegin("value", ::apache::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeString((*(this->value)));
   xfer += oprot->writeFieldEnd();
 
   xfer += oprot->writeFieldStop();
@@ -1199,19 +1199,19 @@ void DBServiceClient::recv_ping()
   return;
 }
 
-void DBServiceClient::putData(std::string& _return, const Data& d)
+void DBServiceClient::putData(std::string& _return, const std::string& value)
 {
-  send_putData(d);
+  send_putData(value);
   recv_putData(_return);
 }
 
-void DBServiceClient::send_putData(const Data& d)
+void DBServiceClient::send_putData(const std::string& value)
 {
   int32_t cseqid = 0;
   oprot_->writeMessageBegin("putData", ::apache::thrift::protocol::T_CALL, cseqid);
 
   DBService_putData_pargs args;
-  args.d = &d;
+  args.value = &value;
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
@@ -1603,7 +1603,7 @@ void DBServiceProcessor::process_putData(int32_t seqid, ::apache::thrift::protoc
 
   DBService_putData_result result;
   try {
-    iface_->putData(result.success, args.d);
+    iface_->putData(result.success, args.value);
     result.__isset.success = true;
   } catch (const std::exception& e) {
     if (this->eventHandler_.get() != NULL) {

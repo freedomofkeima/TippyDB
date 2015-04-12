@@ -88,15 +88,16 @@ void init() {
 }
 
 int main(int argc, char** argv) {
-  if (argc != 2) {
-    cout << "Usage: ./application_name port_number" << endl;
+  if (argc != 3) {
+    cout << "Usage: ./application_name ip_address port_number" << endl;
     return 1;
   }
-  cout << "Port number: " << argv[1] << endl;
+  cout << "IP Address: " << argv[1] << endl;
+  cout << "Port number: " << argv[2] << endl;
 
-  shared_ptr<TTransport> socket(new TSocket("localhost", atoi(argv[1])));
-  shared_ptr<TTransport> transport(new TBufferedTransport(socket));
-  shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+  boost::shared_ptr<TTransport> socket(new TSocket(argv[1], atoi(argv[2])));
+  boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+  boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
   DBServiceClient client(protocol);
 
   init();
@@ -134,13 +135,11 @@ int main(int argc, char** argv) {
 
     /** PUTDATA operation */
     cout << "--PUTDATA (correctness)--" << endl;
-    string result;
-    cout << "Key: dummy ; Value: test" << endl;
+    cout << "{key :\"dummy\", value: \"test\"}" << endl;
     Data d;
-    d.key = "dummy";
     d.value = "test";
-    client.putData(result, d);
-    cout << "Sharded key: " << result << endl;
+    client.putData(d.key, d.value);
+    cout << "Sharded key: " << d.key << endl;
     /** End of PUTDATA operation **/
 
   } catch (TException& tx) {

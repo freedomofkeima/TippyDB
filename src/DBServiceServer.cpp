@@ -141,9 +141,9 @@ class DBServiceHandler : virtual public DBServiceIf {
     printf("ping\n");
   }
 
-  void putData(std::string& _return, const Data& d) {
+  void putData(std::string& _return, const std::string& value) {
     // Your implementation goes here
-    _return = d.key;
+    _return = putDB(value, server_region, server_node);
   }
 
   bool updateData(const Data& d) {
@@ -188,11 +188,11 @@ int main(int argc, char **argv) {
   cout << "DB path: " << argv[2] << endl;
 
   int port = atoi(argv[1]);
-  shared_ptr<DBServiceHandler> handler(new DBServiceHandler());
-  shared_ptr<TProcessor> processor(new DBServiceProcessor(handler));
-  shared_ptr<TServerTransport> serverTransport(new TServerSocket(port));
-  shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
-  shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
+  boost::shared_ptr<DBServiceHandler> handler(new DBServiceHandler());
+  boost::shared_ptr<TProcessor> processor(new DBServiceProcessor(handler));
+  boost::shared_ptr<TServerTransport> serverTransport(new TServerSocket(port));
+  boost::shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
+  boost::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
 
   /** Create Threaded server */
   TThreadedServer server(processor,

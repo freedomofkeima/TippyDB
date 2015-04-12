@@ -11,7 +11,11 @@
 #define DATABASE_H
 
 #include <assert.h>
+#include <algorithm>
 #include <iostream>
+
+#include <mutex>
+#include <string>
 
 #include "leveldb/comparator.h"
 #include "leveldb/db.h"
@@ -25,13 +29,16 @@ extern leveldb::WriteOptions write_options;
 extern leveldb::WriteOptions write_options2;
 extern leveldb::ReadOptions read_options;
 extern leveldb::Slice counter_key;
-extern string counter_value;
+extern int counter_value;
 
 extern string log_filepath;
 
 void initDB(string path);
 
-string putDB(const string key, const string value);
+string fixedLength(int value, int digits);
+string generate_key(int region, int node, int ctx);
+
+string putDB(const string value, int region, int node);
 
 void test();
 

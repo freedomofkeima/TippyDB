@@ -27,7 +27,7 @@ class DBServiceHandler : virtual public DBServiceIf {
     printf("ping\n");
   }
 
-  void putData(std::string& _return, const Data& d) {
+  void putData(std::string& _return, const std::string& value) {
     // Your implementation goes here
     printf("putData\n");
   }
@@ -49,7 +49,7 @@ class DBServiceHandler : virtual public DBServiceIf {
 
   /**
    * resyncData
-   * Retrieve all shard contents where region = remote_region && node = remote_node
+   * Retrieve all newest shard contents where region = remote_region && node = remote_node
    * 
    * @param remote_region
    * @param remote_node

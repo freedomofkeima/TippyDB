@@ -9,7 +9,11 @@
 #include "database.h"
 
 #include <assert.h>
+#include <algorithm>
 #include <iostream>
+
+#include <mutex>
+#include <string>
 
 #include "leveldb/comparator.h"
 #include "leveldb/db.h"
@@ -23,7 +27,9 @@ leveldb::WriteOptions write_options;
 leveldb::WriteOptions write_options2;
 leveldb::ReadOptions read_options;
 leveldb::Slice counter_key = "counter"; // reserved key
-string counter_value = "0";
+int counter_value = 0;
+
+mutex put_mutex;
 
 string log_filepath = "../data/app.log";
 
@@ -35,12 +41,52 @@ void initDB(string path) {
 	cout << status.ToString() << endl;
 
 	leveldb::Status local_status;
-	local_status = db->Get(read_options, counter_key, &counter_value);
+    string temp_value;
+	local_status = db->Get(read_options, counter_key, &temp_value);
+    counter_value = stoi(temp_value);
 	if (!local_status.ok()) { // initialize counter if it hasn't been initialized
-		db->Put(write_options, counter_key, counter_value);
+		db->Put(write_options, counter_key, to_string(counter_value));
 	}
 
 	write_options2.sync = true;
+}
+
+string fixedLength(int value, int digits) {
+	unsigned int uvalue = value;
+	if (value < 0) uvalue = -uvalue;
+
+	string result;
+	while (digits-- > 0) {
+		result += ('0' + uvalue % 10);
+		uvalue /= 10;
+	}
+	if (value < 0) {
+		result += '-';
+	}
+
+	reverse(result.begin(), result.end());
+	return result;
+}
+
+/** 16 bytes shared key */
+string generate_key(int region, int node, int ctx) {
+	return fixedLength(region, 4) + fixedLength(node, 4) + fixedLength(ctx, 8);
+}
+
+string putDB(const string value, int region, int node) {
+	string shared_key;
+
+	put_mutex.lock();
+	counter_value++;
+	// increment counter's value
+	db->Put(write_options, counter_key, to_string(counter_value));
+	put_mutex.unlock();
+
+	shared_key = generate_key(region, node, counter_value);
+	leveldb::Slice key = shared_key;
+	db->Put(write_options, key, value);
+
+	return shared_key;
 }
 
 void test() {

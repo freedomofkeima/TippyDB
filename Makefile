@@ -12,7 +12,7 @@ LEVELDB_INCS_DIRS =-I $(LEVELDB)/include
 LIBS_DIRS  =-L/usr/local/lib 
 LEVELDB_LIBS_DIRS =$(LEVELDB)/libleveldb.a
 CPP_DEFS   =-D=HAVE_CONFIG_H
-CPP_OPTS   =-Wall -O2
+CPP_OPTS   =-Wall -O2 -std=c++11
 LIBS       =-lthrift 
 LEVELDB_LIBS =-lpthread 
 

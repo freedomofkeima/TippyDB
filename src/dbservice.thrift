@@ -31,7 +31,7 @@ service DBService {
 
 	void ping(),
 
-	string putData(1:Data d),
+	string putData(1:string value),
 
 	bool updateData(1:Data d),
 

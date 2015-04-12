@@ -16,14 +16,14 @@ class DBServiceIf {
  public:
   virtual ~DBServiceIf() {}
   virtual void ping() = 0;
-  virtual void putData(std::string& _return, const Data& d) = 0;
+  virtual void putData(std::string& _return, const std::string& value) = 0;
   virtual bool updateData(const Data& d) = 0;
   virtual void getData(std::string& _return, const std::string& sharded_key) = 0;
   virtual bool deleteData(const std::string& sharded_key) = 0;
 
   /**
    * resyncData
-   * Retrieve all shard contents where region = remote_region && node = remote_node
+   * Retrieve all newest shard contents where region = remote_region && node = remote_node
    * 
    * @param remote_region
    * @param remote_node
@@ -62,7 +62,7 @@ class DBServiceNull : virtual public DBServiceIf {
   void ping() {
     return;
   }
-  void putData(std::string& /* _return */, const Data& /* d */) {
+  void putData(std::string& /* _return */, const std::string& /* value */) {
     return;
   }
   bool updateData(const Data& /* d */) {
@@ -175,31 +175,31 @@ class DBService_ping_presult {
 };
 
 typedef struct _DBService_putData_args__isset {
-  _DBService_putData_args__isset() : d(false) {}
-  bool d :1;
+  _DBService_putData_args__isset() : value(false) {}
+  bool value :1;
 } _DBService_putData_args__isset;
 
 class DBService_putData_args {
  public:
 
-  static const char* ascii_fingerprint; // = "A756D3DBE614FB13F70BF7F7B6EB3D73";
-  static const uint8_t binary_fingerprint[16]; // = {0xA7,0x56,0xD3,0xDB,0xE6,0x14,0xFB,0x13,0xF7,0x0B,0xF7,0xF7,0xB6,0xEB,0x3D,0x73};
+  static const char* ascii_fingerprint; // = "EFB929595D312AC8F305D5A794CFEDA1";
+  static const uint8_t binary_fingerprint[16]; // = {0xEF,0xB9,0x29,0x59,0x5D,0x31,0x2A,0xC8,0xF3,0x05,0xD5,0xA7,0x94,0xCF,0xED,0xA1};
 
   DBService_putData_args(const DBService_putData_args&);
   DBService_putData_args& operator=(const DBService_putData_args&);
-  DBService_putData_args() {
+  DBService_putData_args() : value() {
   }
 
   virtual ~DBService_putData_args() throw();
-  Data d;
+  std::string value;
 
   _DBService_putData_args__isset __isset;
 
-  void __set_d(const Data& val);
+  void __set_value(const std::string& val);
 
   bool operator == (const DBService_putData_args & rhs) const
   {
-    if (!(d == rhs.d))
+    if (!(value == rhs.value))
       return false;
     return true;
   }
@@ -219,12 +219,12 @@ class DBService_putData_args {
 class DBService_putData_pargs {
  public:
 
-  static const char* ascii_fingerprint; // = "A756D3DBE614FB13F70BF7F7B6EB3D73";
-  static const uint8_t binary_fingerprint[16]; // = {0xA7,0x56,0xD3,0xDB,0xE6,0x14,0xFB,0x13,0xF7,0x0B,0xF7,0xF7,0xB6,0xEB,0x3D,0x73};
+  static const char* ascii_fingerprint; // = "EFB929595D312AC8F305D5A794CFEDA1";
+  static const uint8_t binary_fingerprint[16]; // = {0xEF,0xB9,0x29,0x59,0x5D,0x31,0x2A,0xC8,0xF3,0x05,0xD5,0xA7,0x94,0xCF,0xED,0xA1};
 
 
   virtual ~DBService_putData_pargs() throw();
-  const Data* d;
+  const std::string* value;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
@@ -854,8 +854,8 @@ class DBServiceClient : virtual public DBServiceIf {
   void ping();
   void send_ping();
   void recv_ping();
-  void putData(std::string& _return, const Data& d);
-  void send_putData(const Data& d);
+  void putData(std::string& _return, const std::string& value);
+  void send_putData(const std::string& value);
   void recv_putData(std::string& _return);
   bool updateData(const Data& d);
   void send_updateData(const Data& d);
@@ -940,13 +940,13 @@ class DBServiceMultiface : virtual public DBServiceIf {
     ifaces_[i]->ping();
   }
 
-  void putData(std::string& _return, const Data& d) {
+  void putData(std::string& _return, const std::string& value) {
     size_t sz = ifaces_.size();
     size_t i = 0;
     for (; i < (sz - 1); ++i) {
-      ifaces_[i]->putData(_return, d);
+      ifaces_[i]->putData(_return, value);
     }
-    ifaces_[i]->putData(_return, d);
+    ifaces_[i]->putData(_return, value);
     return;
   }
 

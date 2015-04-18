@@ -88,6 +88,8 @@ int main(int argc, char** argv) {
   leveldb::ReadOptions read_options;
   options.create_if_missing = true;
   leveldb::Status status = leveldb::DB::Open(options, argv[1], &db);
+  assert(status.ok());
+  cout << status.ToString() << endl;
   // leveldb::Slice key = "";
   string value;
 
@@ -116,8 +118,8 @@ int main(int argc, char** argv) {
   cout << "--FILLSYNC (local)--" << endl;
   counter = 10000000; total = 0;
   while (counter < max_iteration + 10000000) {
-    value = "value" + boost::lexical_cast<std::string>(counter);
-	leveldb::Slice key("keysync" + boost::lexical_cast<std::string>(counter));
+    value = "val" + boost::lexical_cast<std::string>(counter);
+	leveldb::Slice key("keys" + boost::lexical_cast<std::string>(counter));
     // cout << "Key: " << key.ToString() << " ; " << "Value: " << value << endl;
 	RDTSC_START(t1); // start operation
 	status = db->Put(write_options2, key, value);
@@ -132,7 +134,7 @@ int main(int argc, char** argv) {
   cout << "--OVERWRITE (local)--" << endl;
   counter = 10000000; total = 0;
   while (counter < max_iteration + 10000000) {
-    value = "value" + boost::lexical_cast<std::string>(counter);
+    value = "val" + boost::lexical_cast<std::string>(counter);
 	leveldb::Slice key("key" + boost::lexical_cast<std::string>(counter));
     // cout << "Key: " << key.ToString() << " ; " << "Value: " << value << endl;
 	RDTSC_START(t1); // start operation

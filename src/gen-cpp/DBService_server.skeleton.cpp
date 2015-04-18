@@ -32,9 +32,33 @@ class DBServiceHandler : virtual public DBServiceIf {
     printf("putData\n");
   }
 
+  /**
+   * putDataForce
+   * Write a new data by force (due to partition limitation)
+   * 
+   * @param value
+   */
+  void putDataForce(std::string& _return, const std::string& value) {
+    // Your implementation goes here
+    printf("putDataForce\n");
+  }
+
   bool updateData(const Data& d) {
     // Your implementation goes here
     printf("updateData\n");
+  }
+
+  /**
+   * updateSecondaryData
+   * Propagate latest data to secondary nodes where region = remote_region && node == remote_node
+   * 
+   * @param d
+   * @param remote_region
+   * @param remote_node
+   */
+  bool updateSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node) {
+    // Your implementation goes here
+    printf("updateSecondaryData\n");
   }
 
   void getData(std::string& _return, const std::string& sharded_key) {
@@ -45,6 +69,32 @@ class DBServiceHandler : virtual public DBServiceIf {
   bool deleteData(const std::string& sharded_key) {
     // Your implementation goes here
     printf("deleteData\n");
+  }
+
+  /**
+   * deleteSecondaryData
+   * Remove data from secondary nodes where region = remote_region && node == remote_node
+   * 
+   * @param d
+   * @param remote_region
+   * @param remote_node
+   */
+  bool deleteSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node) {
+    // Your implementation goes here
+    printf("deleteSecondaryData\n");
+  }
+
+  /**
+   * replicateData
+   * Replicate a new data from primary to secondary where region = remote_region && node = remote_node
+   * 
+   * @param d
+   * @param remote_region
+   * @param remote_node
+   */
+  bool replicateData(const Data& d, const int32_t remote_region, const int32_t remote_node) {
+    // Your implementation goes here
+    printf("replicateData\n");
   }
 
   /**

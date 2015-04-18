@@ -17,9 +17,47 @@ class DBServiceIf {
   virtual ~DBServiceIf() {}
   virtual void ping() = 0;
   virtual void putData(std::string& _return, const std::string& value) = 0;
+
+  /**
+   * putDataForce
+   * Write a new data by force (due to partition limitation)
+   * 
+   * @param value
+   */
+  virtual void putDataForce(std::string& _return, const std::string& value) = 0;
   virtual bool updateData(const Data& d) = 0;
+
+  /**
+   * updateSecondaryData
+   * Propagate latest data to secondary nodes where region = remote_region && node == remote_node
+   * 
+   * @param d
+   * @param remote_region
+   * @param remote_node
+   */
+  virtual bool updateSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node) = 0;
   virtual void getData(std::string& _return, const std::string& sharded_key) = 0;
   virtual bool deleteData(const std::string& sharded_key) = 0;
+
+  /**
+   * deleteSecondaryData
+   * Remove data from secondary nodes where region = remote_region && node == remote_node
+   * 
+   * @param d
+   * @param remote_region
+   * @param remote_node
+   */
+  virtual bool deleteSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node) = 0;
+
+  /**
+   * replicateData
+   * Replicate a new data from primary to secondary where region = remote_region && node = remote_node
+   * 
+   * @param d
+   * @param remote_region
+   * @param remote_node
+   */
+  virtual bool replicateData(const Data& d, const int32_t remote_region, const int32_t remote_node) = 0;
 
   /**
    * resyncData
@@ -65,7 +103,14 @@ class DBServiceNull : virtual public DBServiceIf {
   void putData(std::string& /* _return */, const std::string& /* value */) {
     return;
   }
+  void putDataForce(std::string& /* _return */, const std::string& /* value */) {
+    return;
+  }
   bool updateData(const Data& /* d */) {
+    bool _return = false;
+    return _return;
+  }
+  bool updateSecondaryData(const Data& /* d */, const int32_t /* remote_region */, const int32_t /* remote_node */) {
     bool _return = false;
     return _return;
   }
@@ -73,6 +118,14 @@ class DBServiceNull : virtual public DBServiceIf {
     return;
   }
   bool deleteData(const std::string& /* sharded_key */) {
+    bool _return = false;
+    return _return;
+  }
+  bool deleteSecondaryData(const Data& /* d */, const int32_t /* remote_region */, const int32_t /* remote_node */) {
+    bool _return = false;
+    return _return;
+  }
+  bool replicateData(const Data& /* d */, const int32_t /* remote_region */, const int32_t /* remote_node */) {
     bool _return = false;
     return _return;
   }
@@ -294,6 +347,126 @@ class DBService_putData_presult {
   friend std::ostream& operator<<(std::ostream& out, const DBService_putData_presult& obj);
 };
 
+typedef struct _DBService_putDataForce_args__isset {
+  _DBService_putDataForce_args__isset() : value(false) {}
+  bool value :1;
+} _DBService_putDataForce_args__isset;
+
+class DBService_putDataForce_args {
+ public:
+
+  static const char* ascii_fingerprint; // = "EFB929595D312AC8F305D5A794CFEDA1";
+  static const uint8_t binary_fingerprint[16]; // = {0xEF,0xB9,0x29,0x59,0x5D,0x31,0x2A,0xC8,0xF3,0x05,0xD5,0xA7,0x94,0xCF,0xED,0xA1};
+
+  DBService_putDataForce_args(const DBService_putDataForce_args&);
+  DBService_putDataForce_args& operator=(const DBService_putDataForce_args&);
+  DBService_putDataForce_args() : value() {
+  }
+
+  virtual ~DBService_putDataForce_args() throw();
+  std::string value;
+
+  _DBService_putDataForce_args__isset __isset;
+
+  void __set_value(const std::string& val);
+
+  bool operator == (const DBService_putDataForce_args & rhs) const
+  {
+    if (!(value == rhs.value))
+      return false;
+    return true;
+  }
+  bool operator != (const DBService_putDataForce_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const DBService_putDataForce_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_putDataForce_args& obj);
+};
+
+
+class DBService_putDataForce_pargs {
+ public:
+
+  static const char* ascii_fingerprint; // = "EFB929595D312AC8F305D5A794CFEDA1";
+  static const uint8_t binary_fingerprint[16]; // = {0xEF,0xB9,0x29,0x59,0x5D,0x31,0x2A,0xC8,0xF3,0x05,0xD5,0xA7,0x94,0xCF,0xED,0xA1};
+
+
+  virtual ~DBService_putDataForce_pargs() throw();
+  const std::string* value;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_putDataForce_pargs& obj);
+};
+
+typedef struct _DBService_putDataForce_result__isset {
+  _DBService_putDataForce_result__isset() : success(false) {}
+  bool success :1;
+} _DBService_putDataForce_result__isset;
+
+class DBService_putDataForce_result {
+ public:
+
+  static const char* ascii_fingerprint; // = "9A73381FEFD6B67F432E717102246330";
+  static const uint8_t binary_fingerprint[16]; // = {0x9A,0x73,0x38,0x1F,0xEF,0xD6,0xB6,0x7F,0x43,0x2E,0x71,0x71,0x02,0x24,0x63,0x30};
+
+  DBService_putDataForce_result(const DBService_putDataForce_result&);
+  DBService_putDataForce_result& operator=(const DBService_putDataForce_result&);
+  DBService_putDataForce_result() : success() {
+  }
+
+  virtual ~DBService_putDataForce_result() throw();
+  std::string success;
+
+  _DBService_putDataForce_result__isset __isset;
+
+  void __set_success(const std::string& val);
+
+  bool operator == (const DBService_putDataForce_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    return true;
+  }
+  bool operator != (const DBService_putDataForce_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const DBService_putDataForce_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_putDataForce_result& obj);
+};
+
+typedef struct _DBService_putDataForce_presult__isset {
+  _DBService_putDataForce_presult__isset() : success(false) {}
+  bool success :1;
+} _DBService_putDataForce_presult__isset;
+
+class DBService_putDataForce_presult {
+ public:
+
+  static const char* ascii_fingerprint; // = "9A73381FEFD6B67F432E717102246330";
+  static const uint8_t binary_fingerprint[16]; // = {0x9A,0x73,0x38,0x1F,0xEF,0xD6,0xB6,0x7F,0x43,0x2E,0x71,0x71,0x02,0x24,0x63,0x30};
+
+
+  virtual ~DBService_putDataForce_presult() throw();
+  std::string* success;
+
+  _DBService_putDataForce_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_putDataForce_presult& obj);
+};
+
 typedef struct _DBService_updateData_args__isset {
   _DBService_updateData_args__isset() : d(false) {}
   bool d :1;
@@ -412,6 +585,140 @@ class DBService_updateData_presult {
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
   friend std::ostream& operator<<(std::ostream& out, const DBService_updateData_presult& obj);
+};
+
+typedef struct _DBService_updateSecondaryData_args__isset {
+  _DBService_updateSecondaryData_args__isset() : d(false), remote_region(false), remote_node(false) {}
+  bool d :1;
+  bool remote_region :1;
+  bool remote_node :1;
+} _DBService_updateSecondaryData_args__isset;
+
+class DBService_updateSecondaryData_args {
+ public:
+
+  static const char* ascii_fingerprint; // = "1FBC4FCB1957A9C542E486B490C9BB7B";
+  static const uint8_t binary_fingerprint[16]; // = {0x1F,0xBC,0x4F,0xCB,0x19,0x57,0xA9,0xC5,0x42,0xE4,0x86,0xB4,0x90,0xC9,0xBB,0x7B};
+
+  DBService_updateSecondaryData_args(const DBService_updateSecondaryData_args&);
+  DBService_updateSecondaryData_args& operator=(const DBService_updateSecondaryData_args&);
+  DBService_updateSecondaryData_args() : remote_region(0), remote_node(0) {
+  }
+
+  virtual ~DBService_updateSecondaryData_args() throw();
+  Data d;
+  int32_t remote_region;
+  int32_t remote_node;
+
+  _DBService_updateSecondaryData_args__isset __isset;
+
+  void __set_d(const Data& val);
+
+  void __set_remote_region(const int32_t val);
+
+  void __set_remote_node(const int32_t val);
+
+  bool operator == (const DBService_updateSecondaryData_args & rhs) const
+  {
+    if (!(d == rhs.d))
+      return false;
+    if (!(remote_region == rhs.remote_region))
+      return false;
+    if (!(remote_node == rhs.remote_node))
+      return false;
+    return true;
+  }
+  bool operator != (const DBService_updateSecondaryData_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const DBService_updateSecondaryData_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_updateSecondaryData_args& obj);
+};
+
+
+class DBService_updateSecondaryData_pargs {
+ public:
+
+  static const char* ascii_fingerprint; // = "1FBC4FCB1957A9C542E486B490C9BB7B";
+  static const uint8_t binary_fingerprint[16]; // = {0x1F,0xBC,0x4F,0xCB,0x19,0x57,0xA9,0xC5,0x42,0xE4,0x86,0xB4,0x90,0xC9,0xBB,0x7B};
+
+
+  virtual ~DBService_updateSecondaryData_pargs() throw();
+  const Data* d;
+  const int32_t* remote_region;
+  const int32_t* remote_node;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_updateSecondaryData_pargs& obj);
+};
+
+typedef struct _DBService_updateSecondaryData_result__isset {
+  _DBService_updateSecondaryData_result__isset() : success(false) {}
+  bool success :1;
+} _DBService_updateSecondaryData_result__isset;
+
+class DBService_updateSecondaryData_result {
+ public:
+
+  static const char* ascii_fingerprint; // = "D9D3B4421B1F23CB4063C80B484E7909";
+  static const uint8_t binary_fingerprint[16]; // = {0xD9,0xD3,0xB4,0x42,0x1B,0x1F,0x23,0xCB,0x40,0x63,0xC8,0x0B,0x48,0x4E,0x79,0x09};
+
+  DBService_updateSecondaryData_result(const DBService_updateSecondaryData_result&);
+  DBService_updateSecondaryData_result& operator=(const DBService_updateSecondaryData_result&);
+  DBService_updateSecondaryData_result() : success(0) {
+  }
+
+  virtual ~DBService_updateSecondaryData_result() throw();
+  bool success;
+
+  _DBService_updateSecondaryData_result__isset __isset;
+
+  void __set_success(const bool val);
+
+  bool operator == (const DBService_updateSecondaryData_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    return true;
+  }
+  bool operator != (const DBService_updateSecondaryData_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const DBService_updateSecondaryData_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_updateSecondaryData_result& obj);
+};
+
+typedef struct _DBService_updateSecondaryData_presult__isset {
+  _DBService_updateSecondaryData_presult__isset() : success(false) {}
+  bool success :1;
+} _DBService_updateSecondaryData_presult__isset;
+
+class DBService_updateSecondaryData_presult {
+ public:
+
+  static const char* ascii_fingerprint; // = "D9D3B4421B1F23CB4063C80B484E7909";
+  static const uint8_t binary_fingerprint[16]; // = {0xD9,0xD3,0xB4,0x42,0x1B,0x1F,0x23,0xCB,0x40,0x63,0xC8,0x0B,0x48,0x4E,0x79,0x09};
+
+
+  virtual ~DBService_updateSecondaryData_presult() throw();
+  bool* success;
+
+  _DBService_updateSecondaryData_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_updateSecondaryData_presult& obj);
 };
 
 typedef struct _DBService_getData_args__isset {
@@ -654,6 +961,274 @@ class DBService_deleteData_presult {
   friend std::ostream& operator<<(std::ostream& out, const DBService_deleteData_presult& obj);
 };
 
+typedef struct _DBService_deleteSecondaryData_args__isset {
+  _DBService_deleteSecondaryData_args__isset() : d(false), remote_region(false), remote_node(false) {}
+  bool d :1;
+  bool remote_region :1;
+  bool remote_node :1;
+} _DBService_deleteSecondaryData_args__isset;
+
+class DBService_deleteSecondaryData_args {
+ public:
+
+  static const char* ascii_fingerprint; // = "1FBC4FCB1957A9C542E486B490C9BB7B";
+  static const uint8_t binary_fingerprint[16]; // = {0x1F,0xBC,0x4F,0xCB,0x19,0x57,0xA9,0xC5,0x42,0xE4,0x86,0xB4,0x90,0xC9,0xBB,0x7B};
+
+  DBService_deleteSecondaryData_args(const DBService_deleteSecondaryData_args&);
+  DBService_deleteSecondaryData_args& operator=(const DBService_deleteSecondaryData_args&);
+  DBService_deleteSecondaryData_args() : remote_region(0), remote_node(0) {
+  }
+
+  virtual ~DBService_deleteSecondaryData_args() throw();
+  Data d;
+  int32_t remote_region;
+  int32_t remote_node;
+
+  _DBService_deleteSecondaryData_args__isset __isset;
+
+  void __set_d(const Data& val);
+
+  void __set_remote_region(const int32_t val);
+
+  void __set_remote_node(const int32_t val);
+
+  bool operator == (const DBService_deleteSecondaryData_args & rhs) const
+  {
+    if (!(d == rhs.d))
+      return false;
+    if (!(remote_region == rhs.remote_region))
+      return false;
+    if (!(remote_node == rhs.remote_node))
+      return false;
+    return true;
+  }
+  bool operator != (const DBService_deleteSecondaryData_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const DBService_deleteSecondaryData_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_deleteSecondaryData_args& obj);
+};
+
+
+class DBService_deleteSecondaryData_pargs {
+ public:
+
+  static const char* ascii_fingerprint; // = "1FBC4FCB1957A9C542E486B490C9BB7B";
+  static const uint8_t binary_fingerprint[16]; // = {0x1F,0xBC,0x4F,0xCB,0x19,0x57,0xA9,0xC5,0x42,0xE4,0x86,0xB4,0x90,0xC9,0xBB,0x7B};
+
+
+  virtual ~DBService_deleteSecondaryData_pargs() throw();
+  const Data* d;
+  const int32_t* remote_region;
+  const int32_t* remote_node;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_deleteSecondaryData_pargs& obj);
+};
+
+typedef struct _DBService_deleteSecondaryData_result__isset {
+  _DBService_deleteSecondaryData_result__isset() : success(false) {}
+  bool success :1;
+} _DBService_deleteSecondaryData_result__isset;
+
+class DBService_deleteSecondaryData_result {
+ public:
+
+  static const char* ascii_fingerprint; // = "D9D3B4421B1F23CB4063C80B484E7909";
+  static const uint8_t binary_fingerprint[16]; // = {0xD9,0xD3,0xB4,0x42,0x1B,0x1F,0x23,0xCB,0x40,0x63,0xC8,0x0B,0x48,0x4E,0x79,0x09};
+
+  DBService_deleteSecondaryData_result(const DBService_deleteSecondaryData_result&);
+  DBService_deleteSecondaryData_result& operator=(const DBService_deleteSecondaryData_result&);
+  DBService_deleteSecondaryData_result() : success(0) {
+  }
+
+  virtual ~DBService_deleteSecondaryData_result() throw();
+  bool success;
+
+  _DBService_deleteSecondaryData_result__isset __isset;
+
+  void __set_success(const bool val);
+
+  bool operator == (const DBService_deleteSecondaryData_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    return true;
+  }
+  bool operator != (const DBService_deleteSecondaryData_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const DBService_deleteSecondaryData_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_deleteSecondaryData_result& obj);
+};
+
+typedef struct _DBService_deleteSecondaryData_presult__isset {
+  _DBService_deleteSecondaryData_presult__isset() : success(false) {}
+  bool success :1;
+} _DBService_deleteSecondaryData_presult__isset;
+
+class DBService_deleteSecondaryData_presult {
+ public:
+
+  static const char* ascii_fingerprint; // = "D9D3B4421B1F23CB4063C80B484E7909";
+  static const uint8_t binary_fingerprint[16]; // = {0xD9,0xD3,0xB4,0x42,0x1B,0x1F,0x23,0xCB,0x40,0x63,0xC8,0x0B,0x48,0x4E,0x79,0x09};
+
+
+  virtual ~DBService_deleteSecondaryData_presult() throw();
+  bool* success;
+
+  _DBService_deleteSecondaryData_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_deleteSecondaryData_presult& obj);
+};
+
+typedef struct _DBService_replicateData_args__isset {
+  _DBService_replicateData_args__isset() : d(false), remote_region(false), remote_node(false) {}
+  bool d :1;
+  bool remote_region :1;
+  bool remote_node :1;
+} _DBService_replicateData_args__isset;
+
+class DBService_replicateData_args {
+ public:
+
+  static const char* ascii_fingerprint; // = "1FBC4FCB1957A9C542E486B490C9BB7B";
+  static const uint8_t binary_fingerprint[16]; // = {0x1F,0xBC,0x4F,0xCB,0x19,0x57,0xA9,0xC5,0x42,0xE4,0x86,0xB4,0x90,0xC9,0xBB,0x7B};
+
+  DBService_replicateData_args(const DBService_replicateData_args&);
+  DBService_replicateData_args& operator=(const DBService_replicateData_args&);
+  DBService_replicateData_args() : remote_region(0), remote_node(0) {
+  }
+
+  virtual ~DBService_replicateData_args() throw();
+  Data d;
+  int32_t remote_region;
+  int32_t remote_node;
+
+  _DBService_replicateData_args__isset __isset;
+
+  void __set_d(const Data& val);
+
+  void __set_remote_region(const int32_t val);
+
+  void __set_remote_node(const int32_t val);
+
+  bool operator == (const DBService_replicateData_args & rhs) const
+  {
+    if (!(d == rhs.d))
+      return false;
+    if (!(remote_region == rhs.remote_region))
+      return false;
+    if (!(remote_node == rhs.remote_node))
+      return false;
+    return true;
+  }
+  bool operator != (const DBService_replicateData_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const DBService_replicateData_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_replicateData_args& obj);
+};
+
+
+class DBService_replicateData_pargs {
+ public:
+
+  static const char* ascii_fingerprint; // = "1FBC4FCB1957A9C542E486B490C9BB7B";
+  static const uint8_t binary_fingerprint[16]; // = {0x1F,0xBC,0x4F,0xCB,0x19,0x57,0xA9,0xC5,0x42,0xE4,0x86,0xB4,0x90,0xC9,0xBB,0x7B};
+
+
+  virtual ~DBService_replicateData_pargs() throw();
+  const Data* d;
+  const int32_t* remote_region;
+  const int32_t* remote_node;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_replicateData_pargs& obj);
+};
+
+typedef struct _DBService_replicateData_result__isset {
+  _DBService_replicateData_result__isset() : success(false) {}
+  bool success :1;
+} _DBService_replicateData_result__isset;
+
+class DBService_replicateData_result {
+ public:
+
+  static const char* ascii_fingerprint; // = "D9D3B4421B1F23CB4063C80B484E7909";
+  static const uint8_t binary_fingerprint[16]; // = {0xD9,0xD3,0xB4,0x42,0x1B,0x1F,0x23,0xCB,0x40,0x63,0xC8,0x0B,0x48,0x4E,0x79,0x09};
+
+  DBService_replicateData_result(const DBService_replicateData_result&);
+  DBService_replicateData_result& operator=(const DBService_replicateData_result&);
+  DBService_replicateData_result() : success(0) {
+  }
+
+  virtual ~DBService_replicateData_result() throw();
+  bool success;
+
+  _DBService_replicateData_result__isset __isset;
+
+  void __set_success(const bool val);
+
+  bool operator == (const DBService_replicateData_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    return true;
+  }
+  bool operator != (const DBService_replicateData_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const DBService_replicateData_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_replicateData_result& obj);
+};
+
+typedef struct _DBService_replicateData_presult__isset {
+  _DBService_replicateData_presult__isset() : success(false) {}
+  bool success :1;
+} _DBService_replicateData_presult__isset;
+
+class DBService_replicateData_presult {
+ public:
+
+  static const char* ascii_fingerprint; // = "D9D3B4421B1F23CB4063C80B484E7909";
+  static const uint8_t binary_fingerprint[16]; // = {0xD9,0xD3,0xB4,0x42,0x1B,0x1F,0x23,0xCB,0x40,0x63,0xC8,0x0B,0x48,0x4E,0x79,0x09};
+
+
+  virtual ~DBService_replicateData_presult() throw();
+  bool* success;
+
+  _DBService_replicateData_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_replicateData_presult& obj);
+};
+
 typedef struct _DBService_resyncData_args__isset {
   _DBService_resyncData_args__isset() : remote_region(false), remote_node(false) {}
   bool remote_region :1;
@@ -857,15 +1432,27 @@ class DBServiceClient : virtual public DBServiceIf {
   void putData(std::string& _return, const std::string& value);
   void send_putData(const std::string& value);
   void recv_putData(std::string& _return);
+  void putDataForce(std::string& _return, const std::string& value);
+  void send_putDataForce(const std::string& value);
+  void recv_putDataForce(std::string& _return);
   bool updateData(const Data& d);
   void send_updateData(const Data& d);
   bool recv_updateData();
+  bool updateSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node);
+  void send_updateSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node);
+  bool recv_updateSecondaryData();
   void getData(std::string& _return, const std::string& sharded_key);
   void send_getData(const std::string& sharded_key);
   void recv_getData(std::string& _return);
   bool deleteData(const std::string& sharded_key);
   void send_deleteData(const std::string& sharded_key);
   bool recv_deleteData();
+  bool deleteSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node);
+  void send_deleteSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node);
+  bool recv_deleteSecondaryData();
+  bool replicateData(const Data& d, const int32_t remote_region, const int32_t remote_node);
+  void send_replicateData(const Data& d, const int32_t remote_region, const int32_t remote_node);
+  bool recv_replicateData();
   void resyncData(ShardContent& _return, const int32_t remote_region, const int32_t remote_node);
   void send_resyncData(const int32_t remote_region, const int32_t remote_node);
   void recv_resyncData(ShardContent& _return);
@@ -888,9 +1475,13 @@ class DBServiceProcessor : public ::apache::thrift::TDispatchProcessor {
   ProcessMap processMap_;
   void process_ping(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_putData(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_putDataForce(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_updateData(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_updateSecondaryData(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_getData(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_deleteData(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_deleteSecondaryData(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_replicateData(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_resyncData(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_zip(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
  public:
@@ -898,9 +1489,13 @@ class DBServiceProcessor : public ::apache::thrift::TDispatchProcessor {
     iface_(iface) {
     processMap_["ping"] = &DBServiceProcessor::process_ping;
     processMap_["putData"] = &DBServiceProcessor::process_putData;
+    processMap_["putDataForce"] = &DBServiceProcessor::process_putDataForce;
     processMap_["updateData"] = &DBServiceProcessor::process_updateData;
+    processMap_["updateSecondaryData"] = &DBServiceProcessor::process_updateSecondaryData;
     processMap_["getData"] = &DBServiceProcessor::process_getData;
     processMap_["deleteData"] = &DBServiceProcessor::process_deleteData;
+    processMap_["deleteSecondaryData"] = &DBServiceProcessor::process_deleteSecondaryData;
+    processMap_["replicateData"] = &DBServiceProcessor::process_replicateData;
     processMap_["resyncData"] = &DBServiceProcessor::process_resyncData;
     processMap_["zip"] = &DBServiceProcessor::process_zip;
   }
@@ -950,6 +1545,16 @@ class DBServiceMultiface : virtual public DBServiceIf {
     return;
   }
 
+  void putDataForce(std::string& _return, const std::string& value) {
+    size_t sz = ifaces_.size();
+    size_t i = 0;
+    for (; i < (sz - 1); ++i) {
+      ifaces_[i]->putDataForce(_return, value);
+    }
+    ifaces_[i]->putDataForce(_return, value);
+    return;
+  }
+
   bool updateData(const Data& d) {
     size_t sz = ifaces_.size();
     size_t i = 0;
@@ -957,6 +1562,15 @@ class DBServiceMultiface : virtual public DBServiceIf {
       ifaces_[i]->updateData(d);
     }
     return ifaces_[i]->updateData(d);
+  }
+
+  bool updateSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node) {
+    size_t sz = ifaces_.size();
+    size_t i = 0;
+    for (; i < (sz - 1); ++i) {
+      ifaces_[i]->updateSecondaryData(d, remote_region, remote_node);
+    }
+    return ifaces_[i]->updateSecondaryData(d, remote_region, remote_node);
   }
 
   void getData(std::string& _return, const std::string& sharded_key) {
@@ -976,6 +1590,24 @@ class DBServiceMultiface : virtual public DBServiceIf {
       ifaces_[i]->deleteData(sharded_key);
     }
     return ifaces_[i]->deleteData(sharded_key);
+  }
+
+  bool deleteSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node) {
+    size_t sz = ifaces_.size();
+    size_t i = 0;
+    for (; i < (sz - 1); ++i) {
+      ifaces_[i]->deleteSecondaryData(d, remote_region, remote_node);
+    }
+    return ifaces_[i]->deleteSecondaryData(d, remote_region, remote_node);
+  }
+
+  bool replicateData(const Data& d, const int32_t remote_region, const int32_t remote_node) {
+    size_t sz = ifaces_.size();
+    size_t i = 0;
+    for (; i < (sz - 1); ++i) {
+      ifaces_[i]->replicateData(d, remote_region, remote_node);
+    }
+    return ifaces_[i]->replicateData(d, remote_region, remote_node);
   }
 
   void resyncData(ShardContent& _return, const int32_t remote_region, const int32_t remote_node) {

@@ -33,11 +33,35 @@ service DBService {
 
 	string putData(1:string value),
 
+   /**
+      * putDataForce
+      * Write a new data by force (due to partition limitation)
+      */
+	string putDataForce(1: string value),
+
 	bool updateData(1:Data d),
+
+   /**
+      * updateSecondaryData
+      * Propagate latest data to secondary nodes where region = remote_region && node == remote_node
+      */
+	bool updateSecondaryData(1: Data d, 2:i32 remote_region, 3:i32 remote_node),
 
 	string getData(1:string sharded_key),
 
 	bool deleteData(1:string sharded_key),
+
+   /**
+      * deleteSecondaryData
+      * Remove data from secondary nodes where region = remote_region && node == remote_node
+      */
+	bool deleteSecondaryData(1: Data d, 2:i32 remote_region, 3:i32 remote_node),
+
+   /**
+      * replicateData
+      * Replicate a new data from primary to secondary where region = remote_region && node = remote_node
+      */
+    bool replicateData(1:Data d, 2:i32 remote_region, 3:i32 remote_node),
 
     /**
       * resyncData

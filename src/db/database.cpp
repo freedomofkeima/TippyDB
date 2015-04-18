@@ -27,25 +27,47 @@ leveldb::WriteOptions write_options;
 leveldb::WriteOptions write_options2;
 leveldb::ReadOptions read_options;
 leveldb::Slice counter_key = "counter"; // reserved key
+leveldb::Slice metadata_key = "metadata"; // reserved key
+leveldb::Slice psize_key = "psize"; // reserved key (for primary size, in bytes)
 int counter_value = 0;
+int metadata_value = 0;
+long long psize_value = 0;
+long long size = 0; // size per shard
 
 mutex put_mutex;
 
 string log_filepath = "../data/app.log";
 
-void initDB(string path) {
+void initDB(string path, int shard_size) {
 	leveldb::Options options;
 	options.create_if_missing = true;
 	status = leveldb::DB::Open(options, path, &db);
 	assert(status.ok());
 	cout << status.ToString() << endl;
 
+	size = (long long) shard_size * 1048576; // 1 MB size
+
 	leveldb::Status local_status;
     string temp_value;
 	local_status = db->Get(read_options, counter_key, &temp_value);
-    counter_value = stoi(temp_value);
 	if (!local_status.ok()) { // initialize counter if it hasn't been initialized
 		db->Put(write_options, counter_key, to_string(counter_value));
+	} else {
+		counter_value = stoi(temp_value);
+	}
+
+	local_status = db->Get(read_options, metadata_key, &temp_value);
+	if (!local_status.ok()) { // initialize metadata if it hasn't been initialized
+		db->Put(write_options, metadata_key, to_string(metadata_value));
+	} else {
+		metadata_value = stoi(temp_value);
+	}
+
+	local_status = db->Get(read_options, psize_key, &temp_value);
+	if (!local_status.ok()) { // initialize metadata if it hasn't been initialized
+		db->Put(write_options, psize_key, to_string(psize_value));
+	} else {
+		psize_value = stoll(temp_value);
 	}
 
 	write_options2.sync = true;
@@ -73,13 +95,22 @@ string generate_key(int region, int node, int ctx) {
 	return fixedLength(region, 4) + fixedLength(node, 4) + fixedLength(ctx, 8);
 }
 
-string putDB(const string value, int region, int node) {
+string putDB(const string value, int region, int node, bool force) {
 	string shared_key;
+
+	long long additional_size = 16 + value.length();
+
+	if (!force) {
+		if ((psize_value % size) + additional_size > size) return "";
+	}
 
 	put_mutex.lock();
 	counter_value++;
 	// increment counter's value
 	db->Put(write_options, counter_key, to_string(counter_value));
+	psize_value += additional_size;
+	// increment psize's value
+	db->Put(write_options, psize_key, to_string(psize_value));
 	put_mutex.unlock();
 
 	shared_key = generate_key(region, node, counter_value);

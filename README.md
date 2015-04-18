@@ -6,7 +6,7 @@ By: Iskandar Setiadi (freedomofkeima)
 
 - Linux/UNIX based Operating System
 
-- C++ version 4.7.2 (g++ compiler)
+- C++ version 4.7.2 (g++ compiler, with C++11 support)
 
 - Python version 2.7
 

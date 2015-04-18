@@ -42,6 +42,7 @@ using namespace dbservice;
 
 /** Own configuration */
 int replication_factors = 1; // default (own)
+int shard_size = 32; // default (in MB)
 
 string global_id;
 string server_ip;
@@ -99,6 +100,7 @@ void loadMembers() {
   global_id = d["id"].GetString();
   uint32_t num_members = d["numberRegions"].GetInt();
   replication_factors = (int) d["replicationFactors"].GetInt();
+  shard_size = (int) d["shardSize"].GetInt();
   const Value& distances = d["distance"];
 
   for (SizeType i = 0; i < num_members; i++) {
@@ -127,6 +129,8 @@ void loadMembers() {
      }
   }
 
+  // TODO: Init metadata if metadata_counter = 0, else ask for newest version
+
   // StringBuffer buffer;
   // Writer<StringBuffer> writer(buffer);
   // d.Accept(writer);
@@ -138,15 +142,48 @@ class DBServiceHandler : virtual public DBServiceIf {
   DBServiceHandler() {}
 
   void ping() {
-    printf("ping\n");
+    // Do nothing
   }
 
   void putData(std::string& _return, const std::string& value) {
+	// TODO: Partition check, except force == true
+    _return = putDB(value, server_region, server_node, false);
+	if (_return.length() == 16) {
+		// replicate data to secondary nodes
+	} else {
+		// shard limit, check other partitions
+
+		// if exist, send putDataForce
+
+		// if doesn't exist, force to putDB
+	}
+  }
+
+  /**
+   * putDataForce
+   * Write a new data by force (due to partition limitation)
+   * 
+   * @param value
+   */
+  void putDataForce(std::string& _return, const std::string& value) {
     // Your implementation goes here
-    _return = putDB(value, server_region, server_node);
+    _return = "";
   }
 
   bool updateData(const Data& d) {
+    // Your implementation goes here
+    return true;
+  }
+
+  /**
+   * updateSecondaryData
+   * Propagate latest data to secondary nodes where region = remote_region && node == remote_node
+   * 
+   * @param d
+   * @param remote_region
+   * @param remote_node
+   */
+  bool updateSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node) {
     // Your implementation goes here
     return true;
   }
@@ -157,6 +194,32 @@ class DBServiceHandler : virtual public DBServiceIf {
   }
 
   bool deleteData(const std::string& sharded_key) {
+    // Your implementation goes here
+    return true;
+  }
+
+  /**
+   * deleteSecondaryData
+   * Remove data from secondary nodes where region = remote_region && node == remote_node
+   * 
+   * @param d
+   * @param remote_region
+   * @param remote_node
+   */
+  bool deleteSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node) {
+    // Your implementation goes here
+    return true;
+  }
+
+  /**
+   * replicateData
+   * Replicate a new data from primary to secondary where region = remote_region && node = remote_node
+   * 
+   * @param d
+   * @param remote_region
+   * @param remote_node
+   */
+  bool replicateData(const Data& d, const int32_t remote_region, const int32_t remote_node) {
     // Your implementation goes here
     return true;
   }
@@ -174,7 +237,7 @@ class DBServiceHandler : virtual public DBServiceIf {
   }
 
   void zip() {
-    printf("zip\n");
+    // Do nothing
   }
 
 };
@@ -207,7 +270,7 @@ int main(int argc, char **argv) {
   // Create one thread for each member
 
   // Test leveldb
-  initDB(argv[2]);
+  initDB(argv[2], shard_size);
   test();
 
   cout << "** Starting the server **" << endl;

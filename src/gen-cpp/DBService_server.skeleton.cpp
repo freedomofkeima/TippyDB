@@ -39,9 +39,8 @@ class DBServiceHandler : virtual public DBServiceIf {
    * @param value
    * @param remote_region
    * @param remote_node
-   * @param ts
    */
-  void putDataForce(std::string& _return, const std::string& value, const int32_t remote_region, const int32_t remote_node, const int64_t ts) {
+  void putDataForce(std::string& _return, const std::string& value, const int32_t remote_region, const int32_t remote_node) {
     // Your implementation goes here
     printf("putDataForce\n");
   }

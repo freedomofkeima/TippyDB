@@ -29,7 +29,7 @@ leveldb::ReadOptions read_options;
 leveldb::Slice counter_key = "counter"; // reserved key
 leveldb::Slice metadata_key = "metadata"; // reserved key
 leveldb::Slice psize_key = "psize"; // reserved key (for primary size, in bytes)
-leveldb::Slice lclock_key = "lclock"; // reserved key (for logical clock)
+string lclock_key = "lc"; // reserved key (for logical clock)
 int counter_value = 0;
 int metadata_value = 0;
 long long psize_value = 0;
@@ -75,12 +75,14 @@ void initDB(string path, int shard_size) {
 }
 
 // Retrieve logical clock counter
-long long getLClock() {
+long long getLClock(const string key) {
 	leveldb::Status local_status;
     string temp_value;
-	local_status = db->Get(read_options, lclock_key, &temp_value);
+    string t_key = lclock_key + key;
+	leveldb::Slice l_key = t_key;
+	local_status = db->Get(read_options, l_key, &temp_value);
 	if (!local_status.ok()) { // initialize lclock if it hasn't been initialized
-		db->Put(write_options, lclock_key, "0");
+		db->Put(write_options, l_key, "0");
 		return 0;
 	} else {
 		return stoll(temp_value);
@@ -88,8 +90,10 @@ long long getLClock() {
 }
 
 // Update logical clock counter
-void putLClock(long long logical_clock) {
-	db->Put(write_options, lclock_key, to_string(logical_clock));
+void putLClock(const string key, long long logical_clock) {
+    string t_key = lclock_key + key;
+	leveldb::Slice l_key = t_key;
+	db->Put(write_options, l_key, to_string(logical_clock));
 }
 
 string fixedLength(int value, int digits) {

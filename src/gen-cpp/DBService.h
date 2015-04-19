@@ -25,9 +25,8 @@ class DBServiceIf {
    * @param value
    * @param remote_region
    * @param remote_node
-   * @param ts
    */
-  virtual void putDataForce(std::string& _return, const std::string& value, const int32_t remote_region, const int32_t remote_node, const int64_t ts) = 0;
+  virtual void putDataForce(std::string& _return, const std::string& value, const int32_t remote_region, const int32_t remote_node) = 0;
   virtual bool updateData(const Data& d) = 0;
 
   /**
@@ -110,7 +109,7 @@ class DBServiceNull : virtual public DBServiceIf {
   void putData(std::string& /* _return */, const std::string& /* value */) {
     return;
   }
-  void putDataForce(std::string& /* _return */, const std::string& /* value */, const int32_t /* remote_region */, const int32_t /* remote_node */, const int64_t /* ts */) {
+  void putDataForce(std::string& /* _return */, const std::string& /* value */, const int32_t /* remote_region */, const int32_t /* remote_node */) {
     return;
   }
   bool updateData(const Data& /* d */) {
@@ -355,29 +354,27 @@ class DBService_putData_presult {
 };
 
 typedef struct _DBService_putDataForce_args__isset {
-  _DBService_putDataForce_args__isset() : value(false), remote_region(false), remote_node(false), ts(false) {}
+  _DBService_putDataForce_args__isset() : value(false), remote_region(false), remote_node(false) {}
   bool value :1;
   bool remote_region :1;
   bool remote_node :1;
-  bool ts :1;
 } _DBService_putDataForce_args__isset;
 
 class DBService_putDataForce_args {
  public:
 
-  static const char* ascii_fingerprint; // = "06CA794AAA3454F690E568B2D26F8D89";
-  static const uint8_t binary_fingerprint[16]; // = {0x06,0xCA,0x79,0x4A,0xAA,0x34,0x54,0xF6,0x90,0xE5,0x68,0xB2,0xD2,0x6F,0x8D,0x89};
+  static const char* ascii_fingerprint; // = "28C2ECC89260BADB9C70330FBF47BFA8";
+  static const uint8_t binary_fingerprint[16]; // = {0x28,0xC2,0xEC,0xC8,0x92,0x60,0xBA,0xDB,0x9C,0x70,0x33,0x0F,0xBF,0x47,0xBF,0xA8};
 
   DBService_putDataForce_args(const DBService_putDataForce_args&);
   DBService_putDataForce_args& operator=(const DBService_putDataForce_args&);
-  DBService_putDataForce_args() : value(), remote_region(0), remote_node(0), ts(0) {
+  DBService_putDataForce_args() : value(), remote_region(0), remote_node(0) {
   }
 
   virtual ~DBService_putDataForce_args() throw();
   std::string value;
   int32_t remote_region;
   int32_t remote_node;
-  int64_t ts;
 
   _DBService_putDataForce_args__isset __isset;
 
@@ -387,8 +384,6 @@ class DBService_putDataForce_args {
 
   void __set_remote_node(const int32_t val);
 
-  void __set_ts(const int64_t val);
-
   bool operator == (const DBService_putDataForce_args & rhs) const
   {
     if (!(value == rhs.value))
@@ -396,8 +391,6 @@ class DBService_putDataForce_args {
     if (!(remote_region == rhs.remote_region))
       return false;
     if (!(remote_node == rhs.remote_node))
-      return false;
-    if (!(ts == rhs.ts))
       return false;
     return true;
   }
@@ -417,15 +410,14 @@ class DBService_putDataForce_args {
 class DBService_putDataForce_pargs {
  public:
 
-  static const char* ascii_fingerprint; // = "06CA794AAA3454F690E568B2D26F8D89";
-  static const uint8_t binary_fingerprint[16]; // = {0x06,0xCA,0x79,0x4A,0xAA,0x34,0x54,0xF6,0x90,0xE5,0x68,0xB2,0xD2,0x6F,0x8D,0x89};
+  static const char* ascii_fingerprint; // = "28C2ECC89260BADB9C70330FBF47BFA8";
+  static const uint8_t binary_fingerprint[16]; // = {0x28,0xC2,0xEC,0xC8,0x92,0x60,0xBA,0xDB,0x9C,0x70,0x33,0x0F,0xBF,0x47,0xBF,0xA8};
 
 
   virtual ~DBService_putDataForce_pargs() throw();
   const std::string* value;
   const int32_t* remote_region;
   const int32_t* remote_node;
-  const int64_t* ts;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
@@ -1488,8 +1480,8 @@ class DBServiceClient : virtual public DBServiceIf {
   void putData(std::string& _return, const std::string& value);
   void send_putData(const std::string& value);
   void recv_putData(std::string& _return);
-  void putDataForce(std::string& _return, const std::string& value, const int32_t remote_region, const int32_t remote_node, const int64_t ts);
-  void send_putDataForce(const std::string& value, const int32_t remote_region, const int32_t remote_node, const int64_t ts);
+  void putDataForce(std::string& _return, const std::string& value, const int32_t remote_region, const int32_t remote_node);
+  void send_putDataForce(const std::string& value, const int32_t remote_region, const int32_t remote_node);
   void recv_putDataForce(std::string& _return);
   bool updateData(const Data& d);
   void send_updateData(const Data& d);
@@ -1601,13 +1593,13 @@ class DBServiceMultiface : virtual public DBServiceIf {
     return;
   }
 
-  void putDataForce(std::string& _return, const std::string& value, const int32_t remote_region, const int32_t remote_node, const int64_t ts) {
+  void putDataForce(std::string& _return, const std::string& value, const int32_t remote_region, const int32_t remote_node) {
     size_t sz = ifaces_.size();
     size_t i = 0;
     for (; i < (sz - 1); ++i) {
-      ifaces_[i]->putDataForce(_return, value, remote_region, remote_node, ts);
+      ifaces_[i]->putDataForce(_return, value, remote_region, remote_node);
     }
-    ifaces_[i]->putDataForce(_return, value, remote_region, remote_node, ts);
+    ifaces_[i]->putDataForce(_return, value, remote_region, remote_node);
     return;
   }
 

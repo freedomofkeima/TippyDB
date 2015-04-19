@@ -377,14 +377,6 @@ uint32_t DBService_putDataForce_args::read(::apache::thrift::protocol::TProtocol
           xfer += iprot->skip(ftype);
         }
         break;
-      case 4:
-        if (ftype == ::apache::thrift::protocol::T_I64) {
-          xfer += iprot->readI64(this->ts);
-          this->__isset.ts = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
       default:
         xfer += iprot->skip(ftype);
         break;
@@ -414,10 +406,6 @@ uint32_t DBService_putDataForce_args::write(::apache::thrift::protocol::TProtoco
   xfer += oprot->writeI32(this->remote_node);
   xfer += oprot->writeFieldEnd();
 
-  xfer += oprot->writeFieldBegin("ts", ::apache::thrift::protocol::T_I64, 4);
-  xfer += oprot->writeI64(this->ts);
-  xfer += oprot->writeFieldEnd();
-
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
   oprot->decrementRecursionDepth();
@@ -444,10 +432,6 @@ uint32_t DBService_putDataForce_pargs::write(::apache::thrift::protocol::TProtoc
 
   xfer += oprot->writeFieldBegin("remote_node", ::apache::thrift::protocol::T_I32, 3);
   xfer += oprot->writeI32((*(this->remote_node)));
-  xfer += oprot->writeFieldEnd();
-
-  xfer += oprot->writeFieldBegin("ts", ::apache::thrift::protocol::T_I64, 4);
-  xfer += oprot->writeI64((*(this->ts)));
   xfer += oprot->writeFieldEnd();
 
   xfer += oprot->writeFieldStop();
@@ -2209,13 +2193,13 @@ void DBServiceClient::recv_putData(std::string& _return)
   throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "putData failed: unknown result");
 }
 
-void DBServiceClient::putDataForce(std::string& _return, const std::string& value, const int32_t remote_region, const int32_t remote_node, const int64_t ts)
+void DBServiceClient::putDataForce(std::string& _return, const std::string& value, const int32_t remote_region, const int32_t remote_node)
 {
-  send_putDataForce(value, remote_region, remote_node, ts);
+  send_putDataForce(value, remote_region, remote_node);
   recv_putDataForce(_return);
 }
 
-void DBServiceClient::send_putDataForce(const std::string& value, const int32_t remote_region, const int32_t remote_node, const int64_t ts)
+void DBServiceClient::send_putDataForce(const std::string& value, const int32_t remote_region, const int32_t remote_node)
 {
   int32_t cseqid = 0;
   oprot_->writeMessageBegin("putDataForce", ::apache::thrift::protocol::T_CALL, cseqid);
@@ -2224,7 +2208,6 @@ void DBServiceClient::send_putDataForce(const std::string& value, const int32_t 
   args.value = &value;
   args.remote_region = &remote_region;
   args.remote_node = &remote_node;
-  args.ts = &ts;
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
@@ -2854,7 +2837,7 @@ void DBServiceProcessor::process_putDataForce(int32_t seqid, ::apache::thrift::p
 
   DBService_putDataForce_result result;
   try {
-    iface_->putDataForce(result.success, args.value, args.remote_region, args.remote_node, args.ts);
+    iface_->putDataForce(result.success, args.value, args.remote_region, args.remote_node);
     result.__isset.success = true;
   } catch (const std::exception& e) {
     if (this->eventHandler_.get() != NULL) {

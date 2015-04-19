@@ -37,7 +37,7 @@ service DBService {
       * putDataForce
       * Write a new data by force (due to partition limitation)
       */
-	string putDataForce(1: string value, 2:i32 remote_region, 3:i32 remote_node, 4:i64 ts),
+	string putDataForce(1: string value, 2:i32 remote_region, 3:i32 remote_node),
 
 	bool updateData(1:Data d),
 

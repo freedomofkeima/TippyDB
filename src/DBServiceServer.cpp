@@ -60,7 +60,6 @@ struct Member {
   int node;
   string ip;
   int port;
-  long long lclock;
   vector<int> distance;
 };
 
@@ -76,7 +75,6 @@ void printMembers() {
       cout << "Node: " << members[i].node << endl;
       cout << "IP: " << members[i].ip << endl;
       cout << "Port: " << members[i].port << endl;
-      cout << "Logical Clock: " << members[i].lclock << endl;
       cout << "Distance: ";
       int size2 = (int) members[i].distance.size();
       for (int j = 0; j < size2; j++) {
@@ -114,7 +112,6 @@ void loadMembers() {
 
   for (SizeType i = 0; i < num_members; i++) {
       Member m;
-      m.lclock = 0; // initialize (we don't need to know the initial logical clock)
       const Value& distance = distances[i];
       for (SizeType j = 0; j < num_members; j++) {
            m.distance.push_back(distance[SizeType(j)].GetInt());
@@ -157,33 +154,25 @@ mutex logical_mutex;
 class LogicalClock {
 public:
   LogicalClock() {
-    logical_clock = getLClock();
-  	cout << "Logical clock: " << logical_clock << endl;
   }
 
-  long long incrementLClock() {
-    logical_clock++;
-    members[own_id].lclock = logical_clock;
-    return logical_clock;
-  }
-
-  bool tsCheck(int32_t remote_region, int32_t remote_node, int64_t ts) {
+  long long incrementLClock(const std::string& key) {
     mutex ts_mutex;
-    for (int i = 0; i < (int) members.size(); i++) {
-    	if ((int) remote_region == members[i].region && (int) remote_node == members[i].node) {
-    		ts_mutex.lock();
-     		if (members[i].lclock < (long long) ts) {
-    			members[i].lclock = ts;
-    			return true;
-    		} else return false;
-    		ts_mutex.unlock();
-    	}
-    }
-    return false;
+    ts_mutex.lock();
+    long long c = getLClock(key);
+    c++;
+    putLClock(key, c);
+    ts_mutex.unlock();
+    return c;
+  }
+
+  bool tsCheck(const std::string& key, int64_t ts) {
+    if (getLClock(key) < (long long) ts) return true;
+    else return false;
   }
 
 private:
-  long long logical_clock = 0; // for timestamping
+
 };
 
 LogicalClock* lClock;
@@ -224,9 +213,9 @@ class DBServiceHandler : virtual public DBServiceIf {
 	if (_return.length() == 16) {
 		// replicate data to secondary nodes
 		logical_mutex.lock();
-		long long clock = lClock->incrementLClock();
+		long long clock = lClock->incrementLClock(_return);
 		logical_mutex.unlock();
-		putLClock(clock);
+		putLClock(_return, clock);
 		thread t(replicateTask, _return, value, clock);
 		t.detach();
 	} else {
@@ -244,17 +233,13 @@ class DBServiceHandler : virtual public DBServiceIf {
    * 
    * @param value
    */
-  void putDataForce(std::string& _return, const std::string& value, const int32_t remote_region, const int32_t remote_node, const int64_t ts) {
-	// check whether logical clock 'ts' is higher (ts > lclock)
-	if (!lClock->tsCheck(remote_region, remote_node, ts)) return;
-
+  void putDataForce(std::string& _return, const std::string& value, const int32_t remote_region, const int32_t remote_node) {
     _return = putDB(value, server_region, server_node, true); // return by force
 	if (_return.length() == 16) {
 		// replicate data to secondary nodes
 		logical_mutex.lock();
-		long long clock = lClock->incrementLClock();
+		long long clock = lClock->incrementLClock(_return);
 		logical_mutex.unlock();
-		putLClock(clock);
 		thread t(replicateTask, _return, value, clock);
 		t.detach();
 	}
@@ -267,9 +252,8 @@ class DBServiceHandler : virtual public DBServiceIf {
     bool isSuccess = updateDB(d.key, d.value);
 		if (isSuccess) {
 			logical_mutex.lock();
-			long long clock = lClock->incrementLClock();
+			long long clock = lClock->incrementLClock(d.key);
 			logical_mutex.unlock();
-			putLClock(clock);
 			thread t(updateTask, d.key, d.value, clock);
 			t.detach();
 		}
@@ -307,6 +291,7 @@ class DBServiceHandler : virtual public DBServiceIf {
    */
   bool updateSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node, const int64_t ts) {
     // Your implementation goes here
+    // check whether logical clock 'ts' is higher (ts > lclock)
     return true;
   }
 

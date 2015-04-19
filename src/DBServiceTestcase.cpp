@@ -120,6 +120,8 @@ int main(int argc, char** argv) {
     print_result(total);
     /** End of PING operation **/
 
+	usleep(5000); // cooldown
+
     /** ZIP operation **/
     cout << "--ZIP (oneway sending)--" << endl;
 	counter = 0; total = 0;
@@ -133,6 +135,8 @@ int main(int argc, char** argv) {
     print_result(total);
     /** End of ZIP operation **/
 
+	usleep(5000); // cooldown
+
     /** PUTDATA operation */
     cout << "--PUTDATA (correctness)--" << endl;
     Data d;
@@ -142,11 +146,15 @@ int main(int argc, char** argv) {
     cout << "Sharded key: " << d.key << endl;
     /** End of PUTDATA operation **/
 
+	usleep(5000); // cooldown
+
     /** PUTDATA (FORCE) operation */
     cout << "--PUTDATA FORCE (correctness)--" << endl;
     client.putDataForce(d.key, d.value, 2, 1, 1);
     cout << "Sharded key: " << d.key << endl;
     /** End of PUTDATA (FORCE) operation **/
+
+	usleep(5000); // cooldown
 
     /** UPDATEDATA operation */
     cout << "--UPDATEDATA (correctness)--" << endl;

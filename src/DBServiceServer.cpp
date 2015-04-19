@@ -178,7 +178,7 @@ public:
     		} else return false;
     		ts_mutex.unlock();
     	}
-	}
+    }
     return false;
   }
 

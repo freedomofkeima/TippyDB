@@ -114,6 +114,8 @@ int main(int argc, char** argv) {
   print_result(total);
   /** End of FILL (local) operation **/
 
+  usleep(5000); // cooldown
+
   /** FILLSYNC (local) operation **/
   cout << "--FILLSYNC (local)--" << endl;
   counter = 10000000; total = 0;
@@ -129,6 +131,8 @@ int main(int argc, char** argv) {
   }
   print_result(total);
   /** End of FILLSYNC (local) operation **/
+
+  usleep(5000); // cooldown
 
   /** OVERWRITE (local) operation **/
   cout << "--OVERWRITE (local)--" << endl;
@@ -146,6 +150,8 @@ int main(int argc, char** argv) {
   print_result(total);
   /** End of OVERWRITE (local) operation **/
 
+  usleep(5000); // cooldown
+
   /** READ (local) operation **/
   cout << "--READ (local)--" << endl;
   counter = 10000000; total = 0;
@@ -160,6 +166,8 @@ int main(int argc, char** argv) {
   }
   print_result(total);
   /** End of READ (local) operation **/
+
+  usleep(5000); // cooldown
 
   /** DELETE (local) operation **/
   cout << "--DELETE (local)--" << endl;

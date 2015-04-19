@@ -49,6 +49,7 @@ void putLClock(long long logical_clock);
 
 string fixedLength(int value, int digits);
 string generate_key(int region, int node, int ctx);
+pair<int, int> parse_key(const string key);
 
 string putDB(const string value, int region, int node, bool force);
 

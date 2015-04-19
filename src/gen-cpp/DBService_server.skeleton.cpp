@@ -37,8 +37,11 @@ class DBServiceHandler : virtual public DBServiceIf {
    * Write a new data by force (due to partition limitation)
    * 
    * @param value
+   * @param remote_region
+   * @param remote_node
+   * @param ts
    */
-  void putDataForce(std::string& _return, const std::string& value) {
+  void putDataForce(std::string& _return, const std::string& value, const int32_t remote_region, const int32_t remote_node, const int64_t ts) {
     // Your implementation goes here
     printf("putDataForce\n");
   }
@@ -55,8 +58,9 @@ class DBServiceHandler : virtual public DBServiceIf {
    * @param d
    * @param remote_region
    * @param remote_node
+   * @param ts
    */
-  bool updateSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node) {
+  bool updateSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node, const int64_t ts) {
     // Your implementation goes here
     printf("updateSecondaryData\n");
   }
@@ -78,8 +82,9 @@ class DBServiceHandler : virtual public DBServiceIf {
    * @param d
    * @param remote_region
    * @param remote_node
+   * @param ts
    */
-  bool deleteSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node) {
+  bool deleteSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node, const int64_t ts) {
     // Your implementation goes here
     printf("deleteSecondaryData\n");
   }
@@ -91,8 +96,9 @@ class DBServiceHandler : virtual public DBServiceIf {
    * @param d
    * @param remote_region
    * @param remote_node
+   * @param ts
    */
-  bool replicateData(const Data& d, const int32_t remote_region, const int32_t remote_node) {
+  bool replicateData(const Data& d, const int32_t remote_region, const int32_t remote_node, const int64_t ts) {
     // Your implementation goes here
     printf("replicateData\n");
   }
@@ -103,8 +109,9 @@ class DBServiceHandler : virtual public DBServiceIf {
    * 
    * @param remote_region
    * @param remote_node
+   * @param ts
    */
-  void resyncData(ShardContent& _return, const int32_t remote_region, const int32_t remote_node) {
+  void resyncData(ShardContent& _return, const int32_t remote_region, const int32_t remote_node, const int64_t ts) {
     // Your implementation goes here
     printf("resyncData\n");
   }

@@ -37,7 +37,7 @@ By: Iskandar Setiadi (freedomofkeima)
 
 - Run the ```Makefile``` by running ```make all``` command.
 
-- Set your distributed database environments by specifying all machines at ```db.config```. You should set ```own``` as ```true``` for the specified machine's address. The value of ```replicationFactors``` should be smaller than or equal to the number of running nodes.
+- Set your distributed database environments by specifying all machines at ```db.config```. You should set ```own``` as ```true``` for the specified machine's address. The value of ```replicationFactors``` should be smaller than or equal to the number of running nodes. Caution: Do not change the orderings of the existing members.
 
 - To run the prototype server, you could simply use ```./application_name port_number db_path```, such as ```bin/server 9090 /tmp/testdb```. You could also use ```./application_name ip_address port_number```, such as ```bin/testcase 127.0.0.1 9090``` which provides several testcases.
 

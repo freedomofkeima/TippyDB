@@ -114,6 +114,13 @@ string generate_key(int region, int node, int ctx) {
 	return fixedLength(region, 4) + fixedLength(node, 4) + fixedLength(ctx, 8);
 }
 
+pair<int, int> parse_key(const string key) {
+	pair<int, int> data;
+	data.first = atoi(key.substr(0, 4).c_str());
+	data.second = atoi(key.substr(4, 4).c_str());
+	return data;
+}
+
 string putDB(const string value, int region, int node, bool force) {
 	string shared_key;
 
@@ -143,10 +150,11 @@ bool updateDB(const string key, const string value) {
 	leveldb::Slice db_key = key;
 	leveldb::Status local_status;
 	string result;
+	long long data_size;
 
 	local_status = db->Get(read_options, db_key, &result);
 	if (!local_status.ok()) return false; // non-existing key
-	long long data_size = result.length();
+	data_size = result.length();
 
 	local_status = db->Put(write_options, db_key, value);
 	if (!local_status.ok()) return false; // failure in update

@@ -12,6 +12,8 @@
 #include <thrift/server/TThreadedServer.h>
 #include <thrift/transport/TServerSocket.h>
 #include <thrift/transport/TBufferTransports.h>
+#include <thrift/transport/TSocket.h>
+#include <thrift/transport/TTransportUtils.h>
 #include <thrift/TToString.h>
 
 #include "rapidjson/document.h"
@@ -165,6 +167,21 @@ public:
     return logical_clock;
   }
 
+  bool tsCheck(int32_t remote_region, int32_t remote_node, int64_t ts) {
+    mutex ts_mutex;
+    for (int i = 0; i < (int) members.size(); i++) {
+    	if ((int) remote_region == members[i].region && (int) remote_node == members[i].node) {
+    		ts_mutex.lock();
+     		if (members[i].lclock < (long long) ts) {
+    			members[i].lclock = ts;
+    			return true;
+    		} else return false;
+    		ts_mutex.unlock();
+    	}
+	}
+    return false;
+  }
+
 private:
   long long logical_clock = 0; // for timestamping
 };
@@ -201,6 +218,7 @@ class DBServiceHandler : virtual public DBServiceIf {
     // Do nothing
   }
 
+  // First come first serve basis
   void putData(std::string& _return, const std::string& value) {
     _return = putDB(value, server_region, server_node, false);
 	if (_return.length() == 16) {
@@ -226,7 +244,10 @@ class DBServiceHandler : virtual public DBServiceIf {
    * 
    * @param value
    */
-  void putDataForce(std::string& _return, const std::string& value) {
+  void putDataForce(std::string& _return, const std::string& value, const int32_t remote_region, const int32_t remote_node, const int64_t ts) {
+	// check whether logical clock 'ts' is higher (ts > lclock)
+	if (!lClock->tsCheck(remote_region, remote_node, ts)) return;
+
     _return = putDB(value, server_region, server_node, true); // return by force
 	if (_return.length() == 16) {
 		// replicate data to secondary nodes
@@ -239,17 +260,41 @@ class DBServiceHandler : virtual public DBServiceIf {
 	}
   }
 
+  // First come first serve basis
   bool updateData(const Data& d) {
+    pair<int, int> location = parse_key(d.key);
+    if (location.first == server_region && location.second == server_node) {
     bool isSuccess = updateDB(d.key, d.value);
-	if (isSuccess) {
-		logical_mutex.lock();
-		long long clock = lClock->incrementLClock();
-		logical_mutex.unlock();
-		putLClock(clock);
-		thread t(updateTask, d.key, d.value, clock);
-		t.detach();
-	}
-    return isSuccess;
+		if (isSuccess) {
+			logical_mutex.lock();
+			long long clock = lClock->incrementLClock();
+			logical_mutex.unlock();
+			putLClock(clock);
+			thread t(updateTask, d.key, d.value, clock);
+			t.detach();
+		}
+    	return isSuccess;
+    } else {
+			// search at specified region and node
+			for (int i = 0; i < (int) members.size(); i++) {
+				if (location.first == members[i].region && location.second == members[i].node) {
+					boost::shared_ptr<TTransport> socket(new TSocket(members[i].ip, members[i].port));
+					boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+					boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+					DBServiceClient client(protocol);
+
+					try {
+						transport->open();
+					    return client.updateData(d);	
+					} catch (TException& tx) {
+ 					   cout << "ERROR: " << tx.what() << endl;
+ 					   return false;
+					}
+
+				}
+			}
+    }
+    return false;
   }
 
   /**
@@ -260,16 +305,18 @@ class DBServiceHandler : virtual public DBServiceIf {
    * @param remote_region
    * @param remote_node
    */
-  bool updateSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node) {
+  bool updateSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node, const int64_t ts) {
     // Your implementation goes here
     return true;
   }
 
+  // First come first serve basis
   void getData(std::string& _return, const std::string& sharded_key) {
     // Your implementation goes here
     printf("getData\n");
   }
 
+  // First come first serve basis
   bool deleteData(const std::string& sharded_key) {
     // Your implementation goes here
     return true;
@@ -283,7 +330,7 @@ class DBServiceHandler : virtual public DBServiceIf {
    * @param remote_region
    * @param remote_node
    */
-  bool deleteSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node) {
+  bool deleteSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node, const int64_t ts) {
     // Your implementation goes here
     return true;
   }
@@ -296,7 +343,7 @@ class DBServiceHandler : virtual public DBServiceIf {
    * @param remote_region
    * @param remote_node
    */
-  bool replicateData(const Data& d, const int32_t remote_region, const int32_t remote_node) {
+  bool replicateData(const Data& d, const int32_t remote_region, const int32_t remote_node, const int64_t ts) {
     // Your implementation goes here
     return true;
   }
@@ -308,7 +355,7 @@ class DBServiceHandler : virtual public DBServiceIf {
    * @param remote_region
    * @param remote_node
    */
-  void resyncData(ShardContent& _return, const int32_t remote_region, const int32_t remote_node) {
+  void resyncData(ShardContent& _return, const int32_t remote_region, const int32_t remote_node, const int64_t ts) {
     // Your implementation goes here
     printf("resyncData\n");
   }

@@ -37,7 +37,7 @@ service DBService {
       * putDataForce
       * Write a new data by force (due to partition limitation)
       */
-	string putDataForce(1: string value),
+	string putDataForce(1: string value, 2:i32 remote_region, 3:i32 remote_node, 4:i64 ts),
 
 	bool updateData(1:Data d),
 
@@ -45,7 +45,7 @@ service DBService {
       * updateSecondaryData
       * Propagate latest data to secondary nodes where region = remote_region && node == remote_node
       */
-	bool updateSecondaryData(1: Data d, 2:i32 remote_region, 3:i32 remote_node),
+	bool updateSecondaryData(1: Data d, 2:i32 remote_region, 3:i32 remote_node, 4:i64 ts),
 
 	string getData(1:string sharded_key),
 
@@ -55,19 +55,19 @@ service DBService {
       * deleteSecondaryData
       * Remove data from secondary nodes where region = remote_region && node == remote_node
       */
-	bool deleteSecondaryData(1: Data d, 2:i32 remote_region, 3:i32 remote_node),
+	bool deleteSecondaryData(1: Data d, 2:i32 remote_region, 3:i32 remote_node, 4:i64 ts),
 
    /**
       * replicateData
       * Replicate a new data from primary to secondary where region = remote_region && node = remote_node
       */
-    bool replicateData(1:Data d, 2:i32 remote_region, 3:i32 remote_node),
+    bool replicateData(1:Data d, 2:i32 remote_region, 3:i32 remote_node, 4:i64 ts),
 
     /**
       * resyncData
       * Retrieve all newest shard contents where region = remote_region && node = remote_node
       */
-    ShardContent resyncData(1:i32 remote_region, 2:i32 remote_node),
+    ShardContent resyncData(1:i32 remote_region, 2:i32 remote_node, 3:i64 ts),
 
 	oneway void zip()
 

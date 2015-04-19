@@ -142,8 +142,15 @@ int main(int argc, char** argv) {
     cout << "Sharded key: " << d.key << endl;
     /** End of PUTDATA operation **/
 
+    /** PUTDATA (FORCE) operation */
+    cout << "--PUTDATA FORCE (correctness)--" << endl;
+    client.putDataForce(d.key, d.value, 2, 1, 1);
+    cout << "Sharded key: " << d.key << endl;
+    /** End of PUTDATA (FORCE) operation **/
+
     /** UPDATEDATA operation */
     cout << "--UPDATEDATA (correctness)--" << endl;
+	d.key = "0001000100000001";
     cout << "Sharded key: " << d.key << endl;
     d.value = "{key :\"dummy\", value: \"test2\"}";
     cout << "New value: " << d.value << endl;

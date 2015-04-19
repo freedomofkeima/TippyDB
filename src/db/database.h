@@ -28,9 +28,10 @@ extern leveldb::Status status;
 extern leveldb::WriteOptions write_options;
 extern leveldb::WriteOptions write_options2;
 extern leveldb::ReadOptions read_options;
-extern leveldb::Slice counter_key;
-extern leveldb::Slice metadata_key;
-extern leveldb::Slice psize_key;
+extern leveldb::Slice counter_key; // reserved key
+extern leveldb::Slice metadata_key; // reserved key
+extern leveldb::Slice psize_key; // reserved key (for primary size, in bytes)
+extern leveldb::Slice lclock_key; // reserved key (for logical clock)
 extern int counter_value;
 extern int metadata_value;
 extern long long psize_value;
@@ -40,10 +41,18 @@ extern string log_filepath;
 
 void initDB(string path, int shard_size);
 
+// Retrieve logical clock counter
+long long getLClock();
+
+// Update logical clock counter
+void putLClock(long long logical_clock);
+
 string fixedLength(int value, int digits);
 string generate_key(int region, int node, int ctx);
 
 string putDB(const string value, int region, int node, bool force);
+
+bool updateDB(const string key, const string value);
 
 void test();
 

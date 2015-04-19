@@ -24,6 +24,8 @@
 #include <vector>
 #include <fstream>
 #include <streambuf>
+#include <thread>
+#include <mutex>
 
 #include "./gen-cpp/DBService.h"
 #include "./db/database.h"
@@ -49,16 +51,20 @@ string server_ip;
 int server_port;
 int server_region;
 int server_node;
+int own_id;
 
 struct Member {
   int region;
   int node;
   string ip;
   int port;
+  long long lclock;
   vector<int> distance;
 };
 
 vector<Member> members;
+
+/***** MEMBERSHIP SECTION *****/
 
 void printMembers() {
   int size = (int) members.size();
@@ -68,6 +74,7 @@ void printMembers() {
       cout << "Node: " << members[i].node << endl;
       cout << "IP: " << members[i].ip << endl;
       cout << "Port: " << members[i].port << endl;
+      cout << "Logical Clock: " << members[i].lclock << endl;
       cout << "Distance: ";
       int size2 = (int) members[i].distance.size();
       for (int j = 0; j < size2; j++) {
@@ -105,6 +112,7 @@ void loadMembers() {
 
   for (SizeType i = 0; i < num_members; i++) {
       Member m;
+      m.lclock = 0; // initialize (we don't need to know the initial logical clock)
       const Value& distance = distances[i];
       for (SizeType j = 0; j < num_members; j++) {
            m.distance.push_back(distance[SizeType(j)].GetInt());
@@ -122,6 +130,7 @@ void loadMembers() {
 
      // add additional info for self
      if (info["own"].GetBool()) {
+         own_id = (int) i;
          server_ip = members[i].ip;
          server_port = members[i].port;
          server_region = members[i].region;
@@ -129,13 +138,60 @@ void loadMembers() {
      }
   }
 
-  // TODO: Init metadata if metadata_counter = 0, else ask for newest version
+  // TODO: Init metadata if metadata_counter = 0 and there's no response from other members, else ask for newest version from all available server and compare metadata_counter value
 
   // StringBuffer buffer;
   // Writer<StringBuffer> writer(buffer);
   // d.Accept(writer);
   // cout << buffer.GetString() << endl;
 }
+
+/***** END OF MEMBERSHIP SECTION *****/
+
+/***** LOGICAL CLOCK SECTION *****/
+
+mutex logical_mutex;
+
+class LogicalClock {
+public:
+  LogicalClock() {
+    logical_clock = getLClock();
+  	cout << "Logical clock: " << logical_clock << endl;
+  }
+
+  long long incrementLClock() {
+    logical_clock++;
+    members[own_id].lclock = logical_clock;
+    return logical_clock;
+  }
+
+private:
+  long long logical_clock = 0; // for timestamping
+};
+
+LogicalClock* lClock;
+
+/***** END OF LOGICAL CLOCK SECTION *****/
+
+/***** SECONDARY SECTION *****/
+
+void failureTask(const int32_t remote_region, const int32_t remote_node) {
+
+}
+
+void replicateTask(const std::string& key, const std::string& value, long long ts) {
+	// TODO: Handle failure (try for 10, 20, ..., 60 seconds before declaring failure)
+	cout << "Replicate task: " << key << " " << value << " (ts : " << ts << ")" << endl;
+}
+
+void updateTask(const std::string& key, const std::string& value, long long ts) {
+	// TODO: Handle failure (try for 10, 20, ..., 60 seconds before declaring failure)
+	cout << "Update task: " << key << " " << value << " (ts : " << ts << ")" << endl;
+}
+
+/***** END OF SECONDARY SECTION *****/
+
+/***** RPC THRIFT SECTION *****/
 
 class DBServiceHandler : virtual public DBServiceIf {
  public:
@@ -146,10 +202,15 @@ class DBServiceHandler : virtual public DBServiceIf {
   }
 
   void putData(std::string& _return, const std::string& value) {
-	// TODO: Partition check, except force == true
     _return = putDB(value, server_region, server_node, false);
 	if (_return.length() == 16) {
 		// replicate data to secondary nodes
+		logical_mutex.lock();
+		long long clock = lClock->incrementLClock();
+		logical_mutex.unlock();
+		putLClock(clock);
+		thread t(replicateTask, _return, value, clock);
+		t.detach();
 	} else {
 		// shard limit, check other partitions
 
@@ -166,13 +227,29 @@ class DBServiceHandler : virtual public DBServiceIf {
    * @param value
    */
   void putDataForce(std::string& _return, const std::string& value) {
-    // Your implementation goes here
-    _return = "";
+    _return = putDB(value, server_region, server_node, true); // return by force
+	if (_return.length() == 16) {
+		// replicate data to secondary nodes
+		logical_mutex.lock();
+		long long clock = lClock->incrementLClock();
+		logical_mutex.unlock();
+		putLClock(clock);
+		thread t(replicateTask, _return, value, clock);
+		t.detach();
+	}
   }
 
   bool updateData(const Data& d) {
-    // Your implementation goes here
-    return true;
+    bool isSuccess = updateDB(d.key, d.value);
+	if (isSuccess) {
+		logical_mutex.lock();
+		long long clock = lClock->incrementLClock();
+		logical_mutex.unlock();
+		putLClock(clock);
+		thread t(updateTask, d.key, d.value, clock);
+		t.detach();
+	}
+    return isSuccess;
   }
 
   /**
@@ -242,6 +319,8 @@ class DBServiceHandler : virtual public DBServiceIf {
 
 };
 
+/***** END OF RPC THRIFT SECTION *****/
+
 int main(int argc, char **argv) {
   if (argc != 3) {
     cout << "Usage: ./application_name port_number db_path" << endl;
@@ -272,6 +351,9 @@ int main(int argc, char **argv) {
   // Test leveldb
   initDB(argv[2], shard_size);
   test();
+
+  // Load logical clock
+  lClock = new LogicalClock();
 
   cout << "** Starting the server **" << endl;
   server.serve();

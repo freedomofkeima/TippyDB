@@ -29,6 +29,7 @@ leveldb::ReadOptions read_options;
 leveldb::Slice counter_key = "counter"; // reserved key
 leveldb::Slice metadata_key = "metadata"; // reserved key
 leveldb::Slice psize_key = "psize"; // reserved key (for primary size, in bytes)
+leveldb::Slice lclock_key = "lclock"; // reserved key (for logical clock)
 int counter_value = 0;
 int metadata_value = 0;
 long long psize_value = 0;
@@ -45,7 +46,7 @@ void initDB(string path, int shard_size) {
 	assert(status.ok());
 	cout << status.ToString() << endl;
 
-	size = (long long) shard_size * 1048576; // 1 MB size
+	size = (long long) shard_size * 943718; // (1 MB size, allow 10% free for other operations)
 
 	leveldb::Status local_status;
     string temp_value;
@@ -71,6 +72,24 @@ void initDB(string path, int shard_size) {
 	}
 
 	write_options2.sync = true;
+}
+
+// Retrieve logical clock counter
+long long getLClock() {
+	leveldb::Status local_status;
+    string temp_value;
+	local_status = db->Get(read_options, lclock_key, &temp_value);
+	if (!local_status.ok()) { // initialize lclock if it hasn't been initialized
+		db->Put(write_options, lclock_key, "0");
+		return 0;
+	} else {
+		return stoll(temp_value);
+	}
+}
+
+// Update logical clock counter
+void putLClock(long long logical_clock) {
+	db->Put(write_options, lclock_key, to_string(logical_clock));
 }
 
 string fixedLength(int value, int digits) {
@@ -118,6 +137,28 @@ string putDB(const string value, int region, int node, bool force) {
 	db->Put(write_options, key, value);
 
 	return shared_key;
+}
+
+bool updateDB(const string key, const string value) {
+	leveldb::Slice db_key = key;
+	leveldb::Status local_status;
+	string result;
+
+	local_status = db->Get(read_options, db_key, &result);
+	if (!local_status.ok()) return false; // non-existing key
+	long long data_size = result.length();
+
+	local_status = db->Put(write_options, db_key, value);
+	if (!local_status.ok()) return false; // failure in update
+
+	put_mutex.lock();
+	psize_value = psize_value + value.length() - data_size;
+	if (psize_value > size) psize_value = size; // set to limit
+	// update psize's value
+	db->Put(write_options, psize_key, to_string(psize_value));
+	put_mutex.unlock();
+
+	return true;
 }
 
 void test() {

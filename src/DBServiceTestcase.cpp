@@ -135,12 +135,22 @@ int main(int argc, char** argv) {
 
     /** PUTDATA operation */
     cout << "--PUTDATA (correctness)--" << endl;
-    cout << "{key :\"dummy\", value: \"test\"}" << endl;
     Data d;
-    d.value = "test";
+    d.value = "{key :\"dummy\", value: \"test\"}";
+    cout << d.value << endl;
     client.putData(d.key, d.value);
     cout << "Sharded key: " << d.key << endl;
     /** End of PUTDATA operation **/
+
+    /** UPDATEDATA operation */
+    cout << "--UPDATEDATA (correctness)--" << endl;
+    cout << "Sharded key: " << d.key << endl;
+    d.value = "{key :\"dummy\", value: \"test2\"}";
+    cout << "New value: " << d.value << endl;
+    bool isSuccess = client.updateData(d);
+    if (isSuccess) cout << "Update OK" << endl;
+    else cout << "Update FAILED" << endl;
+    /** End of UPDATEDATA operation **/
 
   } catch (TException& tx) {
     cout << "ERROR: " << tx.what() << endl;

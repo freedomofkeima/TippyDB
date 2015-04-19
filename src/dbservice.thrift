@@ -31,6 +31,7 @@ service DBService {
 
 	void ping(),
 
+	// First come first serve basis
 	string putData(1:string value),
 
    /**
@@ -39,6 +40,7 @@ service DBService {
       */
 	string putDataForce(1: string value, 2:i32 remote_region, 3:i32 remote_node),
 
+	// First come first serve basis
 	bool updateData(1:Data d),
 
    /**
@@ -47,8 +49,11 @@ service DBService {
       */
 	bool updateSecondaryData(1: Data d, 2:i32 remote_region, 3:i32 remote_node, 4:i64 ts),
 
+
+	// First come first serve basis (return null if sharded_key != exists)
 	string getData(1:string sharded_key),
 
+	// First come first serve basis
 	bool deleteData(1:string sharded_key),
 
    /**

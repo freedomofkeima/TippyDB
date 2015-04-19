@@ -173,6 +173,15 @@ bool updateDB(const string key, const string value) {
 	return true;
 }
 
+string getDB(const string key) {
+	leveldb::Slice db_key = key;
+	leveldb::Status local_status;
+	string result;
+	local_status = db->Get(read_options, db_key, &result);
+	if (!local_status.ok()) return ""; // non-existing key
+	return result;
+}
+
 void test() {
 	/** Write a pair of key and value to database */
 	leveldb::Slice key = "IF3230";

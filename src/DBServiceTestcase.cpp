@@ -167,6 +167,16 @@ int main(int argc, char** argv) {
     else cout << "Update FAILED" << endl;
     /** End of UPDATEDATA operation **/
 
+	usleep(50000); // cooldown 50 ms
+
+    /** GETDATA operation */
+    cout << "--GETDATA (correctness)--" << endl;
+    cout << "Sharded key: " << d.key << endl;
+    client.getData(d.value, d.key);
+    if (d.value != "") cout << "New value: " << d.value << endl;
+    else cout << "Get FAILED" << endl;
+    /** End of GETDATA operation **/
+
   } catch (TException& tx) {
     cout << "ERROR: " << tx.what() << endl;
   }

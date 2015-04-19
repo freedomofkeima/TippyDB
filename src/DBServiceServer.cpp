@@ -295,10 +295,30 @@ class DBServiceHandler : virtual public DBServiceIf {
     return true;
   }
 
-  // First come first serve basis
+  // First come first serve basis (return empty string if sharded_key != exists)
   void getData(std::string& _return, const std::string& sharded_key) {
-    // Your implementation goes here
-    printf("getData\n");
+    pair<int, int> location = parse_key(sharded_key);
+    if (location.first == server_region && location.second == server_node) {
+		_return = getDB(sharded_key);
+    } else {
+			// search at specified region and node
+			for (int i = 0; i < (int) members.size(); i++) {
+				if (location.first == members[i].region && location.second == members[i].node) {
+					boost::shared_ptr<TTransport> socket(new TSocket(members[i].ip, members[i].port));
+					boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+					boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+					DBServiceClient client(protocol);
+
+					try {
+						transport->open();
+					    client.getData(_return, sharded_key);	
+					} catch (TException& tx) {
+ 					   cout << "ERROR: " << tx.what() << endl;
+					}
+
+				}
+			}
+    }
   }
 
   // First come first serve basis

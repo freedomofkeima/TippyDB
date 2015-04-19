@@ -55,6 +55,8 @@ string putDB(const string value, int region, int node, bool force);
 
 bool updateDB(const string key, const string value);
 
+string getDB(const string key);
+
 void test();
 
 #endif

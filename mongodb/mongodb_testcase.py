@@ -32,7 +32,8 @@ def main(args):
         tx = tx + (time.time() - t0)
         counter = counter + 1
     print 'Number of iteration: %d' % (max_iteration)
-    print 'Average elapsed time: %.10f us' % (tx / max_iteration * 1000000)
+    empty_timer = tx / max_iteration * 1000000
+    print 'Average elapsed time: %.10f us' % (empty_timer)
     
     print '--INSERT (local)--'
     tx = 0 # time counter
@@ -47,7 +48,7 @@ def main(args):
         item_id.append(id)
         counter = counter + 1
     print 'Number of iteration: %d' % (max_iteration)
-    print 'Average elapsed time: %.10f us' % (tx / max_iteration * 1000000)
+    print 'Average elapsed time: %.10f us' % (tx / max_iteration * 1000000 - empty_timer)
     
     print '--UPDATE (local)--'
     tx = 0 # time counter
@@ -58,7 +59,7 @@ def main(args):
         tx = tx + (time.time() - t0)
         counter = counter + 1
     print 'Number of iteration: %d' % (max_iteration)
-    print 'Average elapsed time: %.10f us' % (tx / max_iteration * 1000000)
+    print 'Average elapsed time: %.10f us' % (tx / max_iteration * 1000000 - empty_timer)
     
     print '--READ (local)--'
     tx = 0 # time counter
@@ -69,7 +70,7 @@ def main(args):
         tx = tx + (time.time() - t0)
         counter = counter + 1
     print 'Number of iteration: %d' % (max_iteration)
-    print 'Average elapsed time: %.10f us' % (tx / max_iteration * 1000000)
+    print 'Average elapsed time: %.10f us' % (tx / max_iteration * 1000000 - empty_timer)
     
     print '--DELETE(local)--'
     tx = 0 # time counter
@@ -80,7 +81,7 @@ def main(args):
         tx = tx + (time.time() - t0)
         counter = counter + 1
     print 'Number of iteration: %d' % (max_iteration)
-    print 'Average elapsed time: %.10f us' % (tx / max_iteration * 1000000)
+    print 'Average elapsed time: %.10f us' % (tx / max_iteration * 1000000 - empty_timer)
     
     client.close()
 

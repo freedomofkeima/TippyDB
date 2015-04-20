@@ -49,9 +49,8 @@ class DBServiceIf {
    * @param d
    * @param remote_region
    * @param remote_node
-   * @param ts
    */
-  virtual bool deleteSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node, const int64_t ts) = 0;
+  virtual bool deleteSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node) = 0;
 
   /**
    * replicateData
@@ -127,7 +126,7 @@ class DBServiceNull : virtual public DBServiceIf {
     bool _return = false;
     return _return;
   }
-  bool deleteSecondaryData(const Data& /* d */, const int32_t /* remote_region */, const int32_t /* remote_node */, const int64_t /* ts */) {
+  bool deleteSecondaryData(const Data& /* d */, const int32_t /* remote_region */, const int32_t /* remote_node */) {
     bool _return = false;
     return _return;
   }
@@ -989,29 +988,27 @@ class DBService_deleteData_presult {
 };
 
 typedef struct _DBService_deleteSecondaryData_args__isset {
-  _DBService_deleteSecondaryData_args__isset() : d(false), remote_region(false), remote_node(false), ts(false) {}
+  _DBService_deleteSecondaryData_args__isset() : d(false), remote_region(false), remote_node(false) {}
   bool d :1;
   bool remote_region :1;
   bool remote_node :1;
-  bool ts :1;
 } _DBService_deleteSecondaryData_args__isset;
 
 class DBService_deleteSecondaryData_args {
  public:
 
-  static const char* ascii_fingerprint; // = "C814DA7A1E4A5C3B841A71316D17B030";
-  static const uint8_t binary_fingerprint[16]; // = {0xC8,0x14,0xDA,0x7A,0x1E,0x4A,0x5C,0x3B,0x84,0x1A,0x71,0x31,0x6D,0x17,0xB0,0x30};
+  static const char* ascii_fingerprint; // = "1FBC4FCB1957A9C542E486B490C9BB7B";
+  static const uint8_t binary_fingerprint[16]; // = {0x1F,0xBC,0x4F,0xCB,0x19,0x57,0xA9,0xC5,0x42,0xE4,0x86,0xB4,0x90,0xC9,0xBB,0x7B};
 
   DBService_deleteSecondaryData_args(const DBService_deleteSecondaryData_args&);
   DBService_deleteSecondaryData_args& operator=(const DBService_deleteSecondaryData_args&);
-  DBService_deleteSecondaryData_args() : remote_region(0), remote_node(0), ts(0) {
+  DBService_deleteSecondaryData_args() : remote_region(0), remote_node(0) {
   }
 
   virtual ~DBService_deleteSecondaryData_args() throw();
   Data d;
   int32_t remote_region;
   int32_t remote_node;
-  int64_t ts;
 
   _DBService_deleteSecondaryData_args__isset __isset;
 
@@ -1021,8 +1018,6 @@ class DBService_deleteSecondaryData_args {
 
   void __set_remote_node(const int32_t val);
 
-  void __set_ts(const int64_t val);
-
   bool operator == (const DBService_deleteSecondaryData_args & rhs) const
   {
     if (!(d == rhs.d))
@@ -1030,8 +1025,6 @@ class DBService_deleteSecondaryData_args {
     if (!(remote_region == rhs.remote_region))
       return false;
     if (!(remote_node == rhs.remote_node))
-      return false;
-    if (!(ts == rhs.ts))
       return false;
     return true;
   }
@@ -1051,15 +1044,14 @@ class DBService_deleteSecondaryData_args {
 class DBService_deleteSecondaryData_pargs {
  public:
 
-  static const char* ascii_fingerprint; // = "C814DA7A1E4A5C3B841A71316D17B030";
-  static const uint8_t binary_fingerprint[16]; // = {0xC8,0x14,0xDA,0x7A,0x1E,0x4A,0x5C,0x3B,0x84,0x1A,0x71,0x31,0x6D,0x17,0xB0,0x30};
+  static const char* ascii_fingerprint; // = "1FBC4FCB1957A9C542E486B490C9BB7B";
+  static const uint8_t binary_fingerprint[16]; // = {0x1F,0xBC,0x4F,0xCB,0x19,0x57,0xA9,0xC5,0x42,0xE4,0x86,0xB4,0x90,0xC9,0xBB,0x7B};
 
 
   virtual ~DBService_deleteSecondaryData_pargs() throw();
   const Data* d;
   const int32_t* remote_region;
   const int32_t* remote_node;
-  const int64_t* ts;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
@@ -1495,8 +1487,8 @@ class DBServiceClient : virtual public DBServiceIf {
   bool deleteData(const std::string& sharded_key);
   void send_deleteData(const std::string& sharded_key);
   bool recv_deleteData();
-  bool deleteSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node, const int64_t ts);
-  void send_deleteSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node, const int64_t ts);
+  bool deleteSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node);
+  void send_deleteSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node);
   bool recv_deleteSecondaryData();
   bool replicateData(const Data& d, const int32_t remote_region, const int32_t remote_node, const int64_t ts);
   void send_replicateData(const Data& d, const int32_t remote_region, const int32_t remote_node, const int64_t ts);
@@ -1640,13 +1632,13 @@ class DBServiceMultiface : virtual public DBServiceIf {
     return ifaces_[i]->deleteData(sharded_key);
   }
 
-  bool deleteSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node, const int64_t ts) {
+  bool deleteSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node) {
     size_t sz = ifaces_.size();
     size_t i = 0;
     for (; i < (sz - 1); ++i) {
-      ifaces_[i]->deleteSecondaryData(d, remote_region, remote_node, ts);
+      ifaces_[i]->deleteSecondaryData(d, remote_region, remote_node);
     }
-    return ifaces_[i]->deleteSecondaryData(d, remote_region, remote_node, ts);
+    return ifaces_[i]->deleteSecondaryData(d, remote_region, remote_node);
   }
 
   bool replicateData(const Data& d, const int32_t remote_region, const int32_t remote_node, const int64_t ts) {

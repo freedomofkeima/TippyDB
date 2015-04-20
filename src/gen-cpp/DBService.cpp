@@ -1387,14 +1387,6 @@ uint32_t DBService_deleteSecondaryData_args::read(::apache::thrift::protocol::TP
           xfer += iprot->skip(ftype);
         }
         break;
-      case 4:
-        if (ftype == ::apache::thrift::protocol::T_I64) {
-          xfer += iprot->readI64(this->ts);
-          this->__isset.ts = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
       default:
         xfer += iprot->skip(ftype);
         break;
@@ -1424,10 +1416,6 @@ uint32_t DBService_deleteSecondaryData_args::write(::apache::thrift::protocol::T
   xfer += oprot->writeI32(this->remote_node);
   xfer += oprot->writeFieldEnd();
 
-  xfer += oprot->writeFieldBegin("ts", ::apache::thrift::protocol::T_I64, 4);
-  xfer += oprot->writeI64(this->ts);
-  xfer += oprot->writeFieldEnd();
-
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
   oprot->decrementRecursionDepth();
@@ -1454,10 +1442,6 @@ uint32_t DBService_deleteSecondaryData_pargs::write(::apache::thrift::protocol::
 
   xfer += oprot->writeFieldBegin("remote_node", ::apache::thrift::protocol::T_I32, 3);
   xfer += oprot->writeI32((*(this->remote_node)));
-  xfer += oprot->writeFieldEnd();
-
-  xfer += oprot->writeFieldBegin("ts", ::apache::thrift::protocol::T_I64, 4);
-  xfer += oprot->writeI64((*(this->ts)));
   xfer += oprot->writeFieldEnd();
 
   xfer += oprot->writeFieldStop();
@@ -2488,13 +2472,13 @@ bool DBServiceClient::recv_deleteData()
   throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "deleteData failed: unknown result");
 }
 
-bool DBServiceClient::deleteSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node, const int64_t ts)
+bool DBServiceClient::deleteSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node)
 {
-  send_deleteSecondaryData(d, remote_region, remote_node, ts);
+  send_deleteSecondaryData(d, remote_region, remote_node);
   return recv_deleteSecondaryData();
 }
 
-void DBServiceClient::send_deleteSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node, const int64_t ts)
+void DBServiceClient::send_deleteSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node)
 {
   int32_t cseqid = 0;
   oprot_->writeMessageBegin("deleteSecondaryData", ::apache::thrift::protocol::T_CALL, cseqid);
@@ -2503,7 +2487,6 @@ void DBServiceClient::send_deleteSecondaryData(const Data& d, const int32_t remo
   args.d = &d;
   args.remote_region = &remote_region;
   args.remote_node = &remote_node;
-  args.ts = &ts;
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
@@ -3107,7 +3090,7 @@ void DBServiceProcessor::process_deleteSecondaryData(int32_t seqid, ::apache::th
 
   DBService_deleteSecondaryData_result result;
   try {
-    result.success = iface_->deleteSecondaryData(args.d, args.remote_region, args.remote_node, args.ts);
+    result.success = iface_->deleteSecondaryData(args.d, args.remote_region, args.remote_node);
     result.__isset.success = true;
   } catch (const std::exception& e) {
     if (this->eventHandler_.get() != NULL) {

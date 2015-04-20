@@ -182,6 +182,19 @@ string getDB(const string key) {
 	return result;
 }
 
+bool deleteDB(const string key) {
+	leveldb::Slice db_key = key;
+	leveldb::Status local_status;
+	local_status = db->Delete(write_options, db_key);
+	if (!local_status.ok()) return false; // error in delete
+
+    string t_key = lclock_key + key;
+	leveldb::Slice l_key = t_key;
+	db->Delete(write_options, l_key); // remove logical clock
+
+	return true;
+}
+
 void test() {
 	/** Write a pair of key and value to database */
 	leveldb::Slice key = "IF3230";

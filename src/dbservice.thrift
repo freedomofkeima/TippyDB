@@ -60,7 +60,7 @@ service DBService {
       * deleteSecondaryData
       * Remove data from secondary nodes where region = remote_region && node == remote_node
       */
-	bool deleteSecondaryData(1: Data d, 2:i32 remote_region, 3:i32 remote_node, 4:i64 ts),
+	bool deleteSecondaryData(1: Data d, 2:i32 remote_region, 3:i32 remote_node),
 
    /**
       * replicateData

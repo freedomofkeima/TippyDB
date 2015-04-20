@@ -156,13 +156,22 @@ int main(int argc, char** argv) {
 
 	usleep(50000); // cooldown 50 ms
 
+    /** DELETEDATA operation */
+    cout << "--DELETEDATA (correctness)--" << endl;
+	bool isSuccess = client.deleteData(d.key);
+    if (isSuccess) cout << "Delete OK" << endl;
+    else cout << "Delete FAILED" << endl;
+    /** End of DELETEDATA operation **/
+
+	usleep(50000); // cooldown 50 ms
+
     /** UPDATEDATA operation */
     cout << "--UPDATEDATA (correctness)--" << endl;
 	d.key = "0001000100000001";
     cout << "Sharded key: " << d.key << endl;
     d.value = "{key :\"dummy\", value: \"test2\"}";
     cout << "New value: " << d.value << endl;
-    bool isSuccess = client.updateData(d);
+    isSuccess = client.updateData(d);
     if (isSuccess) cout << "Update OK" << endl;
     else cout << "Update FAILED" << endl;
     /** End of UPDATEDATA operation **/

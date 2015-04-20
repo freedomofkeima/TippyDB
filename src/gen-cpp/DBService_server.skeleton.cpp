@@ -81,9 +81,8 @@ class DBServiceHandler : virtual public DBServiceIf {
    * @param d
    * @param remote_region
    * @param remote_node
-   * @param ts
    */
-  bool deleteSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node, const int64_t ts) {
+  bool deleteSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node) {
     // Your implementation goes here
     printf("deleteSecondaryData\n");
   }

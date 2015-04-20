@@ -57,6 +57,8 @@ bool updateDB(const string key, const string value);
 
 string getDB(const string key);
 
+bool deleteDB(const string key);
+
 void test();
 
 #endif

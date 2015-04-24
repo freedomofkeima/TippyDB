@@ -28,6 +28,7 @@
 #include <streambuf>
 #include <thread>
 #include <mutex>
+#include <chrono>
 
 #include "./gen-cpp/DBService.h"
 #include "./db/database.h"
@@ -63,7 +64,14 @@ struct Member {
   vector<int> distance;
 };
 
+struct SKey {
+  string id;
+  pair<int, int> primary;
+  vector< pair<int, int> > secondary;
+};
+
 vector<Member> members;
+vector<SKey> skeys;
 
 /***** MEMBERSHIP SECTION *****/
 
@@ -81,8 +89,21 @@ void printMembers() {
           cout << members[i].distance[j];
           if (j != size2 - 1) cout << ", ";
       }
-      cout << endl;
+      cout << endl << endl;
   }
+}
+
+void printSKeys() {
+  int size = (int) skeys.size();
+  for (int i = 0; i < size; i++) {
+      cout << "Sharded Key ID: " << skeys[i].id << endl;
+      cout << "Primary (Region, Node): (" << skeys[i].primary.first << ", " << skeys[i].primary.second << ")" << endl;
+      int sec_size = (int) skeys[i].secondary.size();
+      for (int j = 0; j < sec_size; j++) {
+        cout << "-- Secondary (Region, Node): (" << skeys[i].secondary[j].first << ", " << skeys[i].secondary[j].second << ")" << endl;
+      }
+  }
+  cout << endl;
 }
 
 void loadMembers() {
@@ -137,12 +158,57 @@ void loadMembers() {
      }
   }
 
-  // TODO: Init metadata if metadata_counter = 0 and there's no response from other members, else ask for newest version from all available server and compare metadata_counter value
-
   // StringBuffer buffer;
   // Writer<StringBuffer> writer(buffer);
   // d.Accept(writer);
   // cout << buffer.GetString() << endl;
+}
+
+// Lock with mutex before updating
+void loadSKeys() {
+  // TODO: Consensus for latest version of metadata, if exists
+
+  // TODO: Check with local version, if it's lesser, retrieve from the highest one
+
+  // TODO: Else, read from local json files if version != -1
+
+  // Read from metadata.tmp
+  ifstream t("data/metadata.tmp");
+  string str;
+
+  t.seekg(0, ios::end);
+  str.reserve(t.tellg());
+  t.seekg(0, ios::beg);
+
+  str.assign((istreambuf_iterator<char>(t)), istreambuf_iterator<char>());
+
+  /** Convert string to json */
+  const char* json = str.c_str();
+  Document d;
+  d.Parse(json);
+
+  const Value& shardedkeys = d["shardedkeys"];
+  assert(shardedkeys.IsArray());
+  // Iterate over all values in shardedkeys
+  for (SizeType i = 0; i < shardedkeys.Size(); i++) {
+      SKey sk;
+      const Value& data = shardedkeys[i];
+      sk.id = data["id"].GetString();
+      const Value& primary = data["primary"];
+      sk.primary.first = (int) primary[0]["region"].GetInt();
+      sk.primary.second = (int) primary[0]["node"].GetInt();
+      const Value& secondary = data["secondary"];
+      for (SizeType j = 0; j < secondary.Size(); j++) {
+          pair<int, int> secval;
+          const Value& data2 = secondary[j];
+          secval.first = (int) data2["region"].GetInt();
+          secval.second = (int) data2["node"].GetInt();
+          sk.secondary.push_back(secval);
+      }
+     skeys.push_back(sk);
+  }
+
+  
 }
 
 /***** END OF MEMBERSHIP SECTION *****/
@@ -187,7 +253,28 @@ void failureTask(const int32_t remote_region, const int32_t remote_node) {
 
 void replicateTask(const std::string& key, const std::string& value, long long ts) {
 	// TODO: Handle failure (try for 10, 20, 30 seconds before declaring failure)
+	int timer = 10; // initial timer, in seconds
 	cout << "Replicate task: " << key << " " << value << " (ts : " << ts << ")" << endl;
+	while (timer <= 30) {
+/*
+		boost::shared_ptr<TTransport> socket(new TSocket(members[i].ip, members[i].port));
+		boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+		boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+		DBServiceClient client(protocol);
+
+		try {
+			transport->open();
+			return client.updateData(d);	
+		} catch (TException& tx) {
+			this_thread::sleep_for(chrono::seconds(1));
+			cout << "ERROR: " << tx.what() << endl;
+			return false;
+		}
+*/
+	}
+	if (timer > 30) {
+		// Call failure task
+	}
 }
 
 void updateTask(const std::string& key, const std::string& value, long long ts) {
@@ -295,7 +382,6 @@ class DBServiceHandler : virtual public DBServiceIf {
    * @param remote_node
    */
   bool updateSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node, const int64_t ts) {
-    // Your implementation goes here
     // check whether logical clock 'ts' is higher (ts > lclock)
     return true;
   }
@@ -367,7 +453,6 @@ class DBServiceHandler : virtual public DBServiceIf {
    * @param remote_node
    */
   bool deleteSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node) {
-    // Your implementation goes here
     return true;
   }
 
@@ -380,19 +465,17 @@ class DBServiceHandler : virtual public DBServiceIf {
    * @param remote_node
    */
   bool replicateData(const Data& d, const int32_t remote_region, const int32_t remote_node, const int64_t ts) {
-    // Your implementation goes here
     return true;
   }
 
   /**
    * resyncData
-   * Retrieve all newest shard contents where region = remote_region && node = remote_node
+   * Retrieve all newest shard contents where region = remote_region && node = remote_node (choose the nearest one for primary / the smallest db size for secondary)
    * 
    * @param remote_region
    * @param remote_node
    */
   void resyncData(ShardContent& _return, const int32_t remote_region, const int32_t remote_node, const int64_t ts) {
-    // Your implementation goes here
     printf("resyncData\n");
   }
 
@@ -425,9 +508,12 @@ int main(int argc, char **argv) {
                          transportFactory,
                          protocolFactory);
 
-  // Load members configuration
+  // Load members configuration (db.config)
   loadMembers();
   printMembers();
+  // Load shared keys configuration (metadata.tmp)
+  loadSKeys();
+  printSKeys();
 
   // Create one thread for each member
 

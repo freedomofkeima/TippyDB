@@ -33,13 +33,18 @@ extern leveldb::Slice metadata_key; // reserved key
 extern leveldb::Slice psize_key; // reserved key (for primary size, in bytes)
 extern string lclock_key; // reserved key (for logical clock)
 extern int counter_value;
-extern int metadata_value;
 extern long long psize_value;
 extern long long size;
 
 extern string log_filepath;
 
 void initDB(string path, int shard_size);
+
+// Retrieve metadata version (return -1 if not set)
+int getMetadataValue();
+
+// Update metadata version
+void putMetadataValue(int version);
 
 // Retrieve logical clock counter
 long long getLClock(const string key);

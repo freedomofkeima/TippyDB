@@ -31,7 +31,6 @@ leveldb::Slice metadata_key = "metadata"; // reserved key
 leveldb::Slice psize_key = "psize"; // reserved key (for primary size, in bytes)
 string lclock_key = "lc"; // reserved key (for logical clock)
 int counter_value = 0;
-int metadata_value = 0;
 long long psize_value = 0;
 long long size = 0; // size per shard
 
@@ -57,13 +56,6 @@ void initDB(string path, int shard_size) {
 		counter_value = stoi(temp_value);
 	}
 
-	local_status = db->Get(read_options, metadata_key, &temp_value);
-	if (!local_status.ok()) { // initialize metadata if it hasn't been initialized
-		db->Put(write_options, metadata_key, to_string(metadata_value));
-	} else {
-		metadata_value = stoi(temp_value);
-	}
-
 	local_status = db->Get(read_options, psize_key, &temp_value);
 	if (!local_status.ok()) { // initialize metadata if it hasn't been initialized
 		db->Put(write_options, psize_key, to_string(psize_value));
@@ -72,6 +64,24 @@ void initDB(string path, int shard_size) {
 	}
 
 	write_options2.sync = true;
+}
+
+// Retrieve metadata version (return -1 if not set)
+int getMetadataValue() {
+	leveldb::Status local_status;
+	string temp_value;
+	local_status = db->Get(read_options, metadata_key, &temp_value);
+	if (!local_status.ok()) {	// initialize metadata if it hasn't been initialized
+		db->Put(write_options, metadata_key, "0");
+		return -1;
+	} else {
+		return stoi(temp_value);
+	}
+}
+
+// Update metadata version
+void putMetadataValue(int version) {
+	db->Put(write_options, metadata_key, to_string(version));
 }
 
 // Retrieve logical clock counter
@@ -130,7 +140,7 @@ string putDB(const string value, int region, int node, bool force) {
 
 	long long additional_size = 16 + value.length();
 
-	if (!force) {
+	if (!force) { // TODO: Create allow put flag
 		if ((psize_value % size) + additional_size > size) return "";
 	}
 

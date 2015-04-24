@@ -70,9 +70,13 @@ service DBService {
 
     /**
       * resyncData
-      * Retrieve all newest shard contents where region = remote_region && node = remote_node
+      * Retrieve all newest shard contents where region = remote_region && node = remote_node (choose the nearest one for primary / the smallest db size for secondary)
       */
     ShardContent resyncData(1:i32 remote_region, 2:i32 remote_node, 3:i64 ts),
+
+	// Get metadata (recovery phase)
+
+	// Update metadata (consensus, initialize if empty). On the other hand, lock metadata from other R/W operation
 
 	oneway void zip()
 

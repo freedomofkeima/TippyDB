@@ -78,11 +78,11 @@ class DBServiceHandler : virtual public DBServiceIf {
    * deleteSecondaryData
    * Remove data from secondary nodes where region = remote_region && node == remote_node
    * 
-   * @param d
+   * @param sharded_key
    * @param remote_region
    * @param remote_node
    */
-  bool deleteSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node) {
+  bool deleteSecondaryData(const std::string& sharded_key, const int32_t remote_region, const int32_t remote_node) {
     // Your implementation goes here
     printf("deleteSecondaryData\n");
   }
@@ -103,7 +103,7 @@ class DBServiceHandler : virtual public DBServiceIf {
 
   /**
    * resyncData
-   * Retrieve all newest shard contents where region = remote_region && node = remote_node
+   * Retrieve all newest shard contents where region = remote_region && node = remote_node (choose the nearest one for primary / the smallest db size for secondary)
    * 
    * @param remote_region
    * @param remote_node

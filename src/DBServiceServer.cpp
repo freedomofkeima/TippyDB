@@ -256,13 +256,22 @@ void failureTask(const int32_t remote_region, const int32_t remote_node) {
 
 }
 
-void replicateTask(const std::string& key, const std::string& value, long long ts) {
+/**
+  * code 0: replicateTask
+  * code 1: updateTask
+  * code 2: deleteTask
+  */
+void backgroundTask(const std::string& key, const std::string& value, long long ts, int code) {
 	int timer = 0; // initial timer, in seconds
 	Data d;
 	d.key = key;
 	d.value = value;
 
-	cout << "Replicate task: " << key << " " << value << " (ts : " << ts << ")" << endl;
+	if (code == 0) cout << "Replicate task: " << d.key << " " << d.value << " (ts : " << ts << ")" << endl;
+	else if (code == 1) cout << "Update task: " << d.key << " " << d.value << " (ts : " << ts << ")" << endl;
+	else if (code == 2) cout << "Delete task: " << d.key << endl;
+	else return;
+
 	string identifier = d.key.substr(0, 8); // first 8 characters
 	vector< pair<int, int> > secondary = skeys[identifier].secondary;
 	bool* isSent;
@@ -276,7 +285,11 @@ void replicateTask(const std::string& key, const std::string& value, long long t
 				workers.push_back(thread([&]() {
 					int idx = member_pos[constructShardKey(secondary[i].first, secondary[i].second)];
 					boost::shared_ptr<TTransport> socket(new TSocket(members[idx].ip, members[idx].port));
-					cout << "Replicate " << d.key << " to " << members[idx].ip << ":" << members[idx].port;
+
+					if (code == 0) cout << "Replicate " << d.key << " to " << members[idx].ip << ":" << members[idx].port;
+					else if (code == 1) cout << "Update " << d.key << " to " << members[idx].ip << ":" << members[idx].port;
+					else if (code == 2) cout << "Delete " << d.key << " from " << members[idx].ip << ":" << members[idx].port;
+
 					if (timer <= 30) cout << " (After Timeout: " << timer <<  " second(s))" << endl;
 					else cout << endl;
 					boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
@@ -285,7 +298,11 @@ void replicateTask(const std::string& key, const std::string& value, long long t
 
 					try {
 						transport->open();
-						isSent[i] = client.replicateData(d, server_region, server_node, ts); // RPC Replicate
+
+						if(code == 0) isSent[i] = client.replicateData(d, server_region, server_node, ts); // RPC Replicate
+						else if (code == 1) isSent[i] = client.updateSecondaryData(d, server_region, server_node, ts); // RPC Update
+						else if (code == 2) isSent[i] = client.deleteSecondaryData(d.key, server_region, server_node); // RPC Delete
+
 					} catch (TException& tx) {
 						cout << "ERROR: " << tx.what() << endl;
 					}
@@ -306,16 +323,6 @@ void replicateTask(const std::string& key, const std::string& value, long long t
 	}
 	for (int i = 0; i < (int) secondary.size(); i++)
 		if (!isSent[i]) failureTask(secondary[i].first, secondary[i].second);
-}
-
-void updateTask(const std::string& key, const std::string& value, long long ts) {
-	// TODO: Handle failure (try for 10, 20, 30 seconds before declaring failure)
-	cout << "Update task: " << key << " " << value << " (ts : " << ts << ")" << endl;
-}
-
-void deleteTask(const std::string& key) {
-	// TODO: Handle failure (try for 10, 20, 30 seconds before declaring failure)
-	cout << "Delete task: " << key << endl;
 }
 
 /***** END OF SECONDARY SECTION *****/
@@ -339,7 +346,7 @@ class DBServiceHandler : virtual public DBServiceIf {
 		long long clock = lClock->incrementLClock(_return);
 		logical_mutex.unlock();
 		putLClock(_return, clock);
-		thread t(replicateTask, _return, value, clock);
+		thread t(backgroundTask, _return, value, clock, 0);
 		t.detach();
 	} else {
 		// shard limit, check other partitions
@@ -363,7 +370,7 @@ class DBServiceHandler : virtual public DBServiceIf {
 		logical_mutex.lock();
 		long long clock = lClock->incrementLClock(_return);
 		logical_mutex.unlock();
-		thread t(replicateTask, _return, value, clock);
+		thread t(backgroundTask, _return, value, clock, 0);
 		t.detach();
 	}
   }
@@ -377,7 +384,7 @@ class DBServiceHandler : virtual public DBServiceIf {
 			logical_mutex.lock();
 			long long clock = lClock->incrementLClock(d.key);
 			logical_mutex.unlock();
-			thread t(updateTask, d.key, d.value, clock);
+			thread t(backgroundTask, d.key, d.value, clock, 1);
 			t.detach();
 		}
     	return isSuccess;
@@ -414,6 +421,7 @@ class DBServiceHandler : virtual public DBServiceIf {
    */
   bool updateSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node, const int64_t ts) {
     // check whether logical clock 'ts' is higher (ts > lclock)
+	// check whether not found
 	cout << "updateSecondaryData is called" << endl;
     return true;
   }
@@ -450,7 +458,7 @@ class DBServiceHandler : virtual public DBServiceIf {
     if (location.first == server_region && location.second == server_node) { // TODO : Change to "primary" flag from metadata
 		bool isSuccess = deleteDB(sharded_key);
 		if (isSuccess) {
-			thread t(deleteTask, sharded_key);
+			thread t(backgroundTask, sharded_key, "", 0, 2);
 			t.detach();
 		}
 		return isSuccess;
@@ -484,7 +492,8 @@ class DBServiceHandler : virtual public DBServiceIf {
    * @param remote_region
    * @param remote_node
    */
-  bool deleteSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node) {
+  bool deleteSecondaryData(const std::string& sharded_key, const int32_t remote_region, const int32_t remote_node) {
+	// check whether not found
 	cout << "deleteSecondaryData is called" << endl;
     return true;
   }

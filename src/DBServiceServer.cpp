@@ -257,7 +257,6 @@ void failureTask(const int32_t remote_region, const int32_t remote_node) {
 }
 
 void replicateTask(const std::string& key, const std::string& value, long long ts) {
-	// TODO: Handle failure (try for 10, 20, 30 seconds before declaring failure)
 	int timer = 0; // initial timer, in seconds
 	Data d;
 	d.key = key;
@@ -268,27 +267,33 @@ void replicateTask(const std::string& key, const std::string& value, long long t
 	vector< pair<int, int> > secondary = skeys[identifier].secondary;
 	bool* isSent;
 	isSent = (bool*) malloc ((int) secondary.size() * sizeof(bool));
+	for(int i = 0; i < (int) secondary.size(); i++) isSent[i] = false;
 	while (timer <= 30) {
 		timer += 10;
+		vector<thread> workers;
 		for(int i = 0; i < (int) secondary.size(); i++) {
 			if (!isSent[i]) {
-				int idx = member_pos[constructShardKey(secondary[i].first, secondary[i].second)];
-				boost::shared_ptr<TTransport> socket(new TSocket(members[idx].ip, members[idx].port));
-				cout << "Replicate " << d.key << " to " << members[idx].ip << ":" << members[idx].port;
-				if (timer <= 30) cout << " (After Timeout: " << timer <<  " second(s))" << endl;
-				else cout << endl;
-				boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
-				boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
-				DBServiceClient client(protocol);
+				workers.push_back(thread([&]() {
+					int idx = member_pos[constructShardKey(secondary[i].first, secondary[i].second)];
+					boost::shared_ptr<TTransport> socket(new TSocket(members[idx].ip, members[idx].port));
+					cout << "Replicate " << d.key << " to " << members[idx].ip << ":" << members[idx].port;
+					if (timer <= 30) cout << " (After Timeout: " << timer <<  " second(s))" << endl;
+					else cout << endl;
+					boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+					boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+					DBServiceClient client(protocol);
 
-				try {
-					transport->open();
-					isSent[i] = client.replicateData(d, server_region, server_node, ts); // RPC Replicate
-				} catch (TException& tx) {
-					this_thread::sleep_for(chrono::seconds(1));
-					cout << "ERROR: " << tx.what() << endl;
-				}
+					try {
+						transport->open();
+						isSent[i] = client.replicateData(d, server_region, server_node, ts); // RPC Replicate
+					} catch (TException& tx) {
+						cout << "ERROR: " << tx.what() << endl;
+					}
+				})); // end of thread
 			}
+			for_each(workers.begin(), workers.end(), [](thread &t) {
+				t.join();
+			});
 		}
 		bool globalSent = true;
 		for (int i = 0; i < (int) secondary.size(); i++)
@@ -409,6 +414,7 @@ class DBServiceHandler : virtual public DBServiceIf {
    */
   bool updateSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node, const int64_t ts) {
     // check whether logical clock 'ts' is higher (ts > lclock)
+	cout << "updateSecondaryData is called" << endl;
     return true;
   }
 
@@ -479,6 +485,7 @@ class DBServiceHandler : virtual public DBServiceIf {
    * @param remote_node
    */
   bool deleteSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node) {
+	cout << "deleteSecondaryData is called" << endl;
     return true;
   }
 

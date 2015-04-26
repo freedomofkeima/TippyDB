@@ -377,8 +377,9 @@ class DBServiceHandler : virtual public DBServiceIf {
 
   // First come first serve basis
   bool updateData(const Data& d) {
-    pair<int, int> location = parse_key(d.key);
-    if (location.first == server_region && location.second == server_node) { // TODO : Change to "primary" flag from metadata
+	string identifier = d.key.substr(0, 8); // first 8 characters
+	pair<int, int> location = skeys[identifier].primary;
+    if (location.first == server_region && location.second == server_node) {
     bool isSuccess = updateDB(d.key, d.value);
 		if (isSuccess) {
 			logical_mutex.lock();
@@ -390,22 +391,19 @@ class DBServiceHandler : virtual public DBServiceIf {
     	return isSuccess;
     } else {
 			// search at specified region and node
-			for (int i = 0; i < (int) members.size(); i++) {
-				if (location.first == members[i].region && location.second == members[i].node) { // TODO : Change to "primary" flag from metadata
-					boost::shared_ptr<TTransport> socket(new TSocket(members[i].ip, members[i].port));
-					boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
-					boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
-					DBServiceClient client(protocol);
+			int idx = member_pos[constructShardKey(location.first, location.second)];
 
-					try {
-						transport->open();
-					    return client.updateData(d);	
-					} catch (TException& tx) {
- 					   cout << "ERROR: " << tx.what() << endl;
- 					   return false;
-					}
+			boost::shared_ptr<TTransport> socket(new TSocket(members[idx].ip, members[idx].port));
+			boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+			boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+			DBServiceClient client(protocol);
 
-				}
+			try {
+				transport->open();
+				return client.updateData(d);	
+			} catch (TException& tx) {
+				cout << "ERROR: " << tx.what() << endl;
+				return false;
 			}
     }
     return false;
@@ -428,34 +426,32 @@ class DBServiceHandler : virtual public DBServiceIf {
 
   // First come first serve basis (return empty string if sharded_key != exists)
   void getData(std::string& _return, const std::string& sharded_key) {
-    pair<int, int> location = parse_key(sharded_key);
-    if (location.first == server_region && location.second == server_node) { // TODO : Change to "primary" flag from metadata
+	string identifier = sharded_key.substr(0, 8); // first 8 characters
+	pair<int, int> location = skeys[identifier].primary;
+    if (location.first == server_region && location.second == server_node) {
 		_return = getDB(sharded_key);
     } else {
 			// search at specified region and node
-			for (int i = 0; i < (int) members.size(); i++) {
-				if (location.first == members[i].region && location.second == members[i].node) { // TODO : Change to "primary" flag from metadata
-					boost::shared_ptr<TTransport> socket(new TSocket(members[i].ip, members[i].port));
-					boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
-					boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
-					DBServiceClient client(protocol);
+			int idx = member_pos[constructShardKey(location.first, location.second)];
+			boost::shared_ptr<TTransport> socket(new TSocket(members[idx].ip, members[idx].port));
+			boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+			boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+			DBServiceClient client(protocol);
 
-					try {
-						transport->open();
-					    client.getData(_return, sharded_key);	
-					} catch (TException& tx) {
- 					   cout << "ERROR: " << tx.what() << endl;
-					}
-
-				}
+			try {
+				transport->open();
+				client.getData(_return, sharded_key);	
+			} catch (TException& tx) {
+				cout << "ERROR: " << tx.what() << endl;
 			}
     }
   }
 
   // First come first serve basis
   bool deleteData(const std::string& sharded_key) {
-    pair<int, int> location = parse_key(sharded_key);
-    if (location.first == server_region && location.second == server_node) { // TODO : Change to "primary" flag from metadata
+	string identifier = sharded_key.substr(0, 8); // first 8 characters
+	pair<int, int> location = skeys[identifier].primary;
+    if (location.first == server_region && location.second == server_node) {
 		bool isSuccess = deleteDB(sharded_key);
 		if (isSuccess) {
 			thread t(backgroundTask, sharded_key, "", 0, 2);
@@ -464,21 +460,17 @@ class DBServiceHandler : virtual public DBServiceIf {
 		return isSuccess;
     } else {
 			// search at specified region and node
-			for (int i = 0; i < (int) members.size(); i++) {
-				if (location.first == members[i].region && location.second == members[i].node) { // TODO : Change to "primary" flag from metadata
-					boost::shared_ptr<TTransport> socket(new TSocket(members[i].ip, members[i].port));
-					boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
-					boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
-					DBServiceClient client(protocol);
+			int idx = member_pos[constructShardKey(location.first, location.second)];
+			boost::shared_ptr<TTransport> socket(new TSocket(members[idx].ip, members[idx].port));
+			boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+			boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+			DBServiceClient client(protocol);
 
-					try {
-						transport->open();
-					    return client.deleteData(sharded_key);	
-					} catch (TException& tx) {
- 					   cout << "ERROR: " << tx.what() << endl;
-					}
-
-				}
+			try {
+				transport->open();
+				return client.deleteData(sharded_key);	
+			} catch (TException& tx) {
+				cout << "ERROR: " << tx.what() << endl;
 			}
     }
     return false;

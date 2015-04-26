@@ -62,6 +62,7 @@ struct Member {
   string ip;
   int port;
   vector<int> distance;
+  int active; // 0 = active, 1 = dead suspect, 2 = dead
 };
 
 struct SKey {
@@ -71,7 +72,8 @@ struct SKey {
 };
 
 vector<Member> members;
-vector<SKey> skeys;
+map<string, int> member_pos;
+map<string, SKey> skeys;
 
 /***** MEMBERSHIP SECTION *****/
 
@@ -94,13 +96,13 @@ void printMembers() {
 }
 
 void printSKeys() {
-  int size = (int) skeys.size();
-  for (int i = 0; i < size; i++) {
-      cout << "Sharded Key ID: " << skeys[i].id << endl;
-      cout << "Primary (Region, Node): (" << skeys[i].primary.first << ", " << skeys[i].primary.second << ")" << endl;
-      int sec_size = (int) skeys[i].secondary.size();
+  map<string, SKey>::iterator iter;
+  for (iter = skeys.begin(); iter != skeys.end(); iter++) {
+      cout << "Sharded Key ID: " << iter->first << endl;
+      cout << "Primary (Region, Node): (" << iter->second.primary.first << ", " << iter->second.primary.second << ")" << endl;
+      int sec_size = (int) iter->second.secondary.size();
       for (int j = 0; j < sec_size; j++) {
-        cout << "-- Secondary (Region, Node): (" << skeys[i].secondary[j].first << ", " << skeys[i].secondary[j].second << ")" << endl;
+        cout << "-- Secondary (Region, Node): (" << iter->second.secondary[j].first << ", " << iter->second.secondary[j].second << ")" << endl;
       }
   }
   cout << endl;
@@ -116,6 +118,7 @@ void loadMembers() {
   t.seekg(0, ios::beg);
 
   str.assign((istreambuf_iterator<char>(t)), istreambuf_iterator<char>());
+  t.close();
 
   // Value& s = d["stars"];
   // s.SetInt(s.GetInt() + 1);
@@ -147,7 +150,7 @@ void loadMembers() {
       members[i].node = (int) info["node"].GetInt();
       members[i].ip = info["ip"].GetString();
       members[i].port = info["port"].GetInt();
-
+      members[i].active = 0; // Initially, dim all as active
      // add additional info for self
      if (info["own"].GetBool()) {
          own_id = (int) i;
@@ -156,6 +159,8 @@ void loadMembers() {
          server_region = members[i].region;
          server_node = members[i].node;
      }
+     // construct map
+      member_pos[constructShardKey(members[i].region, members[i].node)] = i;
   }
 
   // StringBuffer buffer;
@@ -181,6 +186,7 @@ void loadSKeys() {
   t.seekg(0, ios::beg);
 
   str.assign((istreambuf_iterator<char>(t)), istreambuf_iterator<char>());
+  t.close();
 
   /** Convert string to json */
   const char* json = str.c_str();
@@ -205,10 +211,9 @@ void loadSKeys() {
           secval.second = (int) data2["node"].GetInt();
           sk.secondary.push_back(secval);
       }
-     skeys.push_back(sk);
+     skeys[sk.id] = sk;
   }
 
-  
 }
 
 /***** END OF MEMBERSHIP SECTION *****/
@@ -253,28 +258,49 @@ void failureTask(const int32_t remote_region, const int32_t remote_node) {
 
 void replicateTask(const std::string& key, const std::string& value, long long ts) {
 	// TODO: Handle failure (try for 10, 20, 30 seconds before declaring failure)
-	int timer = 10; // initial timer, in seconds
-	cout << "Replicate task: " << key << " " << value << " (ts : " << ts << ")" << endl;
-	while (timer <= 30) {
-/*
-		boost::shared_ptr<TTransport> socket(new TSocket(members[i].ip, members[i].port));
-		boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
-		boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
-		DBServiceClient client(protocol);
+	int timer = 0; // initial timer, in seconds
+	Data d;
+	d.key = key;
+	d.value = value;
 
-		try {
-			transport->open();
-			return client.updateData(d);	
-		} catch (TException& tx) {
-			this_thread::sleep_for(chrono::seconds(1));
-			cout << "ERROR: " << tx.what() << endl;
-			return false;
+	cout << "Replicate task: " << key << " " << value << " (ts : " << ts << ")" << endl;
+	string identifier = d.key.substr(0, 8); // first 8 characters
+	vector< pair<int, int> > secondary = skeys[identifier].secondary;
+	bool* isSent;
+	isSent = (bool*) malloc ((int) secondary.size() * sizeof(bool));
+	while (timer <= 30) {
+		timer += 10;
+		for(int i = 0; i < (int) secondary.size(); i++) {
+			if (!isSent[i]) {
+				int idx = member_pos[constructShardKey(secondary[i].first, secondary[i].second)];
+				boost::shared_ptr<TTransport> socket(new TSocket(members[idx].ip, members[idx].port));
+				cout << "Replicate " << d.key << " to " << members[idx].ip << ":" << members[idx].port;
+				if (timer <= 30) cout << " (After Timeout: " << timer <<  " second(s))" << endl;
+				else cout << endl;
+				boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+				boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+				DBServiceClient client(protocol);
+
+				try {
+					transport->open();
+					isSent[i] = client.replicateData(d, server_region, server_node, ts); // RPC Replicate
+				} catch (TException& tx) {
+					this_thread::sleep_for(chrono::seconds(1));
+					cout << "ERROR: " << tx.what() << endl;
+				}
+			}
 		}
-*/
+		bool globalSent = true;
+		for (int i = 0; i < (int) secondary.size(); i++)
+			if (!isSent[i]) globalSent = false;
+		if (globalSent) break;
+		else {
+			// Sleep for timer seconds here
+			if (timer <= 30) this_thread::sleep_for(chrono::seconds(timer));
+		}
 	}
-	if (timer > 30) {
-		// Call failure task
-	}
+	for (int i = 0; i < (int) secondary.size(); i++)
+		if (!isSent[i]) failureTask(secondary[i].first, secondary[i].second);
 }
 
 void updateTask(const std::string& key, const std::string& value, long long ts) {
@@ -465,6 +491,7 @@ class DBServiceHandler : virtual public DBServiceIf {
    * @param remote_node
    */
   bool replicateData(const Data& d, const int32_t remote_region, const int32_t remote_node, const int64_t ts) {
+	cout << "replicateData is called" << endl;
     return true;
   }
 

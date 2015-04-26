@@ -53,6 +53,10 @@ long long getLClock(const string key);
 void putLClock(const string key, long long logical_clock);
 
 string fixedLength(int value, int digits);
+
+// Construct sharded key
+string constructShardKey(int region, int node);
+
 string generate_key(int region, int node, int ctx);
 pair<int, int> parse_key(const string key);
 

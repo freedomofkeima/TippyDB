@@ -123,9 +123,14 @@ string fixedLength(int value, int digits) {
 	return result;
 }
 
+// Construct sharded key
+string constructShardKey(int region, int node) {
+	return fixedLength(region, 4) + fixedLength(node, 4);
+}
+
 /** 16 bytes shared key */
 string generate_key(int region, int node, int ctx) {
-	return fixedLength(region, 4) + fixedLength(node, 4) + fixedLength(ctx, 8);
+	return constructShardKey(region, node) + fixedLength(ctx, 8);
 }
 
 pair<int, int> parse_key(const string key) {

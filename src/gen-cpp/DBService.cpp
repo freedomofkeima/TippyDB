@@ -781,14 +781,6 @@ uint32_t DBService_updateSecondaryData_args::read(::apache::thrift::protocol::TP
           xfer += iprot->skip(ftype);
         }
         break;
-      case 4:
-        if (ftype == ::apache::thrift::protocol::T_I64) {
-          xfer += iprot->readI64(this->ts);
-          this->__isset.ts = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
       default:
         xfer += iprot->skip(ftype);
         break;
@@ -818,10 +810,6 @@ uint32_t DBService_updateSecondaryData_args::write(::apache::thrift::protocol::T
   xfer += oprot->writeI32(this->remote_node);
   xfer += oprot->writeFieldEnd();
 
-  xfer += oprot->writeFieldBegin("ts", ::apache::thrift::protocol::T_I64, 4);
-  xfer += oprot->writeI64(this->ts);
-  xfer += oprot->writeFieldEnd();
-
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
   oprot->decrementRecursionDepth();
@@ -848,10 +836,6 @@ uint32_t DBService_updateSecondaryData_pargs::write(::apache::thrift::protocol::
 
   xfer += oprot->writeFieldBegin("remote_node", ::apache::thrift::protocol::T_I32, 3);
   xfer += oprot->writeI32((*(this->remote_node)));
-  xfer += oprot->writeFieldEnd();
-
-  xfer += oprot->writeFieldBegin("ts", ::apache::thrift::protocol::T_I64, 4);
-  xfer += oprot->writeI64((*(this->ts)));
   xfer += oprot->writeFieldEnd();
 
   xfer += oprot->writeFieldStop();
@@ -1605,14 +1589,6 @@ uint32_t DBService_replicateData_args::read(::apache::thrift::protocol::TProtoco
           xfer += iprot->skip(ftype);
         }
         break;
-      case 4:
-        if (ftype == ::apache::thrift::protocol::T_I64) {
-          xfer += iprot->readI64(this->ts);
-          this->__isset.ts = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
       default:
         xfer += iprot->skip(ftype);
         break;
@@ -1642,10 +1618,6 @@ uint32_t DBService_replicateData_args::write(::apache::thrift::protocol::TProtoc
   xfer += oprot->writeI32(this->remote_node);
   xfer += oprot->writeFieldEnd();
 
-  xfer += oprot->writeFieldBegin("ts", ::apache::thrift::protocol::T_I64, 4);
-  xfer += oprot->writeI64(this->ts);
-  xfer += oprot->writeFieldEnd();
-
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
   oprot->decrementRecursionDepth();
@@ -1672,10 +1644,6 @@ uint32_t DBService_replicateData_pargs::write(::apache::thrift::protocol::TProto
 
   xfer += oprot->writeFieldBegin("remote_node", ::apache::thrift::protocol::T_I32, 3);
   xfer += oprot->writeI32((*(this->remote_node)));
-  xfer += oprot->writeFieldEnd();
-
-  xfer += oprot->writeFieldBegin("ts", ::apache::thrift::protocol::T_I64, 4);
-  xfer += oprot->writeI64((*(this->ts)));
   xfer += oprot->writeFieldEnd();
 
   xfer += oprot->writeFieldStop();
@@ -1831,14 +1799,6 @@ uint32_t DBService_resyncData_args::read(::apache::thrift::protocol::TProtocol* 
           xfer += iprot->skip(ftype);
         }
         break;
-      case 3:
-        if (ftype == ::apache::thrift::protocol::T_I64) {
-          xfer += iprot->readI64(this->ts);
-          this->__isset.ts = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
       default:
         xfer += iprot->skip(ftype);
         break;
@@ -1864,10 +1824,6 @@ uint32_t DBService_resyncData_args::write(::apache::thrift::protocol::TProtocol*
   xfer += oprot->writeI32(this->remote_node);
   xfer += oprot->writeFieldEnd();
 
-  xfer += oprot->writeFieldBegin("ts", ::apache::thrift::protocol::T_I64, 3);
-  xfer += oprot->writeI64(this->ts);
-  xfer += oprot->writeFieldEnd();
-
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
   oprot->decrementRecursionDepth();
@@ -1890,10 +1846,6 @@ uint32_t DBService_resyncData_pargs::write(::apache::thrift::protocol::TProtocol
 
   xfer += oprot->writeFieldBegin("remote_node", ::apache::thrift::protocol::T_I32, 2);
   xfer += oprot->writeI32((*(this->remote_node)));
-  xfer += oprot->writeFieldEnd();
-
-  xfer += oprot->writeFieldBegin("ts", ::apache::thrift::protocol::T_I64, 3);
-  xfer += oprot->writeI64((*(this->ts)));
   xfer += oprot->writeFieldEnd();
 
   xfer += oprot->writeFieldStop();
@@ -2295,13 +2247,13 @@ bool DBServiceClient::recv_updateData()
   throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "updateData failed: unknown result");
 }
 
-bool DBServiceClient::updateSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node, const int64_t ts)
+bool DBServiceClient::updateSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node)
 {
-  send_updateSecondaryData(d, remote_region, remote_node, ts);
+  send_updateSecondaryData(d, remote_region, remote_node);
   return recv_updateSecondaryData();
 }
 
-void DBServiceClient::send_updateSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node, const int64_t ts)
+void DBServiceClient::send_updateSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node)
 {
   int32_t cseqid = 0;
   oprot_->writeMessageBegin("updateSecondaryData", ::apache::thrift::protocol::T_CALL, cseqid);
@@ -2310,7 +2262,6 @@ void DBServiceClient::send_updateSecondaryData(const Data& d, const int32_t remo
   args.d = &d;
   args.remote_region = &remote_region;
   args.remote_node = &remote_node;
-  args.ts = &ts;
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
@@ -2532,13 +2483,13 @@ bool DBServiceClient::recv_deleteSecondaryData()
   throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "deleteSecondaryData failed: unknown result");
 }
 
-bool DBServiceClient::replicateData(const Data& d, const int32_t remote_region, const int32_t remote_node, const int64_t ts)
+bool DBServiceClient::replicateData(const Data& d, const int32_t remote_region, const int32_t remote_node)
 {
-  send_replicateData(d, remote_region, remote_node, ts);
+  send_replicateData(d, remote_region, remote_node);
   return recv_replicateData();
 }
 
-void DBServiceClient::send_replicateData(const Data& d, const int32_t remote_region, const int32_t remote_node, const int64_t ts)
+void DBServiceClient::send_replicateData(const Data& d, const int32_t remote_region, const int32_t remote_node)
 {
   int32_t cseqid = 0;
   oprot_->writeMessageBegin("replicateData", ::apache::thrift::protocol::T_CALL, cseqid);
@@ -2547,7 +2498,6 @@ void DBServiceClient::send_replicateData(const Data& d, const int32_t remote_reg
   args.d = &d;
   args.remote_region = &remote_region;
   args.remote_node = &remote_node;
-  args.ts = &ts;
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
@@ -2593,13 +2543,13 @@ bool DBServiceClient::recv_replicateData()
   throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "replicateData failed: unknown result");
 }
 
-void DBServiceClient::resyncData(ShardContent& _return, const int32_t remote_region, const int32_t remote_node, const int64_t ts)
+void DBServiceClient::resyncData(ShardContent& _return, const int32_t remote_region, const int32_t remote_node)
 {
-  send_resyncData(remote_region, remote_node, ts);
+  send_resyncData(remote_region, remote_node);
   recv_resyncData(_return);
 }
 
-void DBServiceClient::send_resyncData(const int32_t remote_region, const int32_t remote_node, const int64_t ts)
+void DBServiceClient::send_resyncData(const int32_t remote_region, const int32_t remote_node)
 {
   int32_t cseqid = 0;
   oprot_->writeMessageBegin("resyncData", ::apache::thrift::protocol::T_CALL, cseqid);
@@ -2607,7 +2557,6 @@ void DBServiceClient::send_resyncData(const int32_t remote_region, const int32_t
   DBService_resyncData_pargs args;
   args.remote_region = &remote_region;
   args.remote_node = &remote_node;
-  args.ts = &ts;
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
@@ -2928,7 +2877,7 @@ void DBServiceProcessor::process_updateSecondaryData(int32_t seqid, ::apache::th
 
   DBService_updateSecondaryData_result result;
   try {
-    result.success = iface_->updateSecondaryData(args.d, args.remote_region, args.remote_node, args.ts);
+    result.success = iface_->updateSecondaryData(args.d, args.remote_region, args.remote_node);
     result.__isset.success = true;
   } catch (const std::exception& e) {
     if (this->eventHandler_.get() != NULL) {
@@ -3144,7 +3093,7 @@ void DBServiceProcessor::process_replicateData(int32_t seqid, ::apache::thrift::
 
   DBService_replicateData_result result;
   try {
-    result.success = iface_->replicateData(args.d, args.remote_region, args.remote_node, args.ts);
+    result.success = iface_->replicateData(args.d, args.remote_region, args.remote_node);
     result.__isset.success = true;
   } catch (const std::exception& e) {
     if (this->eventHandler_.get() != NULL) {
@@ -3198,7 +3147,7 @@ void DBServiceProcessor::process_resyncData(int32_t seqid, ::apache::thrift::pro
 
   DBService_resyncData_result result;
   try {
-    iface_->resyncData(result.success, args.remote_region, args.remote_node, args.ts);
+    iface_->resyncData(result.success, args.remote_region, args.remote_node);
     result.__isset.success = true;
   } catch (const std::exception& e) {
     if (this->eventHandler_.get() != NULL) {

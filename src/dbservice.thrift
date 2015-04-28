@@ -19,6 +19,7 @@ namespace py dbservice
 struct Data {
   1: string key,
   2: string value,
+  3: i64 ts
 }
 
 typedef list<Data> Shard
@@ -47,7 +48,7 @@ service DBService {
       * updateSecondaryData
       * Propagate latest data to secondary nodes where region = remote_region && node == remote_node
       */
-	bool updateSecondaryData(1: Data d, 2:i32 remote_region, 3:i32 remote_node, 4:i64 ts),
+	bool updateSecondaryData(1: Data d, 2:i32 remote_region, 3:i32 remote_node),
 
 
 	// First come first serve basis (return null if sharded_key != exists)
@@ -66,13 +67,13 @@ service DBService {
       * replicateData
       * Replicate a new data from primary to secondary where region = remote_region && node = remote_node
       */
-    bool replicateData(1:Data d, 2:i32 remote_region, 3:i32 remote_node, 4:i64 ts),
+    bool replicateData(1:Data d, 2:i32 remote_region, 3:i32 remote_node),
 
     /**
       * resyncData
       * Retrieve all newest shard contents where region = remote_region && node = remote_node (choose the nearest one for primary / the smallest db size for secondary)
       */
-    ShardContent resyncData(1:i32 remote_region, 2:i32 remote_node, 3:i64 ts),
+    ShardContent resyncData(1:i32 remote_region, 2:i32 remote_node),
 
 	// Get metadata (recovery phase)
 

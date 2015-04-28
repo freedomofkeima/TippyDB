@@ -11,6 +11,8 @@
 #include <assert.h>
 #include <algorithm>
 #include <iostream>
+#include <list>
+#include <utility>
 
 #include <mutex>
 #include <string>
@@ -224,6 +226,11 @@ bool deleteDB(const string key) {
 	return true;
 }
 
+list< pair< pair<string, string>, long long> > resyncDB(const string section) {
+	list< pair< pair<string, string>, long long> > ret;
+	return ret;
+}
+
 void test() {
 	/** Write a pair of key and value to database */
 	leveldb::Slice key = "IF3230";
@@ -255,6 +262,6 @@ void test() {
 	/** Compare */
 	leveldb::Slice a = std::string("aaaaa");
 	leveldb::Slice b = std::string("aaaa");
-    leveldb::Options options;
+	leveldb::Options options;
 	cout << options.comparator->Compare(a, b) << endl;
 }

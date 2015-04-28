@@ -57,9 +57,8 @@ class DBServiceHandler : virtual public DBServiceIf {
    * @param d
    * @param remote_region
    * @param remote_node
-   * @param ts
    */
-  bool updateSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node, const int64_t ts) {
+  bool updateSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node) {
     // Your implementation goes here
     printf("updateSecondaryData\n");
   }
@@ -94,9 +93,8 @@ class DBServiceHandler : virtual public DBServiceIf {
    * @param d
    * @param remote_region
    * @param remote_node
-   * @param ts
    */
-  bool replicateData(const Data& d, const int32_t remote_region, const int32_t remote_node, const int64_t ts) {
+  bool replicateData(const Data& d, const int32_t remote_region, const int32_t remote_node) {
     // Your implementation goes here
     printf("replicateData\n");
   }
@@ -107,9 +105,8 @@ class DBServiceHandler : virtual public DBServiceIf {
    * 
    * @param remote_region
    * @param remote_node
-   * @param ts
    */
-  void resyncData(ShardContent& _return, const int32_t remote_region, const int32_t remote_node, const int64_t ts) {
+  void resyncData(ShardContent& _return, const int32_t remote_region, const int32_t remote_node) {
     // Your implementation goes here
     printf("resyncData\n");
   }

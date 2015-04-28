@@ -36,9 +36,8 @@ class DBServiceIf {
    * @param d
    * @param remote_region
    * @param remote_node
-   * @param ts
    */
-  virtual bool updateSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node, const int64_t ts) = 0;
+  virtual bool updateSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node) = 0;
   virtual void getData(std::string& _return, const std::string& sharded_key) = 0;
   virtual bool deleteData(const std::string& sharded_key) = 0;
 
@@ -59,9 +58,8 @@ class DBServiceIf {
    * @param d
    * @param remote_region
    * @param remote_node
-   * @param ts
    */
-  virtual bool replicateData(const Data& d, const int32_t remote_region, const int32_t remote_node, const int64_t ts) = 0;
+  virtual bool replicateData(const Data& d, const int32_t remote_region, const int32_t remote_node) = 0;
 
   /**
    * resyncData
@@ -69,9 +67,8 @@ class DBServiceIf {
    * 
    * @param remote_region
    * @param remote_node
-   * @param ts
    */
-  virtual void resyncData(ShardContent& _return, const int32_t remote_region, const int32_t remote_node, const int64_t ts) = 0;
+  virtual void resyncData(ShardContent& _return, const int32_t remote_region, const int32_t remote_node) = 0;
   virtual void zip() = 0;
 };
 
@@ -115,7 +112,7 @@ class DBServiceNull : virtual public DBServiceIf {
     bool _return = false;
     return _return;
   }
-  bool updateSecondaryData(const Data& /* d */, const int32_t /* remote_region */, const int32_t /* remote_node */, const int64_t /* ts */) {
+  bool updateSecondaryData(const Data& /* d */, const int32_t /* remote_region */, const int32_t /* remote_node */) {
     bool _return = false;
     return _return;
   }
@@ -130,11 +127,11 @@ class DBServiceNull : virtual public DBServiceIf {
     bool _return = false;
     return _return;
   }
-  bool replicateData(const Data& /* d */, const int32_t /* remote_region */, const int32_t /* remote_node */, const int64_t /* ts */) {
+  bool replicateData(const Data& /* d */, const int32_t /* remote_region */, const int32_t /* remote_node */) {
     bool _return = false;
     return _return;
   }
-  void resyncData(ShardContent& /* _return */, const int32_t /* remote_region */, const int32_t /* remote_node */, const int64_t /* ts */) {
+  void resyncData(ShardContent& /* _return */, const int32_t /* remote_region */, const int32_t /* remote_node */) {
     return;
   }
   void zip() {
@@ -494,8 +491,8 @@ typedef struct _DBService_updateData_args__isset {
 class DBService_updateData_args {
  public:
 
-  static const char* ascii_fingerprint; // = "A756D3DBE614FB13F70BF7F7B6EB3D73";
-  static const uint8_t binary_fingerprint[16]; // = {0xA7,0x56,0xD3,0xDB,0xE6,0x14,0xFB,0x13,0xF7,0x0B,0xF7,0xF7,0xB6,0xEB,0x3D,0x73};
+  static const char* ascii_fingerprint; // = "B6E8918D242D6AA4B12BFE5B2137B70E";
+  static const uint8_t binary_fingerprint[16]; // = {0xB6,0xE8,0x91,0x8D,0x24,0x2D,0x6A,0xA4,0xB1,0x2B,0xFE,0x5B,0x21,0x37,0xB7,0x0E};
 
   DBService_updateData_args(const DBService_updateData_args&);
   DBService_updateData_args& operator=(const DBService_updateData_args&);
@@ -531,8 +528,8 @@ class DBService_updateData_args {
 class DBService_updateData_pargs {
  public:
 
-  static const char* ascii_fingerprint; // = "A756D3DBE614FB13F70BF7F7B6EB3D73";
-  static const uint8_t binary_fingerprint[16]; // = {0xA7,0x56,0xD3,0xDB,0xE6,0x14,0xFB,0x13,0xF7,0x0B,0xF7,0xF7,0xB6,0xEB,0x3D,0x73};
+  static const char* ascii_fingerprint; // = "B6E8918D242D6AA4B12BFE5B2137B70E";
+  static const uint8_t binary_fingerprint[16]; // = {0xB6,0xE8,0x91,0x8D,0x24,0x2D,0x6A,0xA4,0xB1,0x2B,0xFE,0x5B,0x21,0x37,0xB7,0x0E};
 
 
   virtual ~DBService_updateData_pargs() throw();
@@ -607,29 +604,27 @@ class DBService_updateData_presult {
 };
 
 typedef struct _DBService_updateSecondaryData_args__isset {
-  _DBService_updateSecondaryData_args__isset() : d(false), remote_region(false), remote_node(false), ts(false) {}
+  _DBService_updateSecondaryData_args__isset() : d(false), remote_region(false), remote_node(false) {}
   bool d :1;
   bool remote_region :1;
   bool remote_node :1;
-  bool ts :1;
 } _DBService_updateSecondaryData_args__isset;
 
 class DBService_updateSecondaryData_args {
  public:
 
-  static const char* ascii_fingerprint; // = "C814DA7A1E4A5C3B841A71316D17B030";
-  static const uint8_t binary_fingerprint[16]; // = {0xC8,0x14,0xDA,0x7A,0x1E,0x4A,0x5C,0x3B,0x84,0x1A,0x71,0x31,0x6D,0x17,0xB0,0x30};
+  static const char* ascii_fingerprint; // = "CD9589295765BF7422F81D8BD91B1238";
+  static const uint8_t binary_fingerprint[16]; // = {0xCD,0x95,0x89,0x29,0x57,0x65,0xBF,0x74,0x22,0xF8,0x1D,0x8B,0xD9,0x1B,0x12,0x38};
 
   DBService_updateSecondaryData_args(const DBService_updateSecondaryData_args&);
   DBService_updateSecondaryData_args& operator=(const DBService_updateSecondaryData_args&);
-  DBService_updateSecondaryData_args() : remote_region(0), remote_node(0), ts(0) {
+  DBService_updateSecondaryData_args() : remote_region(0), remote_node(0) {
   }
 
   virtual ~DBService_updateSecondaryData_args() throw();
   Data d;
   int32_t remote_region;
   int32_t remote_node;
-  int64_t ts;
 
   _DBService_updateSecondaryData_args__isset __isset;
 
@@ -639,8 +634,6 @@ class DBService_updateSecondaryData_args {
 
   void __set_remote_node(const int32_t val);
 
-  void __set_ts(const int64_t val);
-
   bool operator == (const DBService_updateSecondaryData_args & rhs) const
   {
     if (!(d == rhs.d))
@@ -648,8 +641,6 @@ class DBService_updateSecondaryData_args {
     if (!(remote_region == rhs.remote_region))
       return false;
     if (!(remote_node == rhs.remote_node))
-      return false;
-    if (!(ts == rhs.ts))
       return false;
     return true;
   }
@@ -669,15 +660,14 @@ class DBService_updateSecondaryData_args {
 class DBService_updateSecondaryData_pargs {
  public:
 
-  static const char* ascii_fingerprint; // = "C814DA7A1E4A5C3B841A71316D17B030";
-  static const uint8_t binary_fingerprint[16]; // = {0xC8,0x14,0xDA,0x7A,0x1E,0x4A,0x5C,0x3B,0x84,0x1A,0x71,0x31,0x6D,0x17,0xB0,0x30};
+  static const char* ascii_fingerprint; // = "CD9589295765BF7422F81D8BD91B1238";
+  static const uint8_t binary_fingerprint[16]; // = {0xCD,0x95,0x89,0x29,0x57,0x65,0xBF,0x74,0x22,0xF8,0x1D,0x8B,0xD9,0x1B,0x12,0x38};
 
 
   virtual ~DBService_updateSecondaryData_pargs() throw();
   const Data* d;
   const int32_t* remote_region;
   const int32_t* remote_node;
-  const int64_t* ts;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
@@ -1122,29 +1112,27 @@ class DBService_deleteSecondaryData_presult {
 };
 
 typedef struct _DBService_replicateData_args__isset {
-  _DBService_replicateData_args__isset() : d(false), remote_region(false), remote_node(false), ts(false) {}
+  _DBService_replicateData_args__isset() : d(false), remote_region(false), remote_node(false) {}
   bool d :1;
   bool remote_region :1;
   bool remote_node :1;
-  bool ts :1;
 } _DBService_replicateData_args__isset;
 
 class DBService_replicateData_args {
  public:
 
-  static const char* ascii_fingerprint; // = "C814DA7A1E4A5C3B841A71316D17B030";
-  static const uint8_t binary_fingerprint[16]; // = {0xC8,0x14,0xDA,0x7A,0x1E,0x4A,0x5C,0x3B,0x84,0x1A,0x71,0x31,0x6D,0x17,0xB0,0x30};
+  static const char* ascii_fingerprint; // = "CD9589295765BF7422F81D8BD91B1238";
+  static const uint8_t binary_fingerprint[16]; // = {0xCD,0x95,0x89,0x29,0x57,0x65,0xBF,0x74,0x22,0xF8,0x1D,0x8B,0xD9,0x1B,0x12,0x38};
 
   DBService_replicateData_args(const DBService_replicateData_args&);
   DBService_replicateData_args& operator=(const DBService_replicateData_args&);
-  DBService_replicateData_args() : remote_region(0), remote_node(0), ts(0) {
+  DBService_replicateData_args() : remote_region(0), remote_node(0) {
   }
 
   virtual ~DBService_replicateData_args() throw();
   Data d;
   int32_t remote_region;
   int32_t remote_node;
-  int64_t ts;
 
   _DBService_replicateData_args__isset __isset;
 
@@ -1154,8 +1142,6 @@ class DBService_replicateData_args {
 
   void __set_remote_node(const int32_t val);
 
-  void __set_ts(const int64_t val);
-
   bool operator == (const DBService_replicateData_args & rhs) const
   {
     if (!(d == rhs.d))
@@ -1163,8 +1149,6 @@ class DBService_replicateData_args {
     if (!(remote_region == rhs.remote_region))
       return false;
     if (!(remote_node == rhs.remote_node))
-      return false;
-    if (!(ts == rhs.ts))
       return false;
     return true;
   }
@@ -1184,15 +1168,14 @@ class DBService_replicateData_args {
 class DBService_replicateData_pargs {
  public:
 
-  static const char* ascii_fingerprint; // = "C814DA7A1E4A5C3B841A71316D17B030";
-  static const uint8_t binary_fingerprint[16]; // = {0xC8,0x14,0xDA,0x7A,0x1E,0x4A,0x5C,0x3B,0x84,0x1A,0x71,0x31,0x6D,0x17,0xB0,0x30};
+  static const char* ascii_fingerprint; // = "CD9589295765BF7422F81D8BD91B1238";
+  static const uint8_t binary_fingerprint[16]; // = {0xCD,0x95,0x89,0x29,0x57,0x65,0xBF,0x74,0x22,0xF8,0x1D,0x8B,0xD9,0x1B,0x12,0x38};
 
 
   virtual ~DBService_replicateData_pargs() throw();
   const Data* d;
   const int32_t* remote_region;
   const int32_t* remote_node;
-  const int64_t* ts;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
@@ -1263,27 +1246,25 @@ class DBService_replicateData_presult {
 };
 
 typedef struct _DBService_resyncData_args__isset {
-  _DBService_resyncData_args__isset() : remote_region(false), remote_node(false), ts(false) {}
+  _DBService_resyncData_args__isset() : remote_region(false), remote_node(false) {}
   bool remote_region :1;
   bool remote_node :1;
-  bool ts :1;
 } _DBService_resyncData_args__isset;
 
 class DBService_resyncData_args {
  public:
 
-  static const char* ascii_fingerprint; // = "F5482C93CA1806422ACA56B615045E1E";
-  static const uint8_t binary_fingerprint[16]; // = {0xF5,0x48,0x2C,0x93,0xCA,0x18,0x06,0x42,0x2A,0xCA,0x56,0xB6,0x15,0x04,0x5E,0x1E};
+  static const char* ascii_fingerprint; // = "989D1F1AE8D148D5E2119FFEC4BBBEE3";
+  static const uint8_t binary_fingerprint[16]; // = {0x98,0x9D,0x1F,0x1A,0xE8,0xD1,0x48,0xD5,0xE2,0x11,0x9F,0xFE,0xC4,0xBB,0xBE,0xE3};
 
   DBService_resyncData_args(const DBService_resyncData_args&);
   DBService_resyncData_args& operator=(const DBService_resyncData_args&);
-  DBService_resyncData_args() : remote_region(0), remote_node(0), ts(0) {
+  DBService_resyncData_args() : remote_region(0), remote_node(0) {
   }
 
   virtual ~DBService_resyncData_args() throw();
   int32_t remote_region;
   int32_t remote_node;
-  int64_t ts;
 
   _DBService_resyncData_args__isset __isset;
 
@@ -1291,15 +1272,11 @@ class DBService_resyncData_args {
 
   void __set_remote_node(const int32_t val);
 
-  void __set_ts(const int64_t val);
-
   bool operator == (const DBService_resyncData_args & rhs) const
   {
     if (!(remote_region == rhs.remote_region))
       return false;
     if (!(remote_node == rhs.remote_node))
-      return false;
-    if (!(ts == rhs.ts))
       return false;
     return true;
   }
@@ -1319,14 +1296,13 @@ class DBService_resyncData_args {
 class DBService_resyncData_pargs {
  public:
 
-  static const char* ascii_fingerprint; // = "F5482C93CA1806422ACA56B615045E1E";
-  static const uint8_t binary_fingerprint[16]; // = {0xF5,0x48,0x2C,0x93,0xCA,0x18,0x06,0x42,0x2A,0xCA,0x56,0xB6,0x15,0x04,0x5E,0x1E};
+  static const char* ascii_fingerprint; // = "989D1F1AE8D148D5E2119FFEC4BBBEE3";
+  static const uint8_t binary_fingerprint[16]; // = {0x98,0x9D,0x1F,0x1A,0xE8,0xD1,0x48,0xD5,0xE2,0x11,0x9F,0xFE,0xC4,0xBB,0xBE,0xE3};
 
 
   virtual ~DBService_resyncData_pargs() throw();
   const int32_t* remote_region;
   const int32_t* remote_node;
-  const int64_t* ts;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
@@ -1341,8 +1317,8 @@ typedef struct _DBService_resyncData_result__isset {
 class DBService_resyncData_result {
  public:
 
-  static const char* ascii_fingerprint; // = "CBFF6EB1EDB1D2381B07A6FDC62945B3";
-  static const uint8_t binary_fingerprint[16]; // = {0xCB,0xFF,0x6E,0xB1,0xED,0xB1,0xD2,0x38,0x1B,0x07,0xA6,0xFD,0xC6,0x29,0x45,0xB3};
+  static const char* ascii_fingerprint; // = "DD635BE8A82C2DC3637D24F73E05DB13";
+  static const uint8_t binary_fingerprint[16]; // = {0xDD,0x63,0x5B,0xE8,0xA8,0x2C,0x2D,0xC3,0x63,0x7D,0x24,0xF7,0x3E,0x05,0xDB,0x13};
 
   DBService_resyncData_result(const DBService_resyncData_result&);
   DBService_resyncData_result& operator=(const DBService_resyncData_result&);
@@ -1382,8 +1358,8 @@ typedef struct _DBService_resyncData_presult__isset {
 class DBService_resyncData_presult {
  public:
 
-  static const char* ascii_fingerprint; // = "CBFF6EB1EDB1D2381B07A6FDC62945B3";
-  static const uint8_t binary_fingerprint[16]; // = {0xCB,0xFF,0x6E,0xB1,0xED,0xB1,0xD2,0x38,0x1B,0x07,0xA6,0xFD,0xC6,0x29,0x45,0xB3};
+  static const char* ascii_fingerprint; // = "DD635BE8A82C2DC3637D24F73E05DB13";
+  static const uint8_t binary_fingerprint[16]; // = {0xDD,0x63,0x5B,0xE8,0xA8,0x2C,0x2D,0xC3,0x63,0x7D,0x24,0xF7,0x3E,0x05,0xDB,0x13};
 
 
   virtual ~DBService_resyncData_presult() throw();
@@ -1478,8 +1454,8 @@ class DBServiceClient : virtual public DBServiceIf {
   bool updateData(const Data& d);
   void send_updateData(const Data& d);
   bool recv_updateData();
-  bool updateSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node, const int64_t ts);
-  void send_updateSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node, const int64_t ts);
+  bool updateSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node);
+  void send_updateSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node);
   bool recv_updateSecondaryData();
   void getData(std::string& _return, const std::string& sharded_key);
   void send_getData(const std::string& sharded_key);
@@ -1490,11 +1466,11 @@ class DBServiceClient : virtual public DBServiceIf {
   bool deleteSecondaryData(const std::string& sharded_key, const int32_t remote_region, const int32_t remote_node);
   void send_deleteSecondaryData(const std::string& sharded_key, const int32_t remote_region, const int32_t remote_node);
   bool recv_deleteSecondaryData();
-  bool replicateData(const Data& d, const int32_t remote_region, const int32_t remote_node, const int64_t ts);
-  void send_replicateData(const Data& d, const int32_t remote_region, const int32_t remote_node, const int64_t ts);
+  bool replicateData(const Data& d, const int32_t remote_region, const int32_t remote_node);
+  void send_replicateData(const Data& d, const int32_t remote_region, const int32_t remote_node);
   bool recv_replicateData();
-  void resyncData(ShardContent& _return, const int32_t remote_region, const int32_t remote_node, const int64_t ts);
-  void send_resyncData(const int32_t remote_region, const int32_t remote_node, const int64_t ts);
+  void resyncData(ShardContent& _return, const int32_t remote_region, const int32_t remote_node);
+  void send_resyncData(const int32_t remote_region, const int32_t remote_node);
   void recv_resyncData(ShardContent& _return);
   void zip();
   void send_zip();
@@ -1604,13 +1580,13 @@ class DBServiceMultiface : virtual public DBServiceIf {
     return ifaces_[i]->updateData(d);
   }
 
-  bool updateSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node, const int64_t ts) {
+  bool updateSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node) {
     size_t sz = ifaces_.size();
     size_t i = 0;
     for (; i < (sz - 1); ++i) {
-      ifaces_[i]->updateSecondaryData(d, remote_region, remote_node, ts);
+      ifaces_[i]->updateSecondaryData(d, remote_region, remote_node);
     }
-    return ifaces_[i]->updateSecondaryData(d, remote_region, remote_node, ts);
+    return ifaces_[i]->updateSecondaryData(d, remote_region, remote_node);
   }
 
   void getData(std::string& _return, const std::string& sharded_key) {
@@ -1641,22 +1617,22 @@ class DBServiceMultiface : virtual public DBServiceIf {
     return ifaces_[i]->deleteSecondaryData(sharded_key, remote_region, remote_node);
   }
 
-  bool replicateData(const Data& d, const int32_t remote_region, const int32_t remote_node, const int64_t ts) {
+  bool replicateData(const Data& d, const int32_t remote_region, const int32_t remote_node) {
     size_t sz = ifaces_.size();
     size_t i = 0;
     for (; i < (sz - 1); ++i) {
-      ifaces_[i]->replicateData(d, remote_region, remote_node, ts);
+      ifaces_[i]->replicateData(d, remote_region, remote_node);
     }
-    return ifaces_[i]->replicateData(d, remote_region, remote_node, ts);
+    return ifaces_[i]->replicateData(d, remote_region, remote_node);
   }
 
-  void resyncData(ShardContent& _return, const int32_t remote_region, const int32_t remote_node, const int64_t ts) {
+  void resyncData(ShardContent& _return, const int32_t remote_region, const int32_t remote_node) {
     size_t sz = ifaces_.size();
     size_t i = 0;
     for (; i < (sz - 1); ++i) {
-      ifaces_[i]->resyncData(_return, remote_region, remote_node, ts);
+      ifaces_[i]->resyncData(_return, remote_region, remote_node);
     }
-    ifaces_[i]->resyncData(_return, remote_region, remote_node, ts);
+    ifaces_[i]->resyncData(_return, remote_region, remote_node);
     return;
   }
 

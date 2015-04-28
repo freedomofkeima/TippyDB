@@ -26,25 +26,27 @@ class Data;
 class ShardContent;
 
 typedef struct _Data__isset {
-  _Data__isset() : key(false), value(false) {}
+  _Data__isset() : key(false), value(false), ts(false) {}
   bool key :1;
   bool value :1;
+  bool ts :1;
 } _Data__isset;
 
 class Data {
  public:
 
-  static const char* ascii_fingerprint; // = "07A9615F837F7D0A952B595DD3020972";
-  static const uint8_t binary_fingerprint[16]; // = {0x07,0xA9,0x61,0x5F,0x83,0x7F,0x7D,0x0A,0x95,0x2B,0x59,0x5D,0xD3,0x02,0x09,0x72};
+  static const char* ascii_fingerprint; // = "A0ED90CE9B69D7A0FCE24E26CAECD2AF";
+  static const uint8_t binary_fingerprint[16]; // = {0xA0,0xED,0x90,0xCE,0x9B,0x69,0xD7,0xA0,0xFC,0xE2,0x4E,0x26,0xCA,0xEC,0xD2,0xAF};
 
   Data(const Data&);
   Data& operator=(const Data&);
-  Data() : key(), value() {
+  Data() : key(), value(), ts(0) {
   }
 
   virtual ~Data() throw();
   std::string key;
   std::string value;
+  int64_t ts;
 
   _Data__isset __isset;
 
@@ -52,11 +54,15 @@ class Data {
 
   void __set_value(const std::string& val);
 
+  void __set_ts(const int64_t val);
+
   bool operator == (const Data & rhs) const
   {
     if (!(key == rhs.key))
       return false;
     if (!(value == rhs.value))
+      return false;
+    if (!(ts == rhs.ts))
       return false;
     return true;
   }
@@ -82,8 +88,8 @@ typedef struct _ShardContent__isset {
 class ShardContent {
  public:
 
-  static const char* ascii_fingerprint; // = "006EFB9C0A4E436459CDFDF617590BB4";
-  static const uint8_t binary_fingerprint[16]; // = {0x00,0x6E,0xFB,0x9C,0x0A,0x4E,0x43,0x64,0x59,0xCD,0xFD,0xF6,0x17,0x59,0x0B,0xB4};
+  static const char* ascii_fingerprint; // = "CADF07CD5CD3A18B4DEF7E3A4388D017";
+  static const uint8_t binary_fingerprint[16]; // = {0xCA,0xDF,0x07,0xCD,0x5C,0xD3,0xA1,0x8B,0x4D,0xEF,0x7E,0x3A,0x43,0x88,0xD0,0x17};
 
   ShardContent(const ShardContent&);
   ShardContent& operator=(const ShardContent&);

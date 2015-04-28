@@ -13,6 +13,8 @@
 #include <assert.h>
 #include <algorithm>
 #include <iostream>
+#include <list>
+#include <utility>
 
 #include <mutex>
 #include <string>
@@ -67,6 +69,8 @@ bool updateDB(const string key, const string value);
 string getDB(const string key);
 
 bool deleteDB(const string key);
+
+list< pair< pair<string, string>, long long> > resyncDB(const string section);
 
 void test();
 

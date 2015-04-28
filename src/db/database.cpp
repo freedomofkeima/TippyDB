@@ -93,7 +93,7 @@ long long getLClock(const string key) {
 	local_status = db->Get(read_options, l_key, &temp_value);
 	if (!local_status.ok()) { // initialize lclock if it hasn't been initialized
 		db->Put(write_options, l_key, "0");
-		return 0;
+		return -1;
 	} else {
 		return stoll(temp_value);
 	}
@@ -172,14 +172,15 @@ bool updateDB(const string key, const string value) {
 	long long data_size;
 
 	local_status = db->Get(read_options, db_key, &result);
-	if (!local_status.ok()) return false; // non-existing key
-	data_size = result.length();
+	if (!local_status.ok()) data_size = 0; // non-existing key
+	else data_size = result.length();
 
 	local_status = db->Put(write_options, db_key, value);
 	if (!local_status.ok()) return false; // failure in update
 
 	put_mutex.lock();
-	psize_value = psize_value + value.length() - data_size;
+	if (data_size == 0) psize_value = psize_value + 16 + value.length();
+	else psize_value = psize_value + value.length() - data_size;
 	if (psize_value > size) psize_value = size; // set to limit
 	// update psize's value
 	db->Put(write_options, psize_key, to_string(psize_value));
@@ -200,8 +201,21 @@ string getDB(const string key) {
 bool deleteDB(const string key) {
 	leveldb::Slice db_key = key;
 	leveldb::Status local_status;
+	string result;
+	long long data_size;
+
+	local_status = db->Get(read_options, db_key, &result);
+	if(!local_status.ok()) return false; // non-existing key
+	data_size = result.length();
+
 	local_status = db->Delete(write_options, db_key);
 	if (!local_status.ok()) return false; // error in delete
+
+	put_mutex.lock();
+	psize_value = psize_value - data_size - 16;
+	// update psize's value
+	db->Put(write_options, psize_key, to_string(psize_value));
+	put_mutex.unlock();
 
     string t_key = lclock_key + key;
 	leveldb::Slice l_key = t_key;

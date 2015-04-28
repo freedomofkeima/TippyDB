@@ -220,15 +220,12 @@ void loadSKeys() {
 
 /***** LOGICAL CLOCK SECTION *****/
 
-mutex logical_mutex;
-
 class LogicalClock {
 public:
   LogicalClock() {
   }
 
   long long incrementLClock(const std::string& key) {
-    mutex ts_mutex;
     ts_mutex.lock();
     long long c = getLClock(key);
     c++;
@@ -238,12 +235,13 @@ public:
   }
 
   bool tsCheck(const std::string& key, int64_t ts) {
-    if (getLClock(key) < (long long) ts) return true;
+    long long db_ts = getLClock(key);
+    if (db_ts < (long long) ts) return true;
     else return false;
   }
 
 private:
-
+  mutex ts_mutex;
 };
 
 LogicalClock* lClock;
@@ -262,7 +260,7 @@ void failureTask(const int32_t remote_region, const int32_t remote_node) {
   * code 2: deleteTask
   */
 void backgroundTask(const std::string& key, const std::string& value, long long ts, int code) {
-	int timer = 0; // initial timer, in seconds
+	int timer = 10; // initial timer, in seconds
 	Data d;
 	d.key = key;
 	d.value = value;
@@ -278,7 +276,6 @@ void backgroundTask(const std::string& key, const std::string& value, long long 
 	isSent = (bool*) malloc ((int) secondary.size() * sizeof(bool));
 	for(int i = 0; i < (int) secondary.size(); i++) isSent[i] = false;
 	while (timer <= 30) {
-		timer += 10;
 		vector<thread> workers;
 		for(int i = 0; i < (int) secondary.size(); i++) {
 			if (!isSent[i]) {
@@ -320,6 +317,7 @@ void backgroundTask(const std::string& key, const std::string& value, long long 
 			// Sleep for timer seconds here
 			if (timer <= 30) this_thread::sleep_for(chrono::seconds(timer));
 		}
+		timer += 10;
 	}
 	for (int i = 0; i < (int) secondary.size(); i++)
 		if (!isSent[i]) failureTask(secondary[i].first, secondary[i].second);
@@ -342,10 +340,7 @@ class DBServiceHandler : virtual public DBServiceIf {
     _return = putDB(value, server_region, server_node, false);
 	if (_return.length() == 16) {
 		// replicate data to secondary nodes
-		logical_mutex.lock();
 		long long clock = lClock->incrementLClock(_return);
-		logical_mutex.unlock();
-		putLClock(_return, clock);
 		thread t(backgroundTask, _return, value, clock, 0);
 		t.detach();
 	} else {
@@ -367,9 +362,7 @@ class DBServiceHandler : virtual public DBServiceIf {
     _return = putDB(value, server_region, server_node, true); // return by force
 	if (_return.length() == 16) {
 		// replicate data to secondary nodes
-		logical_mutex.lock();
 		long long clock = lClock->incrementLClock(_return);
-		logical_mutex.unlock();
 		thread t(backgroundTask, _return, value, clock, 0);
 		t.detach();
 	}
@@ -382,9 +375,7 @@ class DBServiceHandler : virtual public DBServiceIf {
     if (location.first == server_region && location.second == server_node) {
     bool isSuccess = updateDB(d.key, d.value);
 		if (isSuccess) {
-			logical_mutex.lock();
 			long long clock = lClock->incrementLClock(d.key);
-			logical_mutex.unlock();
 			thread t(backgroundTask, d.key, d.value, clock, 1);
 			t.detach();
 		}
@@ -418,9 +409,14 @@ class DBServiceHandler : virtual public DBServiceIf {
    * @param remote_node
    */
   bool updateSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node, const int64_t ts) {
-    // check whether logical clock 'ts' is higher (ts > lclock)
-	// check whether not found
 	cout << "updateSecondaryData is called" << endl;
+	bool check = lClock->tsCheck(d.key, ts);
+	if (check) { // update if logical clock 'ts' is higher (ts > lclock)
+		bool isSuccess = updateDB(d.key, d.value);
+		if (isSuccess) {
+			putLClock(d.key, ts);
+		}
+	}
     return true;
   }
 
@@ -485,8 +481,8 @@ class DBServiceHandler : virtual public DBServiceIf {
    * @param remote_node
    */
   bool deleteSecondaryData(const std::string& sharded_key, const int32_t remote_region, const int32_t remote_node) {
-	// check whether not found
 	cout << "deleteSecondaryData is called" << endl;
+	deleteDB(sharded_key);
     return true;
   }
 
@@ -500,6 +496,13 @@ class DBServiceHandler : virtual public DBServiceIf {
    */
   bool replicateData(const Data& d, const int32_t remote_region, const int32_t remote_node, const int64_t ts) {
 	cout << "replicateData is called" << endl;
+	bool check = lClock->tsCheck(d.key, ts);
+	if (check) {
+		bool isSuccess = updateDB(d.key, d.value); // same behavior with update
+		if (isSuccess) {
+			putLClock(d.key, ts);
+		}
+	}
     return true;
   }
 
@@ -511,7 +514,7 @@ class DBServiceHandler : virtual public DBServiceIf {
    * @param remote_node
    */
   void resyncData(ShardContent& _return, const int32_t remote_region, const int32_t remote_node, const int64_t ts) {
-    printf("resyncData\n");
+	cout << "resyncData is called" << endl;
   }
 
   void zip() {

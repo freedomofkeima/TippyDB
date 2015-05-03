@@ -75,6 +75,48 @@ vector<Member> members;
 map<string, int> member_pos;
 map<string, SKey> skeys;
 
+/***** CONSENSUS (RAFT) SECTION *****/
+enum {
+	RAFT_STATE_NONE,
+	RAFT_STATE_FOLLOWER,
+	RAFT_STATE_CANDIDATE,
+	RAFT_STATE_LEADER
+};
+
+class RaftConsensus {
+public:
+  RaftConsensus(vector<Member> _members, int _own_id) {
+    current_term = 0;
+    // TODO: Retrieve log (each modification in json)
+    voted_for = -1;
+    // TODO: Retrieve commit_idx (from metadata counter), last_applied_idx (from db), last_log_index (size of log)
+    num_nodes = nodes.size();
+    timeout_elapsed = rand() % 1000; // random factor
+    election_timeout = 3000; // 3 seconds
+    request_timeout = 1000; // 1 second
+    nodes = _members;
+    node_id = _own_id;
+  }
+
+private:
+  int current_term; // server's current term (initial = 0)
+  vector<string> log; // each modification in json
+  int voted_for; // the candidate the server voted for (initial = 0)
+  int commit_idx; // highest log entry known to be committed
+  int last_applied_idx; // highest log entry applied to state machine (metadata)
+  int state; // indicator for follower / candidate / leader
+  int last_log_index; // most recently appended index (to be committed)
+  vector<int> votes_for_me; // who has voted for me
+  vector<Member> nodes; // all consensus members
+  int num_nodes; // number of nodes
+  int timeout_elapsed; // random timeout, in miliseconds
+  int election_timeout; // in miliseconds
+  int request_timeout; // in miliseconds
+  int node_id; // my node ID
+};
+
+/***** END OF CONSENSUS (RAFT) SECTION *****/
+
 /***** MEMBERSHIP SECTION *****/
 
 void printMembers() {

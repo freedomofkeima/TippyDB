@@ -111,6 +111,37 @@ class DBServiceHandler : virtual public DBServiceIf {
     printf("resyncData\n");
   }
 
+  /**
+   * getRecover
+   * Get newest metadata (recovery phase)
+   */
+  void getRecover(GetRecover& _return) {
+    // Your implementation goes here
+    printf("getRecover\n");
+  }
+
+  /**
+   * sendAppend
+   * Send append request -> Update metadata (consensus). On the other hand, lock metadata from other R/W operation
+   * 
+   * @param request
+   */
+  void sendAppend(AppendResponse& _return, const AppendRequest& request) {
+    // Your implementation goes here
+    printf("sendAppend\n");
+  }
+
+  /**
+   * sendVote
+   * Send vote request
+   * 
+   * @param request
+   */
+  void sendVote(VoteResponse& _return, const VoteRequest& request) {
+    // Your implementation goes here
+    printf("sendVote\n");
+  }
+
   void zip() {
     // Your implementation goes here
     printf("zip\n");

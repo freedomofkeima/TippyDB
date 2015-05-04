@@ -25,6 +25,16 @@ class Data;
 
 class ShardContent;
 
+class GetRecover;
+
+class AppendRequest;
+
+class AppendResponse;
+
+class VoteRequest;
+
+class VoteResponse;
+
 typedef struct _Data__isset {
   _Data__isset() : key(false), value(false), ts(false) {}
   bool key :1;
@@ -122,6 +132,275 @@ class ShardContent {
 };
 
 void swap(ShardContent &a, ShardContent &b);
+
+typedef struct _GetRecover__isset {
+  _GetRecover__isset() : term(false), commit_idx(false), entry(false) {}
+  bool term :1;
+  bool commit_idx :1;
+  bool entry :1;
+} _GetRecover__isset;
+
+class GetRecover {
+ public:
+
+  static const char* ascii_fingerprint; // = "4086F12A5C2D615560236565C542F3C3";
+  static const uint8_t binary_fingerprint[16]; // = {0x40,0x86,0xF1,0x2A,0x5C,0x2D,0x61,0x55,0x60,0x23,0x65,0x65,0xC5,0x42,0xF3,0xC3};
+
+  GetRecover(const GetRecover&);
+  GetRecover& operator=(const GetRecover&);
+  GetRecover() : term(0), commit_idx(0), entry() {
+  }
+
+  virtual ~GetRecover() throw();
+  int32_t term;
+  int32_t commit_idx;
+  std::string entry;
+
+  _GetRecover__isset __isset;
+
+  void __set_term(const int32_t val);
+
+  void __set_commit_idx(const int32_t val);
+
+  void __set_entry(const std::string& val);
+
+  bool operator == (const GetRecover & rhs) const
+  {
+    if (!(term == rhs.term))
+      return false;
+    if (!(commit_idx == rhs.commit_idx))
+      return false;
+    if (!(entry == rhs.entry))
+      return false;
+    return true;
+  }
+  bool operator != (const GetRecover &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const GetRecover & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  friend std::ostream& operator<<(std::ostream& out, const GetRecover& obj);
+};
+
+void swap(GetRecover &a, GetRecover &b);
+
+typedef struct _AppendRequest__isset {
+  _AppendRequest__isset() : term(false), prev_term(false), commit_idx(false), entry(false) {}
+  bool term :1;
+  bool prev_term :1;
+  bool commit_idx :1;
+  bool entry :1;
+} _AppendRequest__isset;
+
+class AppendRequest {
+ public:
+
+  static const char* ascii_fingerprint; // = "5805DAA8A1E0142D0F84D212A8253609";
+  static const uint8_t binary_fingerprint[16]; // = {0x58,0x05,0xDA,0xA8,0xA1,0xE0,0x14,0x2D,0x0F,0x84,0xD2,0x12,0xA8,0x25,0x36,0x09};
+
+  AppendRequest(const AppendRequest&);
+  AppendRequest& operator=(const AppendRequest&);
+  AppendRequest() : term(0), prev_term(0), commit_idx(0), entry() {
+  }
+
+  virtual ~AppendRequest() throw();
+  int32_t term;
+  int32_t prev_term;
+  int32_t commit_idx;
+  std::string entry;
+
+  _AppendRequest__isset __isset;
+
+  void __set_term(const int32_t val);
+
+  void __set_prev_term(const int32_t val);
+
+  void __set_commit_idx(const int32_t val);
+
+  void __set_entry(const std::string& val);
+
+  bool operator == (const AppendRequest & rhs) const
+  {
+    if (!(term == rhs.term))
+      return false;
+    if (!(prev_term == rhs.prev_term))
+      return false;
+    if (!(commit_idx == rhs.commit_idx))
+      return false;
+    if (!(entry == rhs.entry))
+      return false;
+    return true;
+  }
+  bool operator != (const AppendRequest &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const AppendRequest & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  friend std::ostream& operator<<(std::ostream& out, const AppendRequest& obj);
+};
+
+void swap(AppendRequest &a, AppendRequest &b);
+
+typedef struct _AppendResponse__isset {
+  _AppendResponse__isset() : term(false), succeeds(false) {}
+  bool term :1;
+  bool succeeds :1;
+} _AppendResponse__isset;
+
+class AppendResponse {
+ public:
+
+  static const char* ascii_fingerprint; // = "4DC0C1A1F380340B40244ADC7FB0BA60";
+  static const uint8_t binary_fingerprint[16]; // = {0x4D,0xC0,0xC1,0xA1,0xF3,0x80,0x34,0x0B,0x40,0x24,0x4A,0xDC,0x7F,0xB0,0xBA,0x60};
+
+  AppendResponse(const AppendResponse&);
+  AppendResponse& operator=(const AppendResponse&);
+  AppendResponse() : term(0), succeeds(0) {
+  }
+
+  virtual ~AppendResponse() throw();
+  int32_t term;
+  bool succeeds;
+
+  _AppendResponse__isset __isset;
+
+  void __set_term(const int32_t val);
+
+  void __set_succeeds(const bool val);
+
+  bool operator == (const AppendResponse & rhs) const
+  {
+    if (!(term == rhs.term))
+      return false;
+    if (!(succeeds == rhs.succeeds))
+      return false;
+    return true;
+  }
+  bool operator != (const AppendResponse &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const AppendResponse & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  friend std::ostream& operator<<(std::ostream& out, const AppendResponse& obj);
+};
+
+void swap(AppendResponse &a, AppendResponse &b);
+
+typedef struct _VoteRequest__isset {
+  _VoteRequest__isset() : term(false), last_commit_idx(false), last_term(false) {}
+  bool term :1;
+  bool last_commit_idx :1;
+  bool last_term :1;
+} _VoteRequest__isset;
+
+class VoteRequest {
+ public:
+
+  static const char* ascii_fingerprint; // = "6435B39C87AB0E30F30BEDEFD7328C0D";
+  static const uint8_t binary_fingerprint[16]; // = {0x64,0x35,0xB3,0x9C,0x87,0xAB,0x0E,0x30,0xF3,0x0B,0xED,0xEF,0xD7,0x32,0x8C,0x0D};
+
+  VoteRequest(const VoteRequest&);
+  VoteRequest& operator=(const VoteRequest&);
+  VoteRequest() : term(0), last_commit_idx(0), last_term(0) {
+  }
+
+  virtual ~VoteRequest() throw();
+  int32_t term;
+  int32_t last_commit_idx;
+  int32_t last_term;
+
+  _VoteRequest__isset __isset;
+
+  void __set_term(const int32_t val);
+
+  void __set_last_commit_idx(const int32_t val);
+
+  void __set_last_term(const int32_t val);
+
+  bool operator == (const VoteRequest & rhs) const
+  {
+    if (!(term == rhs.term))
+      return false;
+    if (!(last_commit_idx == rhs.last_commit_idx))
+      return false;
+    if (!(last_term == rhs.last_term))
+      return false;
+    return true;
+  }
+  bool operator != (const VoteRequest &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const VoteRequest & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  friend std::ostream& operator<<(std::ostream& out, const VoteRequest& obj);
+};
+
+void swap(VoteRequest &a, VoteRequest &b);
+
+typedef struct _VoteResponse__isset {
+  _VoteResponse__isset() : term(false), granted(false) {}
+  bool term :1;
+  bool granted :1;
+} _VoteResponse__isset;
+
+class VoteResponse {
+ public:
+
+  static const char* ascii_fingerprint; // = "4DC0C1A1F380340B40244ADC7FB0BA60";
+  static const uint8_t binary_fingerprint[16]; // = {0x4D,0xC0,0xC1,0xA1,0xF3,0x80,0x34,0x0B,0x40,0x24,0x4A,0xDC,0x7F,0xB0,0xBA,0x60};
+
+  VoteResponse(const VoteResponse&);
+  VoteResponse& operator=(const VoteResponse&);
+  VoteResponse() : term(0), granted(0) {
+  }
+
+  virtual ~VoteResponse() throw();
+  int32_t term;
+  bool granted;
+
+  _VoteResponse__isset __isset;
+
+  void __set_term(const int32_t val);
+
+  void __set_granted(const bool val);
+
+  bool operator == (const VoteResponse & rhs) const
+  {
+    if (!(term == rhs.term))
+      return false;
+    if (!(granted == rhs.granted))
+      return false;
+    return true;
+  }
+  bool operator != (const VoteResponse &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const VoteResponse & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  friend std::ostream& operator<<(std::ostream& out, const VoteResponse& obj);
+};
+
+void swap(VoteResponse &a, VoteResponse &b);
 
 } // namespace
 

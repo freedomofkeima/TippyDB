@@ -253,4 +253,634 @@ std::ostream& operator<<(std::ostream& out, const ShardContent& obj) {
   return out;
 }
 
+
+GetRecover::~GetRecover() throw() {
+}
+
+
+void GetRecover::__set_term(const int32_t val) {
+  this->term = val;
+}
+
+void GetRecover::__set_commit_idx(const int32_t val) {
+  this->commit_idx = val;
+}
+
+void GetRecover::__set_entry(const std::string& val) {
+  this->entry = val;
+}
+
+const char* GetRecover::ascii_fingerprint = "4086F12A5C2D615560236565C542F3C3";
+const uint8_t GetRecover::binary_fingerprint[16] = {0x40,0x86,0xF1,0x2A,0x5C,0x2D,0x61,0x55,0x60,0x23,0x65,0x65,0xC5,0x42,0xF3,0xC3};
+
+uint32_t GetRecover::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_I32) {
+          xfer += iprot->readI32(this->term);
+          this->__isset.term = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 2:
+        if (ftype == ::apache::thrift::protocol::T_I32) {
+          xfer += iprot->readI32(this->commit_idx);
+          this->__isset.commit_idx = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 3:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->entry);
+          this->__isset.entry = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t GetRecover::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  oprot->incrementRecursionDepth();
+  xfer += oprot->writeStructBegin("GetRecover");
+
+  xfer += oprot->writeFieldBegin("term", ::apache::thrift::protocol::T_I32, 1);
+  xfer += oprot->writeI32(this->term);
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldBegin("commit_idx", ::apache::thrift::protocol::T_I32, 2);
+  xfer += oprot->writeI32(this->commit_idx);
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldBegin("entry", ::apache::thrift::protocol::T_STRING, 3);
+  xfer += oprot->writeString(this->entry);
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  oprot->decrementRecursionDepth();
+  return xfer;
+}
+
+void swap(GetRecover &a, GetRecover &b) {
+  using ::std::swap;
+  swap(a.term, b.term);
+  swap(a.commit_idx, b.commit_idx);
+  swap(a.entry, b.entry);
+  swap(a.__isset, b.__isset);
+}
+
+GetRecover::GetRecover(const GetRecover& other10) {
+  term = other10.term;
+  commit_idx = other10.commit_idx;
+  entry = other10.entry;
+  __isset = other10.__isset;
+}
+GetRecover& GetRecover::operator=(const GetRecover& other11) {
+  term = other11.term;
+  commit_idx = other11.commit_idx;
+  entry = other11.entry;
+  __isset = other11.__isset;
+  return *this;
+}
+std::ostream& operator<<(std::ostream& out, const GetRecover& obj) {
+  using apache::thrift::to_string;
+  out << "GetRecover(";
+  out << "term=" << to_string(obj.term);
+  out << ", " << "commit_idx=" << to_string(obj.commit_idx);
+  out << ", " << "entry=" << to_string(obj.entry);
+  out << ")";
+  return out;
+}
+
+
+AppendRequest::~AppendRequest() throw() {
+}
+
+
+void AppendRequest::__set_term(const int32_t val) {
+  this->term = val;
+}
+
+void AppendRequest::__set_prev_term(const int32_t val) {
+  this->prev_term = val;
+}
+
+void AppendRequest::__set_commit_idx(const int32_t val) {
+  this->commit_idx = val;
+}
+
+void AppendRequest::__set_entry(const std::string& val) {
+  this->entry = val;
+}
+
+const char* AppendRequest::ascii_fingerprint = "5805DAA8A1E0142D0F84D212A8253609";
+const uint8_t AppendRequest::binary_fingerprint[16] = {0x58,0x05,0xDA,0xA8,0xA1,0xE0,0x14,0x2D,0x0F,0x84,0xD2,0x12,0xA8,0x25,0x36,0x09};
+
+uint32_t AppendRequest::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_I32) {
+          xfer += iprot->readI32(this->term);
+          this->__isset.term = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 2:
+        if (ftype == ::apache::thrift::protocol::T_I32) {
+          xfer += iprot->readI32(this->prev_term);
+          this->__isset.prev_term = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 3:
+        if (ftype == ::apache::thrift::protocol::T_I32) {
+          xfer += iprot->readI32(this->commit_idx);
+          this->__isset.commit_idx = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 4:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->entry);
+          this->__isset.entry = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t AppendRequest::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  oprot->incrementRecursionDepth();
+  xfer += oprot->writeStructBegin("AppendRequest");
+
+  xfer += oprot->writeFieldBegin("term", ::apache::thrift::protocol::T_I32, 1);
+  xfer += oprot->writeI32(this->term);
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldBegin("prev_term", ::apache::thrift::protocol::T_I32, 2);
+  xfer += oprot->writeI32(this->prev_term);
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldBegin("commit_idx", ::apache::thrift::protocol::T_I32, 3);
+  xfer += oprot->writeI32(this->commit_idx);
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldBegin("entry", ::apache::thrift::protocol::T_STRING, 4);
+  xfer += oprot->writeString(this->entry);
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  oprot->decrementRecursionDepth();
+  return xfer;
+}
+
+void swap(AppendRequest &a, AppendRequest &b) {
+  using ::std::swap;
+  swap(a.term, b.term);
+  swap(a.prev_term, b.prev_term);
+  swap(a.commit_idx, b.commit_idx);
+  swap(a.entry, b.entry);
+  swap(a.__isset, b.__isset);
+}
+
+AppendRequest::AppendRequest(const AppendRequest& other12) {
+  term = other12.term;
+  prev_term = other12.prev_term;
+  commit_idx = other12.commit_idx;
+  entry = other12.entry;
+  __isset = other12.__isset;
+}
+AppendRequest& AppendRequest::operator=(const AppendRequest& other13) {
+  term = other13.term;
+  prev_term = other13.prev_term;
+  commit_idx = other13.commit_idx;
+  entry = other13.entry;
+  __isset = other13.__isset;
+  return *this;
+}
+std::ostream& operator<<(std::ostream& out, const AppendRequest& obj) {
+  using apache::thrift::to_string;
+  out << "AppendRequest(";
+  out << "term=" << to_string(obj.term);
+  out << ", " << "prev_term=" << to_string(obj.prev_term);
+  out << ", " << "commit_idx=" << to_string(obj.commit_idx);
+  out << ", " << "entry=" << to_string(obj.entry);
+  out << ")";
+  return out;
+}
+
+
+AppendResponse::~AppendResponse() throw() {
+}
+
+
+void AppendResponse::__set_term(const int32_t val) {
+  this->term = val;
+}
+
+void AppendResponse::__set_succeeds(const bool val) {
+  this->succeeds = val;
+}
+
+const char* AppendResponse::ascii_fingerprint = "4DC0C1A1F380340B40244ADC7FB0BA60";
+const uint8_t AppendResponse::binary_fingerprint[16] = {0x4D,0xC0,0xC1,0xA1,0xF3,0x80,0x34,0x0B,0x40,0x24,0x4A,0xDC,0x7F,0xB0,0xBA,0x60};
+
+uint32_t AppendResponse::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_I32) {
+          xfer += iprot->readI32(this->term);
+          this->__isset.term = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 2:
+        if (ftype == ::apache::thrift::protocol::T_BOOL) {
+          xfer += iprot->readBool(this->succeeds);
+          this->__isset.succeeds = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t AppendResponse::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  oprot->incrementRecursionDepth();
+  xfer += oprot->writeStructBegin("AppendResponse");
+
+  xfer += oprot->writeFieldBegin("term", ::apache::thrift::protocol::T_I32, 1);
+  xfer += oprot->writeI32(this->term);
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldBegin("succeeds", ::apache::thrift::protocol::T_BOOL, 2);
+  xfer += oprot->writeBool(this->succeeds);
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  oprot->decrementRecursionDepth();
+  return xfer;
+}
+
+void swap(AppendResponse &a, AppendResponse &b) {
+  using ::std::swap;
+  swap(a.term, b.term);
+  swap(a.succeeds, b.succeeds);
+  swap(a.__isset, b.__isset);
+}
+
+AppendResponse::AppendResponse(const AppendResponse& other14) {
+  term = other14.term;
+  succeeds = other14.succeeds;
+  __isset = other14.__isset;
+}
+AppendResponse& AppendResponse::operator=(const AppendResponse& other15) {
+  term = other15.term;
+  succeeds = other15.succeeds;
+  __isset = other15.__isset;
+  return *this;
+}
+std::ostream& operator<<(std::ostream& out, const AppendResponse& obj) {
+  using apache::thrift::to_string;
+  out << "AppendResponse(";
+  out << "term=" << to_string(obj.term);
+  out << ", " << "succeeds=" << to_string(obj.succeeds);
+  out << ")";
+  return out;
+}
+
+
+VoteRequest::~VoteRequest() throw() {
+}
+
+
+void VoteRequest::__set_term(const int32_t val) {
+  this->term = val;
+}
+
+void VoteRequest::__set_last_commit_idx(const int32_t val) {
+  this->last_commit_idx = val;
+}
+
+void VoteRequest::__set_last_term(const int32_t val) {
+  this->last_term = val;
+}
+
+const char* VoteRequest::ascii_fingerprint = "6435B39C87AB0E30F30BEDEFD7328C0D";
+const uint8_t VoteRequest::binary_fingerprint[16] = {0x64,0x35,0xB3,0x9C,0x87,0xAB,0x0E,0x30,0xF3,0x0B,0xED,0xEF,0xD7,0x32,0x8C,0x0D};
+
+uint32_t VoteRequest::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_I32) {
+          xfer += iprot->readI32(this->term);
+          this->__isset.term = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 2:
+        if (ftype == ::apache::thrift::protocol::T_I32) {
+          xfer += iprot->readI32(this->last_commit_idx);
+          this->__isset.last_commit_idx = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 3:
+        if (ftype == ::apache::thrift::protocol::T_I32) {
+          xfer += iprot->readI32(this->last_term);
+          this->__isset.last_term = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t VoteRequest::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  oprot->incrementRecursionDepth();
+  xfer += oprot->writeStructBegin("VoteRequest");
+
+  xfer += oprot->writeFieldBegin("term", ::apache::thrift::protocol::T_I32, 1);
+  xfer += oprot->writeI32(this->term);
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldBegin("last_commit_idx", ::apache::thrift::protocol::T_I32, 2);
+  xfer += oprot->writeI32(this->last_commit_idx);
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldBegin("last_term", ::apache::thrift::protocol::T_I32, 3);
+  xfer += oprot->writeI32(this->last_term);
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  oprot->decrementRecursionDepth();
+  return xfer;
+}
+
+void swap(VoteRequest &a, VoteRequest &b) {
+  using ::std::swap;
+  swap(a.term, b.term);
+  swap(a.last_commit_idx, b.last_commit_idx);
+  swap(a.last_term, b.last_term);
+  swap(a.__isset, b.__isset);
+}
+
+VoteRequest::VoteRequest(const VoteRequest& other16) {
+  term = other16.term;
+  last_commit_idx = other16.last_commit_idx;
+  last_term = other16.last_term;
+  __isset = other16.__isset;
+}
+VoteRequest& VoteRequest::operator=(const VoteRequest& other17) {
+  term = other17.term;
+  last_commit_idx = other17.last_commit_idx;
+  last_term = other17.last_term;
+  __isset = other17.__isset;
+  return *this;
+}
+std::ostream& operator<<(std::ostream& out, const VoteRequest& obj) {
+  using apache::thrift::to_string;
+  out << "VoteRequest(";
+  out << "term=" << to_string(obj.term);
+  out << ", " << "last_commit_idx=" << to_string(obj.last_commit_idx);
+  out << ", " << "last_term=" << to_string(obj.last_term);
+  out << ")";
+  return out;
+}
+
+
+VoteResponse::~VoteResponse() throw() {
+}
+
+
+void VoteResponse::__set_term(const int32_t val) {
+  this->term = val;
+}
+
+void VoteResponse::__set_granted(const bool val) {
+  this->granted = val;
+}
+
+const char* VoteResponse::ascii_fingerprint = "4DC0C1A1F380340B40244ADC7FB0BA60";
+const uint8_t VoteResponse::binary_fingerprint[16] = {0x4D,0xC0,0xC1,0xA1,0xF3,0x80,0x34,0x0B,0x40,0x24,0x4A,0xDC,0x7F,0xB0,0xBA,0x60};
+
+uint32_t VoteResponse::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_I32) {
+          xfer += iprot->readI32(this->term);
+          this->__isset.term = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 2:
+        if (ftype == ::apache::thrift::protocol::T_BOOL) {
+          xfer += iprot->readBool(this->granted);
+          this->__isset.granted = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t VoteResponse::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  oprot->incrementRecursionDepth();
+  xfer += oprot->writeStructBegin("VoteResponse");
+
+  xfer += oprot->writeFieldBegin("term", ::apache::thrift::protocol::T_I32, 1);
+  xfer += oprot->writeI32(this->term);
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldBegin("granted", ::apache::thrift::protocol::T_BOOL, 2);
+  xfer += oprot->writeBool(this->granted);
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  oprot->decrementRecursionDepth();
+  return xfer;
+}
+
+void swap(VoteResponse &a, VoteResponse &b) {
+  using ::std::swap;
+  swap(a.term, b.term);
+  swap(a.granted, b.granted);
+  swap(a.__isset, b.__isset);
+}
+
+VoteResponse::VoteResponse(const VoteResponse& other18) {
+  term = other18.term;
+  granted = other18.granted;
+  __isset = other18.__isset;
+}
+VoteResponse& VoteResponse::operator=(const VoteResponse& other19) {
+  term = other19.term;
+  granted = other19.granted;
+  __isset = other19.__isset;
+  return *this;
+}
+std::ostream& operator<<(std::ostream& out, const VoteResponse& obj) {
+  using apache::thrift::to_string;
+  out << "VoteResponse(";
+  out << "term=" << to_string(obj.term);
+  out << ", " << "granted=" << to_string(obj.granted);
+  out << ")";
+  return out;
+}
+
 } // namespace

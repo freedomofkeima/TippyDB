@@ -74,6 +74,35 @@ struct SKey {
 vector<Member> members;
 map<string, int> member_pos;
 map<string, SKey> skeys;
+string metadata;
+
+// Decode JSON to skeys
+void decodeKeys(const char* json) {
+  Document d;
+  d.Parse(json);
+
+  skeys.clear();
+  const Value& shardedkeys = d["shardedkeys"];
+  assert(shardedkeys.IsArray());
+  // Iterate over all values in shardedkeys
+  for (SizeType i = 0; i < shardedkeys.Size(); i++) {
+      SKey sk;
+      const Value& data = shardedkeys[i];
+      sk.id = data["id"].GetString();
+      const Value& primary = data["primary"];
+      sk.primary.first = (int) primary[0]["region"].GetInt();
+      sk.primary.second = (int) primary[0]["node"].GetInt();
+      const Value& secondary = data["secondary"];
+      for (SizeType j = 0; j < secondary.Size(); j++) {
+          pair<int, int> secval;
+          const Value& data2 = secondary[j];
+          secval.first = (int) data2["region"].GetInt();
+          secval.second = (int) data2["node"].GetInt();
+          sk.secondary.push_back(secval);
+      }
+     skeys[sk.id] = sk;
+  }
+}
 
 /***** CONSENSUS (RAFT) SECTION *****/
 enum {
@@ -85,27 +114,27 @@ enum {
 
 class RaftConsensus {
 public:
-  RaftConsensus(vector<Member> _members, int _own_id) {
+  RaftConsensus(vector<Member> _members, string _metadata, int _own_id) {
     current_term = 0;
-    // TODO: Retrieve log (each modification in json)
+    log = _metadata;
     voted_for = -1;
-    // TODO: Retrieve commit_idx (from metadata counter), last_applied_idx (from db), last_log_index (size of log)
+    commit_idx = -1;
     num_nodes = nodes.size();
     timeout_elapsed = rand() % 1000; // random factor
     election_timeout = 3000; // 3 seconds
     request_timeout = 1000; // 1 second
     nodes = _members;
     node_id = _own_id;
+
+    // TODO: Recover here
   }
+
 
 private:
   int current_term; // server's current term (initial = 0)
-  vector<string> log; // each modification in json
+  string log; // newest metadata
   int voted_for; // the candidate the server voted for (initial = 0)
   int commit_idx; // highest log entry known to be committed
-  int last_applied_idx; // highest log entry applied to state machine (metadata)
-  int state; // indicator for follower / candidate / leader
-  int last_log_index; // most recently appended index (to be committed)
   vector<int> votes_for_me; // who has voted for me
   vector<Member> nodes; // all consensus members
   int num_nodes; // number of nodes
@@ -114,6 +143,8 @@ private:
   int request_timeout; // in miliseconds
   int node_id; // my node ID
 };
+
+RaftConsensus* raft;
 
 /***** END OF CONSENSUS (RAFT) SECTION *****/
 
@@ -231,30 +262,10 @@ void loadSKeys() {
   t.close();
 
   /** Convert string to json */
+  metadata = str; // initialize metadata
   const char* json = str.c_str();
-  Document d;
-  d.Parse(json);
 
-  const Value& shardedkeys = d["shardedkeys"];
-  assert(shardedkeys.IsArray());
-  // Iterate over all values in shardedkeys
-  for (SizeType i = 0; i < shardedkeys.Size(); i++) {
-      SKey sk;
-      const Value& data = shardedkeys[i];
-      sk.id = data["id"].GetString();
-      const Value& primary = data["primary"];
-      sk.primary.first = (int) primary[0]["region"].GetInt();
-      sk.primary.second = (int) primary[0]["node"].GetInt();
-      const Value& secondary = data["secondary"];
-      for (SizeType j = 0; j < secondary.Size(); j++) {
-          pair<int, int> secval;
-          const Value& data2 = secondary[j];
-          secval.first = (int) data2["region"].GetInt();
-          secval.second = (int) data2["node"].GetInt();
-          sk.secondary.push_back(secval);
-      }
-     skeys[sk.id] = sk;
-  }
+  decodeKeys(json);
 
 }
 
@@ -560,6 +571,37 @@ class DBServiceHandler : virtual public DBServiceIf {
 	cout << "resyncData is called" << endl;
   }
 
+  /**
+   * getRecover
+   * Get newest metadata (recovery phase)
+   */
+  void getRecover(GetRecover& _return) {
+    // Your implementation goes here
+    printf("getRecover\n");
+  }
+
+  /**
+   * sendAppend
+   * Send append request -> Update metadata (consensus). On the other hand, lock metadata from other R/W operation
+   * 
+   * @param request
+   */
+  void sendAppend(AppendResponse& _return, const AppendRequest& request) {
+    // Your implementation goes here
+    printf("sendAppend\n");
+  }
+
+  /**
+   * sendVote
+   * Send vote request
+   * 
+   * @param request
+   */
+  void sendVote(VoteResponse& _return, const VoteRequest& request) {
+    // Your implementation goes here
+    printf("sendVote\n");
+  }
+
   void zip() {
     // Do nothing
   }
@@ -593,6 +635,7 @@ int main(int argc, char **argv) {
   loadMembers();
   printMembers();
   // Load shared keys configuration (metadata.tmp)
+  raft = new RaftConsensus(members, "", own_id);
   loadSKeys();
   printSKeys();
 

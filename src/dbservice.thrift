@@ -28,6 +28,39 @@ struct ShardContent {
   1: Shard data
 }
 
+/** Consensus section */
+struct GetRecover {
+  1: i32 term,
+  2: i32 commit_idx,
+  3: string entry,
+  4: bool isLeader
+}
+
+struct AppendRequest {
+  1: i32 term,
+  2: i32 prev_term,
+  3: i32 commit_idx,
+  4: string entry
+}
+
+struct AppendResponse {
+  1: i32 term,
+  2: bool succeeds
+}
+
+struct VoteRequest {
+  1: i32 term,
+  2: i32 last_commit_idx,
+  3: i32 last_term
+}
+
+struct VoteResponse {
+  1: i32 term,
+  2: bool granted
+}
+
+/** End of Consensus section */
+
 service DBService {
 
 	void ping(),
@@ -75,9 +108,23 @@ service DBService {
       */
     ShardContent resyncData(1:i32 remote_region, 2:i32 remote_node),
 
-	// Get metadata (recovery phase)
+    /**
+      * getRecover
+      * Get newest metadata (recovery phase)
+      */
+	GetRecover getRecover(),
 
-	// Update metadata (consensus, initialize if empty). On the other hand, lock metadata from other R/W operation
+    /**
+      * sendAppend
+      * Send append request -> Update metadata (consensus). On the other hand, lock metadata from other R/W operation
+      */
+	AppendResponse sendAppend(1: AppendRequest request),
+
+    /**
+      * sendVote
+      * Send vote request
+      */
+	VoteResponse sendVote(1: VoteRequest request),
 
 	oneway void zip()
 

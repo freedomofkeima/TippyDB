@@ -69,6 +69,28 @@ class DBServiceIf {
    * @param remote_node
    */
   virtual void resyncData(ShardContent& _return, const int32_t remote_region, const int32_t remote_node) = 0;
+
+  /**
+   * getRecover
+   * Get newest metadata (recovery phase)
+   */
+  virtual void getRecover(GetRecover& _return) = 0;
+
+  /**
+   * sendAppend
+   * Send append request -> Update metadata (consensus). On the other hand, lock metadata from other R/W operation
+   * 
+   * @param request
+   */
+  virtual void sendAppend(AppendResponse& _return, const AppendRequest& request) = 0;
+
+  /**
+   * sendVote
+   * Send vote request
+   * 
+   * @param request
+   */
+  virtual void sendVote(VoteResponse& _return, const VoteRequest& request) = 0;
   virtual void zip() = 0;
 };
 
@@ -132,6 +154,15 @@ class DBServiceNull : virtual public DBServiceIf {
     return _return;
   }
   void resyncData(ShardContent& /* _return */, const int32_t /* remote_region */, const int32_t /* remote_node */) {
+    return;
+  }
+  void getRecover(GetRecover& /* _return */) {
+    return;
+  }
+  void sendAppend(AppendResponse& /* _return */, const AppendRequest& /* request */) {
+    return;
+  }
+  void sendVote(VoteResponse& /* _return */, const VoteRequest& /* request */) {
     return;
   }
   void zip() {
@@ -1373,6 +1404,354 @@ class DBService_resyncData_presult {
 };
 
 
+class DBService_getRecover_args {
+ public:
+
+  static const char* ascii_fingerprint; // = "99914B932BD37A50B983C5E7C90AE93B";
+  static const uint8_t binary_fingerprint[16]; // = {0x99,0x91,0x4B,0x93,0x2B,0xD3,0x7A,0x50,0xB9,0x83,0xC5,0xE7,0xC9,0x0A,0xE9,0x3B};
+
+  DBService_getRecover_args(const DBService_getRecover_args&);
+  DBService_getRecover_args& operator=(const DBService_getRecover_args&);
+  DBService_getRecover_args() {
+  }
+
+  virtual ~DBService_getRecover_args() throw();
+
+  bool operator == (const DBService_getRecover_args & /* rhs */) const
+  {
+    return true;
+  }
+  bool operator != (const DBService_getRecover_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const DBService_getRecover_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_getRecover_args& obj);
+};
+
+
+class DBService_getRecover_pargs {
+ public:
+
+  static const char* ascii_fingerprint; // = "99914B932BD37A50B983C5E7C90AE93B";
+  static const uint8_t binary_fingerprint[16]; // = {0x99,0x91,0x4B,0x93,0x2B,0xD3,0x7A,0x50,0xB9,0x83,0xC5,0xE7,0xC9,0x0A,0xE9,0x3B};
+
+
+  virtual ~DBService_getRecover_pargs() throw();
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_getRecover_pargs& obj);
+};
+
+typedef struct _DBService_getRecover_result__isset {
+  _DBService_getRecover_result__isset() : success(false) {}
+  bool success :1;
+} _DBService_getRecover_result__isset;
+
+class DBService_getRecover_result {
+ public:
+
+  static const char* ascii_fingerprint; // = "DF95960614A68F47277C02B14AE8A0A0";
+  static const uint8_t binary_fingerprint[16]; // = {0xDF,0x95,0x96,0x06,0x14,0xA6,0x8F,0x47,0x27,0x7C,0x02,0xB1,0x4A,0xE8,0xA0,0xA0};
+
+  DBService_getRecover_result(const DBService_getRecover_result&);
+  DBService_getRecover_result& operator=(const DBService_getRecover_result&);
+  DBService_getRecover_result() {
+  }
+
+  virtual ~DBService_getRecover_result() throw();
+  GetRecover success;
+
+  _DBService_getRecover_result__isset __isset;
+
+  void __set_success(const GetRecover& val);
+
+  bool operator == (const DBService_getRecover_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    return true;
+  }
+  bool operator != (const DBService_getRecover_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const DBService_getRecover_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_getRecover_result& obj);
+};
+
+typedef struct _DBService_getRecover_presult__isset {
+  _DBService_getRecover_presult__isset() : success(false) {}
+  bool success :1;
+} _DBService_getRecover_presult__isset;
+
+class DBService_getRecover_presult {
+ public:
+
+  static const char* ascii_fingerprint; // = "DF95960614A68F47277C02B14AE8A0A0";
+  static const uint8_t binary_fingerprint[16]; // = {0xDF,0x95,0x96,0x06,0x14,0xA6,0x8F,0x47,0x27,0x7C,0x02,0xB1,0x4A,0xE8,0xA0,0xA0};
+
+
+  virtual ~DBService_getRecover_presult() throw();
+  GetRecover* success;
+
+  _DBService_getRecover_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_getRecover_presult& obj);
+};
+
+typedef struct _DBService_sendAppend_args__isset {
+  _DBService_sendAppend_args__isset() : request(false) {}
+  bool request :1;
+} _DBService_sendAppend_args__isset;
+
+class DBService_sendAppend_args {
+ public:
+
+  static const char* ascii_fingerprint; // = "23960A1EF5FA32AA15018263E130354A";
+  static const uint8_t binary_fingerprint[16]; // = {0x23,0x96,0x0A,0x1E,0xF5,0xFA,0x32,0xAA,0x15,0x01,0x82,0x63,0xE1,0x30,0x35,0x4A};
+
+  DBService_sendAppend_args(const DBService_sendAppend_args&);
+  DBService_sendAppend_args& operator=(const DBService_sendAppend_args&);
+  DBService_sendAppend_args() {
+  }
+
+  virtual ~DBService_sendAppend_args() throw();
+  AppendRequest request;
+
+  _DBService_sendAppend_args__isset __isset;
+
+  void __set_request(const AppendRequest& val);
+
+  bool operator == (const DBService_sendAppend_args & rhs) const
+  {
+    if (!(request == rhs.request))
+      return false;
+    return true;
+  }
+  bool operator != (const DBService_sendAppend_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const DBService_sendAppend_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_sendAppend_args& obj);
+};
+
+
+class DBService_sendAppend_pargs {
+ public:
+
+  static const char* ascii_fingerprint; // = "23960A1EF5FA32AA15018263E130354A";
+  static const uint8_t binary_fingerprint[16]; // = {0x23,0x96,0x0A,0x1E,0xF5,0xFA,0x32,0xAA,0x15,0x01,0x82,0x63,0xE1,0x30,0x35,0x4A};
+
+
+  virtual ~DBService_sendAppend_pargs() throw();
+  const AppendRequest* request;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_sendAppend_pargs& obj);
+};
+
+typedef struct _DBService_sendAppend_result__isset {
+  _DBService_sendAppend_result__isset() : success(false) {}
+  bool success :1;
+} _DBService_sendAppend_result__isset;
+
+class DBService_sendAppend_result {
+ public:
+
+  static const char* ascii_fingerprint; // = "49E764C8B69512E0ECAFC9B0C79DBFA8";
+  static const uint8_t binary_fingerprint[16]; // = {0x49,0xE7,0x64,0xC8,0xB6,0x95,0x12,0xE0,0xEC,0xAF,0xC9,0xB0,0xC7,0x9D,0xBF,0xA8};
+
+  DBService_sendAppend_result(const DBService_sendAppend_result&);
+  DBService_sendAppend_result& operator=(const DBService_sendAppend_result&);
+  DBService_sendAppend_result() {
+  }
+
+  virtual ~DBService_sendAppend_result() throw();
+  AppendResponse success;
+
+  _DBService_sendAppend_result__isset __isset;
+
+  void __set_success(const AppendResponse& val);
+
+  bool operator == (const DBService_sendAppend_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    return true;
+  }
+  bool operator != (const DBService_sendAppend_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const DBService_sendAppend_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_sendAppend_result& obj);
+};
+
+typedef struct _DBService_sendAppend_presult__isset {
+  _DBService_sendAppend_presult__isset() : success(false) {}
+  bool success :1;
+} _DBService_sendAppend_presult__isset;
+
+class DBService_sendAppend_presult {
+ public:
+
+  static const char* ascii_fingerprint; // = "49E764C8B69512E0ECAFC9B0C79DBFA8";
+  static const uint8_t binary_fingerprint[16]; // = {0x49,0xE7,0x64,0xC8,0xB6,0x95,0x12,0xE0,0xEC,0xAF,0xC9,0xB0,0xC7,0x9D,0xBF,0xA8};
+
+
+  virtual ~DBService_sendAppend_presult() throw();
+  AppendResponse* success;
+
+  _DBService_sendAppend_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_sendAppend_presult& obj);
+};
+
+typedef struct _DBService_sendVote_args__isset {
+  _DBService_sendVote_args__isset() : request(false) {}
+  bool request :1;
+} _DBService_sendVote_args__isset;
+
+class DBService_sendVote_args {
+ public:
+
+  static const char* ascii_fingerprint; // = "EDE0985507073D811F796DAC76FC9E5E";
+  static const uint8_t binary_fingerprint[16]; // = {0xED,0xE0,0x98,0x55,0x07,0x07,0x3D,0x81,0x1F,0x79,0x6D,0xAC,0x76,0xFC,0x9E,0x5E};
+
+  DBService_sendVote_args(const DBService_sendVote_args&);
+  DBService_sendVote_args& operator=(const DBService_sendVote_args&);
+  DBService_sendVote_args() {
+  }
+
+  virtual ~DBService_sendVote_args() throw();
+  VoteRequest request;
+
+  _DBService_sendVote_args__isset __isset;
+
+  void __set_request(const VoteRequest& val);
+
+  bool operator == (const DBService_sendVote_args & rhs) const
+  {
+    if (!(request == rhs.request))
+      return false;
+    return true;
+  }
+  bool operator != (const DBService_sendVote_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const DBService_sendVote_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_sendVote_args& obj);
+};
+
+
+class DBService_sendVote_pargs {
+ public:
+
+  static const char* ascii_fingerprint; // = "EDE0985507073D811F796DAC76FC9E5E";
+  static const uint8_t binary_fingerprint[16]; // = {0xED,0xE0,0x98,0x55,0x07,0x07,0x3D,0x81,0x1F,0x79,0x6D,0xAC,0x76,0xFC,0x9E,0x5E};
+
+
+  virtual ~DBService_sendVote_pargs() throw();
+  const VoteRequest* request;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_sendVote_pargs& obj);
+};
+
+typedef struct _DBService_sendVote_result__isset {
+  _DBService_sendVote_result__isset() : success(false) {}
+  bool success :1;
+} _DBService_sendVote_result__isset;
+
+class DBService_sendVote_result {
+ public:
+
+  static const char* ascii_fingerprint; // = "49E764C8B69512E0ECAFC9B0C79DBFA8";
+  static const uint8_t binary_fingerprint[16]; // = {0x49,0xE7,0x64,0xC8,0xB6,0x95,0x12,0xE0,0xEC,0xAF,0xC9,0xB0,0xC7,0x9D,0xBF,0xA8};
+
+  DBService_sendVote_result(const DBService_sendVote_result&);
+  DBService_sendVote_result& operator=(const DBService_sendVote_result&);
+  DBService_sendVote_result() {
+  }
+
+  virtual ~DBService_sendVote_result() throw();
+  VoteResponse success;
+
+  _DBService_sendVote_result__isset __isset;
+
+  void __set_success(const VoteResponse& val);
+
+  bool operator == (const DBService_sendVote_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    return true;
+  }
+  bool operator != (const DBService_sendVote_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const DBService_sendVote_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_sendVote_result& obj);
+};
+
+typedef struct _DBService_sendVote_presult__isset {
+  _DBService_sendVote_presult__isset() : success(false) {}
+  bool success :1;
+} _DBService_sendVote_presult__isset;
+
+class DBService_sendVote_presult {
+ public:
+
+  static const char* ascii_fingerprint; // = "49E764C8B69512E0ECAFC9B0C79DBFA8";
+  static const uint8_t binary_fingerprint[16]; // = {0x49,0xE7,0x64,0xC8,0xB6,0x95,0x12,0xE0,0xEC,0xAF,0xC9,0xB0,0xC7,0x9D,0xBF,0xA8};
+
+
+  virtual ~DBService_sendVote_presult() throw();
+  VoteResponse* success;
+
+  _DBService_sendVote_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_sendVote_presult& obj);
+};
+
+
 class DBService_zip_args {
  public:
 
@@ -1472,6 +1851,15 @@ class DBServiceClient : virtual public DBServiceIf {
   void resyncData(ShardContent& _return, const int32_t remote_region, const int32_t remote_node);
   void send_resyncData(const int32_t remote_region, const int32_t remote_node);
   void recv_resyncData(ShardContent& _return);
+  void getRecover(GetRecover& _return);
+  void send_getRecover();
+  void recv_getRecover(GetRecover& _return);
+  void sendAppend(AppendResponse& _return, const AppendRequest& request);
+  void send_sendAppend(const AppendRequest& request);
+  void recv_sendAppend(AppendResponse& _return);
+  void sendVote(VoteResponse& _return, const VoteRequest& request);
+  void send_sendVote(const VoteRequest& request);
+  void recv_sendVote(VoteResponse& _return);
   void zip();
   void send_zip();
  protected:
@@ -1499,6 +1887,9 @@ class DBServiceProcessor : public ::apache::thrift::TDispatchProcessor {
   void process_deleteSecondaryData(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_replicateData(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_resyncData(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_getRecover(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_sendAppend(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_sendVote(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_zip(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
  public:
   DBServiceProcessor(boost::shared_ptr<DBServiceIf> iface) :
@@ -1513,6 +1904,9 @@ class DBServiceProcessor : public ::apache::thrift::TDispatchProcessor {
     processMap_["deleteSecondaryData"] = &DBServiceProcessor::process_deleteSecondaryData;
     processMap_["replicateData"] = &DBServiceProcessor::process_replicateData;
     processMap_["resyncData"] = &DBServiceProcessor::process_resyncData;
+    processMap_["getRecover"] = &DBServiceProcessor::process_getRecover;
+    processMap_["sendAppend"] = &DBServiceProcessor::process_sendAppend;
+    processMap_["sendVote"] = &DBServiceProcessor::process_sendVote;
     processMap_["zip"] = &DBServiceProcessor::process_zip;
   }
 
@@ -1633,6 +2027,36 @@ class DBServiceMultiface : virtual public DBServiceIf {
       ifaces_[i]->resyncData(_return, remote_region, remote_node);
     }
     ifaces_[i]->resyncData(_return, remote_region, remote_node);
+    return;
+  }
+
+  void getRecover(GetRecover& _return) {
+    size_t sz = ifaces_.size();
+    size_t i = 0;
+    for (; i < (sz - 1); ++i) {
+      ifaces_[i]->getRecover(_return);
+    }
+    ifaces_[i]->getRecover(_return);
+    return;
+  }
+
+  void sendAppend(AppendResponse& _return, const AppendRequest& request) {
+    size_t sz = ifaces_.size();
+    size_t i = 0;
+    for (; i < (sz - 1); ++i) {
+      ifaces_[i]->sendAppend(_return, request);
+    }
+    ifaces_[i]->sendAppend(_return, request);
+    return;
+  }
+
+  void sendVote(VoteResponse& _return, const VoteRequest& request) {
+    size_t sz = ifaces_.size();
+    size_t i = 0;
+    for (; i < (sz - 1); ++i) {
+      ifaces_[i]->sendVote(_return, request);
+    }
+    ifaces_[i]->sendVote(_return, request);
     return;
   }
 

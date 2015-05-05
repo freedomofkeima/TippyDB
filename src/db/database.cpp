@@ -64,6 +64,7 @@ void initDB(string path, int shard_size) {
 	} else {
 		psize_value = stoll(temp_value);
 	}
+    cout << "Psize Value: " << psize_value << endl;
 
 	write_options2.sync = true;
 }

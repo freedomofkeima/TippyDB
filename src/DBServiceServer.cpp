@@ -16,6 +16,9 @@
 #include <thrift/transport/TTransportUtils.h>
 #include <thrift/TToString.h>
 
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/date_time/posix_time/posix_time_io.hpp>
+
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
@@ -40,9 +43,8 @@ using namespace apache::thrift::transport;
 using namespace apache::thrift::server;
 
 using boost::shared_ptr;
-
+using namespace boost::posix_time;
 using namespace rapidjson;
-
 using namespace dbservice;
 
 /** Own configuration */
@@ -104,6 +106,32 @@ void decodeKeys(const char* json) {
   }
 }
 
+/***** LOG WRITER SECTION *****/
+class LogWriter {
+public:
+  LogWriter() {
+    file = "data/app.log";
+    facet = new time_facet("%Y-%m-%d-%H:%M:$S.%f");
+  }
+
+  void writeLog(const string &message) {
+    log_mutex.lock();
+    ofstream log_file(file, ios_base::out | ios_base::app);
+    cout.imbue(locale(cout.getloc(), facet));
+    log_file << microsec_clock::local_time() << " | " << message << endl;
+    log_mutex.unlock();
+  }
+
+private:
+  string file;
+  time_facet* facet;
+  mutex log_mutex;
+};
+
+LogWriter* logWriter;
+
+/***** END OF LOG WRITER SECTION *****/
+
 /***** CONSENSUS (RAFT) SECTION *****/
 enum {
 	RAFT_STATE_NONE,
@@ -128,7 +156,6 @@ public:
 
     // TODO: Recover here
   }
-
 
 private:
   int current_term; // server's current term (initial = 0)
@@ -634,6 +661,9 @@ int main(int argc, char **argv) {
   // Load members configuration (db.config)
   loadMembers();
   printMembers();
+  // Load log writer
+  logWriter = new LogWriter();
+  logWriter->writeLog("DBServiceServer is started");
   // Load shared keys configuration (metadata.tmp)
   raft = new RaftConsensus(members, "", own_id);
   loadSKeys();

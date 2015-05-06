@@ -114,7 +114,7 @@ public:
     facet = new time_facet("%Y-%m-%d-%H:%M:$S.%f");
   }
 
-  void writeLog(const string &message) {
+  void writeLog(const std::string &message) {
     log_mutex.lock();
     ofstream log_file(file, ios_base::out | ios_base::app);
     cout.imbue(locale(cout.getloc(), facet));
@@ -156,6 +156,46 @@ public:
 
     // TODO: Recover here
   }
+
+  int getTerm() {
+    return current_term;
+  }
+
+  void setTerm(int _term) {
+    current_term = _term;
+  }
+
+  string getLog() {
+    return log;
+  }
+
+  int getVotedFor() {
+    return voted_for;
+  }
+
+  void setVotedFor(int _voted_for) {
+    voted_for = _voted_for;
+  }
+
+  int getCommitIdx() {
+    return commit_idx;
+  }
+
+  int getNodeId() {
+    return node_id;
+  }
+
+  bool commit(const std::string entry, int _commit_idx) {
+    if (commit_idx < _commit_idx) commit_idx = _commit_idx;
+    else return false;
+    // update log
+    log = entry;
+    return true;
+  }
+
+  // TODO: Send vote request -> write log
+
+  // TODO: Send append request -> write log
 
 private:
   int current_term; // server's current term (initial = 0)
@@ -603,8 +643,18 @@ class DBServiceHandler : virtual public DBServiceIf {
    * Get newest metadata (recovery phase)
    */
   void getRecover(GetRecover& _return) {
-    // Your implementation goes here
-    printf("getRecover\n");
+	if (raft->getVotedFor() == raft->getNodeId()) {
+		_return.isLeader = true;
+		_return.term = raft->getTerm();
+		_return.commit_idx = raft->getCommitIdx();
+		_return.entry = raft->getLog();
+	} else _return.isLeader = false;
+
+	/** Write to log */
+	string message;
+	if (_return.isLeader) message = "accepted";
+	else message = "rejected (not a leader)";
+	logWriter->writeLog("getRecover " + message);
   }
 
   /**
@@ -614,8 +664,25 @@ class DBServiceHandler : virtual public DBServiceIf {
    * @param request
    */
   void sendAppend(AppendResponse& _return, const AppendRequest& request) {
-    // Your implementation goes here
-    printf("sendAppend\n");
+	bool succeeds = false;
+	if (raft->getVotedFor() == raft->getNodeId() && request.term >= raft->getTerm()) {
+		raft->setTerm(request.term); // update Term
+		if (raft->getCommitIdx() < request.commit_idx) {
+			succeeds = raft->commit(request.entry, request.commit_idx); // commit
+			if (succeeds) {
+				// TODO: Send metadata / state to all followers
+				
+			}
+		}
+	}
+	_return.term = request.term;
+	_return.succeeds = succeeds;
+
+	/** Write to log */
+	string message;
+	if (succeeds) message = "accepted";
+	else message = "rejected";
+	logWriter->writeLog("sendAppend " + message + " (term " + to_string(request.term) + ")");
   }
 
   /**
@@ -625,8 +692,23 @@ class DBServiceHandler : virtual public DBServiceIf {
    * @param request
    */
   void sendVote(VoteResponse& _return, const VoteRequest& request) {
-    // Your implementation goes here
-    printf("sendVote\n");
+	bool granted = false;
+	if (request.term >= raft->getTerm()) {
+		raft->setTerm(request.term); // update Term
+		int voted_for = raft->getVotedFor();
+		if ((voted_for == -1 || voted_for == request.peer_id) && request.last_commit_idx >= raft->getCommitIdx()) {
+			granted = true;
+			raft->setVotedFor(request.peer_id);
+		}
+	}
+	_return.term = request.term;
+	_return.granted = granted;
+
+	/** Write to log */
+	string message;
+	if (granted) message = "accepted";
+	else message = "rejected";
+	logWriter->writeLog("sendVote " + message + " to " + to_string(request.peer_id) + " (term " + to_string(request.term) + ")");
   }
 
   void zip() {

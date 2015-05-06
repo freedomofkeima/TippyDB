@@ -38,9 +38,8 @@ struct GetRecover {
 
 struct AppendRequest {
   1: i32 term,
-  2: i32 prev_term,
-  3: i32 commit_idx,
-  4: string entry
+  2: i32 commit_idx,
+  3: string entry
 }
 
 struct AppendResponse {
@@ -51,7 +50,7 @@ struct AppendResponse {
 struct VoteRequest {
   1: i32 term,
   2: i32 last_commit_idx,
-  3: i32 last_term
+  3: i32 peer_id
 }
 
 struct VoteResponse {

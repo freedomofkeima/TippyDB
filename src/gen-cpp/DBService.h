@@ -1456,8 +1456,8 @@ typedef struct _DBService_getRecover_result__isset {
 class DBService_getRecover_result {
  public:
 
-  static const char* ascii_fingerprint; // = "DF95960614A68F47277C02B14AE8A0A0";
-  static const uint8_t binary_fingerprint[16]; // = {0xDF,0x95,0x96,0x06,0x14,0xA6,0x8F,0x47,0x27,0x7C,0x02,0xB1,0x4A,0xE8,0xA0,0xA0};
+  static const char* ascii_fingerprint; // = "491735FE239F275597C5AA026860CA88";
+  static const uint8_t binary_fingerprint[16]; // = {0x49,0x17,0x35,0xFE,0x23,0x9F,0x27,0x55,0x97,0xC5,0xAA,0x02,0x68,0x60,0xCA,0x88};
 
   DBService_getRecover_result(const DBService_getRecover_result&);
   DBService_getRecover_result& operator=(const DBService_getRecover_result&);
@@ -1497,8 +1497,8 @@ typedef struct _DBService_getRecover_presult__isset {
 class DBService_getRecover_presult {
  public:
 
-  static const char* ascii_fingerprint; // = "DF95960614A68F47277C02B14AE8A0A0";
-  static const uint8_t binary_fingerprint[16]; // = {0xDF,0x95,0x96,0x06,0x14,0xA6,0x8F,0x47,0x27,0x7C,0x02,0xB1,0x4A,0xE8,0xA0,0xA0};
+  static const char* ascii_fingerprint; // = "491735FE239F275597C5AA026860CA88";
+  static const uint8_t binary_fingerprint[16]; // = {0x49,0x17,0x35,0xFE,0x23,0x9F,0x27,0x55,0x97,0xC5,0xAA,0x02,0x68,0x60,0xCA,0x88};
 
 
   virtual ~DBService_getRecover_presult() throw();
@@ -1519,8 +1519,8 @@ typedef struct _DBService_sendAppend_args__isset {
 class DBService_sendAppend_args {
  public:
 
-  static const char* ascii_fingerprint; // = "23960A1EF5FA32AA15018263E130354A";
-  static const uint8_t binary_fingerprint[16]; // = {0x23,0x96,0x0A,0x1E,0xF5,0xFA,0x32,0xAA,0x15,0x01,0x82,0x63,0xE1,0x30,0x35,0x4A};
+  static const char* ascii_fingerprint; // = "4678D384F76BCECE0026EBDAFB4ABE16";
+  static const uint8_t binary_fingerprint[16]; // = {0x46,0x78,0xD3,0x84,0xF7,0x6B,0xCE,0xCE,0x00,0x26,0xEB,0xDA,0xFB,0x4A,0xBE,0x16};
 
   DBService_sendAppend_args(const DBService_sendAppend_args&);
   DBService_sendAppend_args& operator=(const DBService_sendAppend_args&);
@@ -1556,8 +1556,8 @@ class DBService_sendAppend_args {
 class DBService_sendAppend_pargs {
  public:
 
-  static const char* ascii_fingerprint; // = "23960A1EF5FA32AA15018263E130354A";
-  static const uint8_t binary_fingerprint[16]; // = {0x23,0x96,0x0A,0x1E,0xF5,0xFA,0x32,0xAA,0x15,0x01,0x82,0x63,0xE1,0x30,0x35,0x4A};
+  static const char* ascii_fingerprint; // = "4678D384F76BCECE0026EBDAFB4ABE16";
+  static const uint8_t binary_fingerprint[16]; // = {0x46,0x78,0xD3,0x84,0xF7,0x6B,0xCE,0xCE,0x00,0x26,0xEB,0xDA,0xFB,0x4A,0xBE,0x16};
 
 
   virtual ~DBService_sendAppend_pargs() throw();

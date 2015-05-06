@@ -270,8 +270,12 @@ void GetRecover::__set_entry(const std::string& val) {
   this->entry = val;
 }
 
-const char* GetRecover::ascii_fingerprint = "4086F12A5C2D615560236565C542F3C3";
-const uint8_t GetRecover::binary_fingerprint[16] = {0x40,0x86,0xF1,0x2A,0x5C,0x2D,0x61,0x55,0x60,0x23,0x65,0x65,0xC5,0x42,0xF3,0xC3};
+void GetRecover::__set_isLeader(const bool val) {
+  this->isLeader = val;
+}
+
+const char* GetRecover::ascii_fingerprint = "255A92C076C015DBAC5DBD5B682082BE";
+const uint8_t GetRecover::binary_fingerprint[16] = {0x25,0x5A,0x92,0xC0,0x76,0xC0,0x15,0xDB,0xAC,0x5D,0xBD,0x5B,0x68,0x20,0x82,0xBE};
 
 uint32_t GetRecover::read(::apache::thrift::protocol::TProtocol* iprot) {
 
@@ -317,6 +321,14 @@ uint32_t GetRecover::read(::apache::thrift::protocol::TProtocol* iprot) {
           xfer += iprot->skip(ftype);
         }
         break;
+      case 4:
+        if (ftype == ::apache::thrift::protocol::T_BOOL) {
+          xfer += iprot->readBool(this->isLeader);
+          this->__isset.isLeader = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
       default:
         xfer += iprot->skip(ftype);
         break;
@@ -346,6 +358,10 @@ uint32_t GetRecover::write(::apache::thrift::protocol::TProtocol* oprot) const {
   xfer += oprot->writeString(this->entry);
   xfer += oprot->writeFieldEnd();
 
+  xfer += oprot->writeFieldBegin("isLeader", ::apache::thrift::protocol::T_BOOL, 4);
+  xfer += oprot->writeBool(this->isLeader);
+  xfer += oprot->writeFieldEnd();
+
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
   oprot->decrementRecursionDepth();
@@ -357,6 +373,7 @@ void swap(GetRecover &a, GetRecover &b) {
   swap(a.term, b.term);
   swap(a.commit_idx, b.commit_idx);
   swap(a.entry, b.entry);
+  swap(a.isLeader, b.isLeader);
   swap(a.__isset, b.__isset);
 }
 
@@ -364,12 +381,14 @@ GetRecover::GetRecover(const GetRecover& other10) {
   term = other10.term;
   commit_idx = other10.commit_idx;
   entry = other10.entry;
+  isLeader = other10.isLeader;
   __isset = other10.__isset;
 }
 GetRecover& GetRecover::operator=(const GetRecover& other11) {
   term = other11.term;
   commit_idx = other11.commit_idx;
   entry = other11.entry;
+  isLeader = other11.isLeader;
   __isset = other11.__isset;
   return *this;
 }
@@ -379,6 +398,7 @@ std::ostream& operator<<(std::ostream& out, const GetRecover& obj) {
   out << "term=" << to_string(obj.term);
   out << ", " << "commit_idx=" << to_string(obj.commit_idx);
   out << ", " << "entry=" << to_string(obj.entry);
+  out << ", " << "isLeader=" << to_string(obj.isLeader);
   out << ")";
   return out;
 }
@@ -392,10 +412,6 @@ void AppendRequest::__set_term(const int32_t val) {
   this->term = val;
 }
 
-void AppendRequest::__set_prev_term(const int32_t val) {
-  this->prev_term = val;
-}
-
 void AppendRequest::__set_commit_idx(const int32_t val) {
   this->commit_idx = val;
 }
@@ -404,8 +420,8 @@ void AppendRequest::__set_entry(const std::string& val) {
   this->entry = val;
 }
 
-const char* AppendRequest::ascii_fingerprint = "5805DAA8A1E0142D0F84D212A8253609";
-const uint8_t AppendRequest::binary_fingerprint[16] = {0x58,0x05,0xDA,0xA8,0xA1,0xE0,0x14,0x2D,0x0F,0x84,0xD2,0x12,0xA8,0x25,0x36,0x09};
+const char* AppendRequest::ascii_fingerprint = "4086F12A5C2D615560236565C542F3C3";
+const uint8_t AppendRequest::binary_fingerprint[16] = {0x40,0x86,0xF1,0x2A,0x5C,0x2D,0x61,0x55,0x60,0x23,0x65,0x65,0xC5,0x42,0xF3,0xC3};
 
 uint32_t AppendRequest::read(::apache::thrift::protocol::TProtocol* iprot) {
 
@@ -437,21 +453,13 @@ uint32_t AppendRequest::read(::apache::thrift::protocol::TProtocol* iprot) {
         break;
       case 2:
         if (ftype == ::apache::thrift::protocol::T_I32) {
-          xfer += iprot->readI32(this->prev_term);
-          this->__isset.prev_term = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      case 3:
-        if (ftype == ::apache::thrift::protocol::T_I32) {
           xfer += iprot->readI32(this->commit_idx);
           this->__isset.commit_idx = true;
         } else {
           xfer += iprot->skip(ftype);
         }
         break;
-      case 4:
+      case 3:
         if (ftype == ::apache::thrift::protocol::T_STRING) {
           xfer += iprot->readString(this->entry);
           this->__isset.entry = true;
@@ -480,15 +488,11 @@ uint32_t AppendRequest::write(::apache::thrift::protocol::TProtocol* oprot) cons
   xfer += oprot->writeI32(this->term);
   xfer += oprot->writeFieldEnd();
 
-  xfer += oprot->writeFieldBegin("prev_term", ::apache::thrift::protocol::T_I32, 2);
-  xfer += oprot->writeI32(this->prev_term);
-  xfer += oprot->writeFieldEnd();
-
-  xfer += oprot->writeFieldBegin("commit_idx", ::apache::thrift::protocol::T_I32, 3);
+  xfer += oprot->writeFieldBegin("commit_idx", ::apache::thrift::protocol::T_I32, 2);
   xfer += oprot->writeI32(this->commit_idx);
   xfer += oprot->writeFieldEnd();
 
-  xfer += oprot->writeFieldBegin("entry", ::apache::thrift::protocol::T_STRING, 4);
+  xfer += oprot->writeFieldBegin("entry", ::apache::thrift::protocol::T_STRING, 3);
   xfer += oprot->writeString(this->entry);
   xfer += oprot->writeFieldEnd();
 
@@ -501,7 +505,6 @@ uint32_t AppendRequest::write(::apache::thrift::protocol::TProtocol* oprot) cons
 void swap(AppendRequest &a, AppendRequest &b) {
   using ::std::swap;
   swap(a.term, b.term);
-  swap(a.prev_term, b.prev_term);
   swap(a.commit_idx, b.commit_idx);
   swap(a.entry, b.entry);
   swap(a.__isset, b.__isset);
@@ -509,14 +512,12 @@ void swap(AppendRequest &a, AppendRequest &b) {
 
 AppendRequest::AppendRequest(const AppendRequest& other12) {
   term = other12.term;
-  prev_term = other12.prev_term;
   commit_idx = other12.commit_idx;
   entry = other12.entry;
   __isset = other12.__isset;
 }
 AppendRequest& AppendRequest::operator=(const AppendRequest& other13) {
   term = other13.term;
-  prev_term = other13.prev_term;
   commit_idx = other13.commit_idx;
   entry = other13.entry;
   __isset = other13.__isset;
@@ -526,7 +527,6 @@ std::ostream& operator<<(std::ostream& out, const AppendRequest& obj) {
   using apache::thrift::to_string;
   out << "AppendRequest(";
   out << "term=" << to_string(obj.term);
-  out << ", " << "prev_term=" << to_string(obj.prev_term);
   out << ", " << "commit_idx=" << to_string(obj.commit_idx);
   out << ", " << "entry=" << to_string(obj.entry);
   out << ")";
@@ -656,8 +656,8 @@ void VoteRequest::__set_last_commit_idx(const int32_t val) {
   this->last_commit_idx = val;
 }
 
-void VoteRequest::__set_last_term(const int32_t val) {
-  this->last_term = val;
+void VoteRequest::__set_peer_id(const int32_t val) {
+  this->peer_id = val;
 }
 
 const char* VoteRequest::ascii_fingerprint = "6435B39C87AB0E30F30BEDEFD7328C0D";
@@ -701,8 +701,8 @@ uint32_t VoteRequest::read(::apache::thrift::protocol::TProtocol* iprot) {
         break;
       case 3:
         if (ftype == ::apache::thrift::protocol::T_I32) {
-          xfer += iprot->readI32(this->last_term);
-          this->__isset.last_term = true;
+          xfer += iprot->readI32(this->peer_id);
+          this->__isset.peer_id = true;
         } else {
           xfer += iprot->skip(ftype);
         }
@@ -732,8 +732,8 @@ uint32_t VoteRequest::write(::apache::thrift::protocol::TProtocol* oprot) const 
   xfer += oprot->writeI32(this->last_commit_idx);
   xfer += oprot->writeFieldEnd();
 
-  xfer += oprot->writeFieldBegin("last_term", ::apache::thrift::protocol::T_I32, 3);
-  xfer += oprot->writeI32(this->last_term);
+  xfer += oprot->writeFieldBegin("peer_id", ::apache::thrift::protocol::T_I32, 3);
+  xfer += oprot->writeI32(this->peer_id);
   xfer += oprot->writeFieldEnd();
 
   xfer += oprot->writeFieldStop();
@@ -746,20 +746,20 @@ void swap(VoteRequest &a, VoteRequest &b) {
   using ::std::swap;
   swap(a.term, b.term);
   swap(a.last_commit_idx, b.last_commit_idx);
-  swap(a.last_term, b.last_term);
+  swap(a.peer_id, b.peer_id);
   swap(a.__isset, b.__isset);
 }
 
 VoteRequest::VoteRequest(const VoteRequest& other16) {
   term = other16.term;
   last_commit_idx = other16.last_commit_idx;
-  last_term = other16.last_term;
+  peer_id = other16.peer_id;
   __isset = other16.__isset;
 }
 VoteRequest& VoteRequest::operator=(const VoteRequest& other17) {
   term = other17.term;
   last_commit_idx = other17.last_commit_idx;
-  last_term = other17.last_term;
+  peer_id = other17.peer_id;
   __isset = other17.__isset;
   return *this;
 }
@@ -768,7 +768,7 @@ std::ostream& operator<<(std::ostream& out, const VoteRequest& obj) {
   out << "VoteRequest(";
   out << "term=" << to_string(obj.term);
   out << ", " << "last_commit_idx=" << to_string(obj.last_commit_idx);
-  out << ", " << "last_term=" << to_string(obj.last_term);
+  out << ", " << "peer_id=" << to_string(obj.peer_id);
   out << ")";
   return out;
 }

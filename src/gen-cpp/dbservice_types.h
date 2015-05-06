@@ -134,27 +134,29 @@ class ShardContent {
 void swap(ShardContent &a, ShardContent &b);
 
 typedef struct _GetRecover__isset {
-  _GetRecover__isset() : term(false), commit_idx(false), entry(false) {}
+  _GetRecover__isset() : term(false), commit_idx(false), entry(false), isLeader(false) {}
   bool term :1;
   bool commit_idx :1;
   bool entry :1;
+  bool isLeader :1;
 } _GetRecover__isset;
 
 class GetRecover {
  public:
 
-  static const char* ascii_fingerprint; // = "4086F12A5C2D615560236565C542F3C3";
-  static const uint8_t binary_fingerprint[16]; // = {0x40,0x86,0xF1,0x2A,0x5C,0x2D,0x61,0x55,0x60,0x23,0x65,0x65,0xC5,0x42,0xF3,0xC3};
+  static const char* ascii_fingerprint; // = "255A92C076C015DBAC5DBD5B682082BE";
+  static const uint8_t binary_fingerprint[16]; // = {0x25,0x5A,0x92,0xC0,0x76,0xC0,0x15,0xDB,0xAC,0x5D,0xBD,0x5B,0x68,0x20,0x82,0xBE};
 
   GetRecover(const GetRecover&);
   GetRecover& operator=(const GetRecover&);
-  GetRecover() : term(0), commit_idx(0), entry() {
+  GetRecover() : term(0), commit_idx(0), entry(), isLeader(0) {
   }
 
   virtual ~GetRecover() throw();
   int32_t term;
   int32_t commit_idx;
   std::string entry;
+  bool isLeader;
 
   _GetRecover__isset __isset;
 
@@ -164,6 +166,8 @@ class GetRecover {
 
   void __set_entry(const std::string& val);
 
+  void __set_isLeader(const bool val);
+
   bool operator == (const GetRecover & rhs) const
   {
     if (!(term == rhs.term))
@@ -171,6 +175,8 @@ class GetRecover {
     if (!(commit_idx == rhs.commit_idx))
       return false;
     if (!(entry == rhs.entry))
+      return false;
+    if (!(isLeader == rhs.isLeader))
       return false;
     return true;
   }
@@ -189,9 +195,8 @@ class GetRecover {
 void swap(GetRecover &a, GetRecover &b);
 
 typedef struct _AppendRequest__isset {
-  _AppendRequest__isset() : term(false), prev_term(false), commit_idx(false), entry(false) {}
+  _AppendRequest__isset() : term(false), commit_idx(false), entry(false) {}
   bool term :1;
-  bool prev_term :1;
   bool commit_idx :1;
   bool entry :1;
 } _AppendRequest__isset;
@@ -199,25 +204,22 @@ typedef struct _AppendRequest__isset {
 class AppendRequest {
  public:
 
-  static const char* ascii_fingerprint; // = "5805DAA8A1E0142D0F84D212A8253609";
-  static const uint8_t binary_fingerprint[16]; // = {0x58,0x05,0xDA,0xA8,0xA1,0xE0,0x14,0x2D,0x0F,0x84,0xD2,0x12,0xA8,0x25,0x36,0x09};
+  static const char* ascii_fingerprint; // = "4086F12A5C2D615560236565C542F3C3";
+  static const uint8_t binary_fingerprint[16]; // = {0x40,0x86,0xF1,0x2A,0x5C,0x2D,0x61,0x55,0x60,0x23,0x65,0x65,0xC5,0x42,0xF3,0xC3};
 
   AppendRequest(const AppendRequest&);
   AppendRequest& operator=(const AppendRequest&);
-  AppendRequest() : term(0), prev_term(0), commit_idx(0), entry() {
+  AppendRequest() : term(0), commit_idx(0), entry() {
   }
 
   virtual ~AppendRequest() throw();
   int32_t term;
-  int32_t prev_term;
   int32_t commit_idx;
   std::string entry;
 
   _AppendRequest__isset __isset;
 
   void __set_term(const int32_t val);
-
-  void __set_prev_term(const int32_t val);
 
   void __set_commit_idx(const int32_t val);
 
@@ -226,8 +228,6 @@ class AppendRequest {
   bool operator == (const AppendRequest & rhs) const
   {
     if (!(term == rhs.term))
-      return false;
-    if (!(prev_term == rhs.prev_term))
       return false;
     if (!(commit_idx == rhs.commit_idx))
       return false;
@@ -299,10 +299,10 @@ class AppendResponse {
 void swap(AppendResponse &a, AppendResponse &b);
 
 typedef struct _VoteRequest__isset {
-  _VoteRequest__isset() : term(false), last_commit_idx(false), last_term(false) {}
+  _VoteRequest__isset() : term(false), last_commit_idx(false), peer_id(false) {}
   bool term :1;
   bool last_commit_idx :1;
-  bool last_term :1;
+  bool peer_id :1;
 } _VoteRequest__isset;
 
 class VoteRequest {
@@ -313,13 +313,13 @@ class VoteRequest {
 
   VoteRequest(const VoteRequest&);
   VoteRequest& operator=(const VoteRequest&);
-  VoteRequest() : term(0), last_commit_idx(0), last_term(0) {
+  VoteRequest() : term(0), last_commit_idx(0), peer_id(0) {
   }
 
   virtual ~VoteRequest() throw();
   int32_t term;
   int32_t last_commit_idx;
-  int32_t last_term;
+  int32_t peer_id;
 
   _VoteRequest__isset __isset;
 
@@ -327,7 +327,7 @@ class VoteRequest {
 
   void __set_last_commit_idx(const int32_t val);
 
-  void __set_last_term(const int32_t val);
+  void __set_peer_id(const int32_t val);
 
   bool operator == (const VoteRequest & rhs) const
   {
@@ -335,7 +335,7 @@ class VoteRequest {
       return false;
     if (!(last_commit_idx == rhs.last_commit_idx))
       return false;
-    if (!(last_term == rhs.last_term))
+    if (!(peer_id == rhs.peer_id))
       return false;
     return true;
   }

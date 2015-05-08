@@ -91,6 +91,14 @@ class DBServiceIf {
    * @param request
    */
   virtual void sendVote(VoteResponse& _return, const VoteRequest& request) = 0;
+
+  /**
+   * followerAppend
+   * Append newest committed metadata at follower
+   * 
+   * @param request
+   */
+  virtual bool followerAppend(const AppendRequest& request) = 0;
   virtual void zip() = 0;
 };
 
@@ -164,6 +172,10 @@ class DBServiceNull : virtual public DBServiceIf {
   }
   void sendVote(VoteResponse& /* _return */, const VoteRequest& /* request */) {
     return;
+  }
+  bool followerAppend(const AppendRequest& /* request */) {
+    bool _return = false;
+    return _return;
   }
   void zip() {
     return;
@@ -1751,6 +1763,126 @@ class DBService_sendVote_presult {
   friend std::ostream& operator<<(std::ostream& out, const DBService_sendVote_presult& obj);
 };
 
+typedef struct _DBService_followerAppend_args__isset {
+  _DBService_followerAppend_args__isset() : request(false) {}
+  bool request :1;
+} _DBService_followerAppend_args__isset;
+
+class DBService_followerAppend_args {
+ public:
+
+  static const char* ascii_fingerprint; // = "4678D384F76BCECE0026EBDAFB4ABE16";
+  static const uint8_t binary_fingerprint[16]; // = {0x46,0x78,0xD3,0x84,0xF7,0x6B,0xCE,0xCE,0x00,0x26,0xEB,0xDA,0xFB,0x4A,0xBE,0x16};
+
+  DBService_followerAppend_args(const DBService_followerAppend_args&);
+  DBService_followerAppend_args& operator=(const DBService_followerAppend_args&);
+  DBService_followerAppend_args() {
+  }
+
+  virtual ~DBService_followerAppend_args() throw();
+  AppendRequest request;
+
+  _DBService_followerAppend_args__isset __isset;
+
+  void __set_request(const AppendRequest& val);
+
+  bool operator == (const DBService_followerAppend_args & rhs) const
+  {
+    if (!(request == rhs.request))
+      return false;
+    return true;
+  }
+  bool operator != (const DBService_followerAppend_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const DBService_followerAppend_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_followerAppend_args& obj);
+};
+
+
+class DBService_followerAppend_pargs {
+ public:
+
+  static const char* ascii_fingerprint; // = "4678D384F76BCECE0026EBDAFB4ABE16";
+  static const uint8_t binary_fingerprint[16]; // = {0x46,0x78,0xD3,0x84,0xF7,0x6B,0xCE,0xCE,0x00,0x26,0xEB,0xDA,0xFB,0x4A,0xBE,0x16};
+
+
+  virtual ~DBService_followerAppend_pargs() throw();
+  const AppendRequest* request;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_followerAppend_pargs& obj);
+};
+
+typedef struct _DBService_followerAppend_result__isset {
+  _DBService_followerAppend_result__isset() : success(false) {}
+  bool success :1;
+} _DBService_followerAppend_result__isset;
+
+class DBService_followerAppend_result {
+ public:
+
+  static const char* ascii_fingerprint; // = "D9D3B4421B1F23CB4063C80B484E7909";
+  static const uint8_t binary_fingerprint[16]; // = {0xD9,0xD3,0xB4,0x42,0x1B,0x1F,0x23,0xCB,0x40,0x63,0xC8,0x0B,0x48,0x4E,0x79,0x09};
+
+  DBService_followerAppend_result(const DBService_followerAppend_result&);
+  DBService_followerAppend_result& operator=(const DBService_followerAppend_result&);
+  DBService_followerAppend_result() : success(0) {
+  }
+
+  virtual ~DBService_followerAppend_result() throw();
+  bool success;
+
+  _DBService_followerAppend_result__isset __isset;
+
+  void __set_success(const bool val);
+
+  bool operator == (const DBService_followerAppend_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    return true;
+  }
+  bool operator != (const DBService_followerAppend_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const DBService_followerAppend_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_followerAppend_result& obj);
+};
+
+typedef struct _DBService_followerAppend_presult__isset {
+  _DBService_followerAppend_presult__isset() : success(false) {}
+  bool success :1;
+} _DBService_followerAppend_presult__isset;
+
+class DBService_followerAppend_presult {
+ public:
+
+  static const char* ascii_fingerprint; // = "D9D3B4421B1F23CB4063C80B484E7909";
+  static const uint8_t binary_fingerprint[16]; // = {0xD9,0xD3,0xB4,0x42,0x1B,0x1F,0x23,0xCB,0x40,0x63,0xC8,0x0B,0x48,0x4E,0x79,0x09};
+
+
+  virtual ~DBService_followerAppend_presult() throw();
+  bool* success;
+
+  _DBService_followerAppend_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_followerAppend_presult& obj);
+};
+
 
 class DBService_zip_args {
  public:
@@ -1860,6 +1992,9 @@ class DBServiceClient : virtual public DBServiceIf {
   void sendVote(VoteResponse& _return, const VoteRequest& request);
   void send_sendVote(const VoteRequest& request);
   void recv_sendVote(VoteResponse& _return);
+  bool followerAppend(const AppendRequest& request);
+  void send_followerAppend(const AppendRequest& request);
+  bool recv_followerAppend();
   void zip();
   void send_zip();
  protected:
@@ -1890,6 +2025,7 @@ class DBServiceProcessor : public ::apache::thrift::TDispatchProcessor {
   void process_getRecover(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_sendAppend(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_sendVote(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_followerAppend(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_zip(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
  public:
   DBServiceProcessor(boost::shared_ptr<DBServiceIf> iface) :
@@ -1907,6 +2043,7 @@ class DBServiceProcessor : public ::apache::thrift::TDispatchProcessor {
     processMap_["getRecover"] = &DBServiceProcessor::process_getRecover;
     processMap_["sendAppend"] = &DBServiceProcessor::process_sendAppend;
     processMap_["sendVote"] = &DBServiceProcessor::process_sendVote;
+    processMap_["followerAppend"] = &DBServiceProcessor::process_followerAppend;
     processMap_["zip"] = &DBServiceProcessor::process_zip;
   }
 
@@ -2058,6 +2195,15 @@ class DBServiceMultiface : virtual public DBServiceIf {
     }
     ifaces_[i]->sendVote(_return, request);
     return;
+  }
+
+  bool followerAppend(const AppendRequest& request) {
+    size_t sz = ifaces_.size();
+    size_t i = 0;
+    for (; i < (sz - 1); ++i) {
+      ifaces_[i]->followerAppend(request);
+    }
+    return ifaces_[i]->followerAppend(request);
   }
 
   void zip() {

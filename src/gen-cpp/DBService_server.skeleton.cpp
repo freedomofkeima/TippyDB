@@ -142,6 +142,17 @@ class DBServiceHandler : virtual public DBServiceIf {
     printf("sendVote\n");
   }
 
+  /**
+   * followerAppend
+   * Append newest committed metadata at follower
+   * 
+   * @param request
+   */
+  bool followerAppend(const AppendRequest& request) {
+    // Your implementation goes here
+    printf("followerAppend\n");
+  }
+
   void zip() {
     // Your implementation goes here
     printf("zip\n");

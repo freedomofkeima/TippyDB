@@ -64,7 +64,6 @@ struct Member {
   string ip;
   int port;
   vector<int> distance;
-  int active; // 0 = active, 1 = dead suspect, 2 = dead
 };
 
 struct SKey {
@@ -76,6 +75,7 @@ struct SKey {
 vector<Member> members;
 map<string, int> member_pos;
 map<string, SKey> skeys;
+string identity;
 string metadata;
 
 // Write JSON to file
@@ -108,6 +108,20 @@ void decodeKeys(map<string, SKey> &ret, const char* json) {
       }
      ret[sk.id] = sk;
   }
+}
+
+// TODO: Create a metadata
+string createMetadata(vector<int> active_nodes) {
+  string ret;
+
+  return ret;
+}
+
+// TODO: Tweak current metadata
+string tweakMetadata(const std::string& m) {
+  string ret;
+
+  return ret;
 }
 
 /***** LOG WRITER SECTION *****/
@@ -156,11 +170,12 @@ public:
     nodes = _members;
     node_id = _own_id;
 
-    // TODO: Recover here (or become candidate if fails)
+    // Recover here (or become candidate if fails)
     bool receiveLeader = false;
     vector<thread> workers;
 
-    for (int i = 0; i < num_nodes; i++) { // broadcast to all nodes
+    for (int i = 0; i < num_nodes; i++) { // broadcast to all nodes except own
+    	if (i == node_id) continue;
     	workers.push_back(thread([&]() {
     		boost::shared_ptr<TTransport> socket(new TSocket(nodes[i].ip, nodes[i].port));
     		cout << "Recover Metadata: Check " << nodes[i].ip << ":" << nodes[i].port;
@@ -177,10 +192,7 @@ public:
     				receiveLeader = true;
     				voted_for = i; // current leader
     				current_term = data.term;
-    				commit_idx = data.commit_idx;
-    				putMetadataValue(commit_idx);
-    				log = data.entry;
-    				writeMetadata(log);
+    				commit(data.entry, data.commit_idx);
     				logWriter->writeLog("Recovered from node_id (leader) = " + to_string(voted_for));
     			}
     		} catch (TException& tx) {
@@ -193,7 +205,10 @@ public:
     });
 
     if (receiveLeader) { // Tweak only own primary (change old primary to secondary, drop one secondary)
+    	string new_entry = tweakMetadata(log);
+    	// TODO: Wait until finish resync before updating metadata
 
+    	appendRequest(new_entry);
     } else {
     	// ensure a majority leader is chosen
     	while (voted_for == -1) {
@@ -201,9 +216,114 @@ public:
 			this_thread::sleep_for(chrono::milliseconds(timeout_elapsed));
 			if (voted_for == -1) leaderRequest(); // requesting leader (as a candidate)
     	}
-    	if (voted_for == node_id) appendRequest(); // propagate metadata
     }
   }
+
+  bool commit(const std::string& entry, int _commit_idx) {
+    if (commit_idx < _commit_idx) commit_idx = _commit_idx;
+    else return false;
+    // update log
+    log = entry;
+    putMetadataValue(commit_idx);
+    writeMetadata(log);
+    return true;
+  }
+
+  // Send vote request
+  bool leaderRequest() {
+    int required = (num_nodes / 2) + 1;
+    votes_for_me.clear(); // reset voters
+    logWriter->writeLog("Become a candidate: leaderRequest to all nodes");
+
+    vector<thread> workers;
+
+    for (int i = 0; i < num_nodes; i++) { // broadcast to all nodes
+    	workers.push_back(thread([&]() {
+    		boost::shared_ptr<TTransport> socket(new TSocket(nodes[i].ip, nodes[i].port));
+    		cout << "Leader Request: Send to " << nodes[i].ip << ":" << nodes[i].port;
+
+    		boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+    		boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+    		DBServiceClient client(protocol);
+
+    		try {
+    			transport->open();
+    			VoteRequest request;
+    			VoteResponse response;
+
+    			/** Start next term */
+    			current_term++; // increase term
+    			request.term = current_term;
+    			request.last_commit_idx = commit_idx + 1; // next commit idx
+    			request.peer_id = node_id;
+
+    			client.sendVote(response, request); // RPC VoteRequest
+    			if (response.granted) {
+    				votes_for_me.push_back(i); // node which has voted for this node
+    				logWriter->writeLog("Receive leader vote from " + nodes[i].ip + ":" + to_string(nodes[i].port));
+    			}
+    		} catch (TException& tx) {
+    			cout << "ERROR: " << tx.what() << endl;
+    		}
+    	})); // end of thread
+    }
+    for_each(workers.begin(), workers.end(), [](thread &t) {
+    	t.join();
+    });
+
+    if ((int) votes_for_me.size() >= required) { // become a leader
+    	// Send newest metadata based on all active nodes
+    	string new_entry = createMetadata(votes_for_me);
+    	if (voted_for == node_id) appendRequest(new_entry); // propagate metadata
+    	logWriter->writeLog("Become a leader: send newest metadata to all nodes");
+    } else return false;
+
+    return true;
+  }
+
+  // Send append request
+  bool appendRequest(const std::string& entry) {
+    int leader_id = voted_for;
+    if (leader_id == -1) return false;
+
+    boost::shared_ptr<TTransport> socket(new TSocket(nodes[leader_id].ip, nodes[leader_id].port));
+    cout << "Append Request: Send to " << nodes[leader_id].ip << ":" << nodes[leader_id].port;
+
+    boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+    boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+    DBServiceClient client(protocol);
+
+    AppendRequest request;
+    AppendResponse response;
+
+    try {
+    	transport->open();
+
+    	/** Start next term */
+    	current_term++; // increase term
+    	logWriter->writeLog("send appendRequest to leader (term " + to_string(current_term) + ")");
+    	request.term = current_term;
+    	request.commit_idx = commit_idx;
+    	request.entry = log;
+
+    	client.sendAppend(response, request); // RPC AppendRequest
+    } catch (TException& tx) {
+    	cout << "ERROR: " << tx.what() << endl;
+    }
+
+    return response.succeeds;
+  }
+
+  void checkFailure(int remote_region, int remote_node) {
+    // TODO: Become a raft leader if the failure_node == voted_for
+
+    // TODO: Change unavailable nodes primary setup, update metadata (At this point, there will be only replication_factor - 1 nodes for this shard key)
+
+    // TODO: Search the next nearest one as the new primary and fill the required number of secondaries (Tell a oneway message to resyncData, add new thrift procedure) -> update metadata for a second time here
+
+  }
+
+  /** Getter & Setter */
 
   int getTerm() {
     return current_term;
@@ -231,30 +351,6 @@ public:
 
   int getNodeId() {
     return node_id;
-  }
-
-  bool commit(const std::string entry, int _commit_idx) {
-    if (commit_idx < _commit_idx) commit_idx = _commit_idx;
-    else return false;
-    // update log
-    log = entry;
-    putMetadataValue(commit_idx);
-    writeMetadata(log);
-    return true;
-  }
-
-  // TODO: Send vote request -> write log
-  bool leaderRequest() {
-    int required = num_nodes / 2; // exclude own
-    logWriter->writeLog("leaderRequest to all nodes");
-
-    return true;
-  }
-
-  // TODO: Send append request -> write log
-  bool appendRequest() {
-    //
-    return true;
   }
 
 private:
@@ -348,7 +444,6 @@ void loadMembers() {
       members[i].node = (int) info["node"].GetInt();
       members[i].ip = info["ip"].GetString();
       members[i].port = info["port"].GetInt();
-      members[i].active = 0; // Initially, dim all as active
      // add additional info for self
      if (info["own"].GetBool()) {
          own_id = (int) i;
@@ -356,6 +451,7 @@ void loadMembers() {
          server_port = members[i].port;
          server_region = members[i].region;
          server_node = members[i].node;
+         identity = constructShardKey(server_region, server_node);
      }
      // construct map
       member_pos[constructShardKey(members[i].region, members[i].node)] = i;
@@ -388,11 +484,6 @@ void loadSKeys() {
 	  skeys.clear();
 	  decodeKeys(skeys, json);
 
-  } else {
-	  // TODO: Create own metadata
-
-	  putMetadataValue(getMetadataValue() + 1);
-	  writeMetadata(metadata);
   }
 }
 
@@ -430,8 +521,8 @@ LogicalClock* lClock;
 
 /***** SECONDARY SECTION *****/
 
-void failureTask(const int32_t remote_region, const int32_t remote_node) {
-
+void failureTask(int remote_region, int remote_node) {
+	raft->checkFailure(remote_region, remote_node);
 }
 
 /**
@@ -458,7 +549,7 @@ void backgroundTask(const std::string& key, const std::string& value, long long 
 	for(int i = 0; i < (int) secondary.size(); i++) isSent[i] = false;
 	while (timer <= 30) {
 		vector<thread> workers;
-		for(int i = 0; i < (int) secondary.size(); i++) {
+		for(int i = 0; i < (int) secondary.size(); i++) { // broadcast to all secondaries
 			if (!isSent[i]) {
 				workers.push_back(thread([&]() {
 					int idx = member_pos[constructShardKey(secondary[i].first, secondary[i].second)];
@@ -525,7 +616,8 @@ class DBServiceHandler : virtual public DBServiceIf {
 		thread t(backgroundTask, _return, value, clock, 0);
 		t.detach();
 	} else {
-		// shard limit, check other partitions
+		// TODO: shard limit, check other secondary partitions
+		vector< pair<int, int> > secondary = skeys[identity].secondary;
 
 		// if exist, send putDataForce
 
@@ -715,7 +807,7 @@ class DBServiceHandler : virtual public DBServiceIf {
 	/** Write to log */
 	string message;
 	if (_return.isLeader) message = "accepted";
-	else message = "rejected (not a leader)";
+	else message = "rejected (this node is not a leader)";
 	logWriter->writeLog("getRecover " + message);
   }
 
@@ -732,7 +824,7 @@ class DBServiceHandler : virtual public DBServiceIf {
 		if (raft->getCommitIdx() < request.commit_idx) {
 			succeeds = raft->commit(request.entry, request.commit_idx); // commit
 			if (succeeds) {
-				// TODO: Send metadata / state to all followers
+				// TODO: Send metadata / state to all followers (exclude own id)
 				
 			}
 		}
@@ -771,6 +863,18 @@ class DBServiceHandler : virtual public DBServiceIf {
 	if (granted) message = "accepted";
 	else message = "rejected";
 	logWriter->writeLog("sendVote " + message + " to " + to_string(request.peer_id) + " (term " + to_string(request.term) + ")");
+  }
+
+  /**
+   * followerAppend
+   * Append newest committed metadata at follower
+   * 
+   * @param request
+   */
+  bool followerAppend(const AppendRequest& request) {
+	if (request.commit_idx < raft->getCommitIdx()) return false;
+
+	return true;
   }
 
   void zip() {

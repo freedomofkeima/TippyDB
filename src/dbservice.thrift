@@ -125,6 +125,12 @@ service DBService {
       */
 	VoteResponse sendVote(1: VoteRequest request),
 
+    /**
+      * followerAppend
+      * Append newest committed metadata at follower
+      */
+	bool followerAppend(1: AppendRequest request),
+
 	oneway void zip()
 
 }

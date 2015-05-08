@@ -78,12 +78,16 @@ map<string, int> member_pos;
 map<string, SKey> skeys;
 string metadata;
 
+// Write JSON to file
+void writeMetadata(const std::string& m) {
+  metadata = m;
+} 
+
 // Decode JSON to skeys
-void decodeKeys(const char* json) {
+void decodeKeys(map<string, SKey> &ret, const char* json) {
   Document d;
   d.Parse(json);
 
-  skeys.clear();
   const Value& shardedkeys = d["shardedkeys"];
   assert(shardedkeys.IsArray());
   // Iterate over all values in shardedkeys
@@ -102,7 +106,7 @@ void decodeKeys(const char* json) {
           secval.second = (int) data2["node"].GetInt();
           sk.secondary.push_back(secval);
       }
-     skeys[sk.id] = sk;
+     ret[sk.id] = sk;
   }
 }
 
@@ -114,7 +118,7 @@ public:
     facet = new time_facet("%Y-%m-%d-%H:%M:$S.%f");
   }
 
-  void writeLog(const std::string &message) {
+  void writeLog(const std::string& message) {
     log_mutex.lock();
     ofstream log_file(file, ios_base::out | ios_base::app);
     cout.imbue(locale(cout.getloc(), facet));
@@ -146,15 +150,59 @@ public:
     current_term = 0;
     log = _metadata;
     voted_for = -1;
-    commit_idx = -1;
+    commit_idx = getMetadataValue();
     num_nodes = nodes.size();
-    timeout_elapsed = rand() % 1000; // random factor
-    election_timeout = 3000; // 3 seconds
-    request_timeout = 1000; // 1 second
+    timeout_elapsed = (rand() % 500) + 150; // random factor
     nodes = _members;
     node_id = _own_id;
 
-    // TODO: Recover here
+    // TODO: Recover here (or become candidate if fails)
+    bool receiveLeader = false;
+    vector<thread> workers;
+
+    for (int i = 0; i < num_nodes; i++) { // broadcast to all nodes
+    	workers.push_back(thread([&]() {
+    		boost::shared_ptr<TTransport> socket(new TSocket(nodes[i].ip, nodes[i].port));
+    		cout << "Recover Metadata: Check " << nodes[i].ip << ":" << nodes[i].port;
+
+    		boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+    		boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+    		DBServiceClient client(protocol);
+
+    		try {
+    			transport->open();
+    			GetRecover data;
+    			client.getRecover(data); // RPC Recover
+    			if (data.isLeader) {
+    				receiveLeader = true;
+    				voted_for = i; // current leader
+    				current_term = data.term;
+    				commit_idx = data.commit_idx;
+    				putMetadataValue(commit_idx);
+    				log = data.entry;
+    				writeMetadata(log);
+    				logWriter->writeLog("Recovered from node_id (leader) = " + to_string(voted_for));
+    			}
+    		} catch (TException& tx) {
+    			cout << "ERROR: " << tx.what() << endl;
+    		}
+    	})); // end of thread
+    }
+    for_each(workers.begin(), workers.end(), [](thread &t) {
+    	t.join();
+    });
+
+    if (receiveLeader) { // Tweak only own primary (change old primary to secondary, drop one secondary)
+
+    } else {
+    	// ensure a majority leader is chosen
+    	while (voted_for == -1) {
+    		// sleep for timeout_elapsed, declare candidacy
+			this_thread::sleep_for(chrono::milliseconds(timeout_elapsed));
+			if (voted_for == -1) leaderRequest(); // requesting leader (as a candidate)
+    	}
+    	if (voted_for == node_id) appendRequest(); // propagate metadata
+    }
   }
 
   int getTerm() {
@@ -190,12 +238,24 @@ public:
     else return false;
     // update log
     log = entry;
+    putMetadataValue(commit_idx);
+    writeMetadata(log);
     return true;
   }
 
   // TODO: Send vote request -> write log
+  bool leaderRequest() {
+    int required = num_nodes / 2; // exclude own
+    logWriter->writeLog("leaderRequest to all nodes");
+
+    return true;
+  }
 
   // TODO: Send append request -> write log
+  bool appendRequest() {
+    //
+    return true;
+  }
 
 private:
   int current_term; // server's current term (initial = 0)
@@ -206,8 +266,6 @@ private:
   vector<Member> nodes; // all consensus members
   int num_nodes; // number of nodes
   int timeout_elapsed; // random timeout, in miliseconds
-  int election_timeout; // in miliseconds
-  int request_timeout; // in miliseconds
   int node_id; // my node ID
 };
 
@@ -311,29 +369,31 @@ void loadMembers() {
 
 // Lock with mutex before updating
 void loadSKeys() {
-  // TODO: Consensus for latest version of metadata, if exists
+  if (getMetadataValue() != -1) {
+	  // Read from metadata.tmp
+	  ifstream t("data/metadata.tmp");
+	  string str;
 
-  // TODO: Check with local version, if it's lesser, retrieve from the highest one
+	  t.seekg(0, ios::end);
+	  str.reserve(t.tellg());
+	  t.seekg(0, ios::beg);
 
-  // TODO: Else, read from local json files if version != -1
+	  str.assign((istreambuf_iterator<char>(t)), istreambuf_iterator<char>());
+	  t.close();
 
-  // Read from metadata.tmp
-  ifstream t("data/metadata.tmp");
-  string str;
+	  /** Convert string to json */
+	  metadata = str; // initialize metadata
+	  const char* json = str.c_str();
 
-  t.seekg(0, ios::end);
-  str.reserve(t.tellg());
-  t.seekg(0, ios::beg);
+	  skeys.clear();
+	  decodeKeys(skeys, json);
 
-  str.assign((istreambuf_iterator<char>(t)), istreambuf_iterator<char>());
-  t.close();
+  } else {
+	  // TODO: Create own metadata
 
-  /** Convert string to json */
-  metadata = str; // initialize metadata
-  const char* json = str.c_str();
-
-  decodeKeys(json);
-
+	  putMetadataValue(getMetadataValue() + 1);
+	  writeMetadata(metadata);
+  }
 }
 
 /***** END OF MEMBERSHIP SECTION *****/
@@ -629,13 +689,15 @@ class DBServiceHandler : virtual public DBServiceIf {
 
   /**
    * resyncData
-   * Retrieve all newest shard contents where region = remote_region && node = remote_node (choose the nearest one for primary / the smallest db size for secondary)
+   * Retrieve all newest shard contents where region = remote_region && node = remote_node
    * 
    * @param remote_region
    * @param remote_node
    */
   void resyncData(ShardContent& _return, const int32_t remote_region, const int32_t remote_node) {
 	cout << "resyncData is called" << endl;
+	list< pair< pair<string, string>, long long> > data; // (key, value, ts)
+	resyncDB(data, constructShardKey(remote_region, remote_node));
   }
 
   /**
@@ -746,14 +808,16 @@ int main(int argc, char **argv) {
   // Load log writer
   logWriter = new LogWriter();
   logWriter->writeLog("DBServiceServer is started");
-  // Load shared keys configuration (metadata.tmp)
-  raft = new RaftConsensus(members, "", own_id);
-  loadSKeys();
-  printSKeys();
 
   // Test leveldb
   initDB(argv[2], shard_size);
   // test();
+
+  // Load shared keys configuration (metadata.tmp)
+  loadSKeys();
+  printSKeys();
+  // Create RAFT object
+  raft = new RaftConsensus(members, metadata, own_id);
 
   // Load logical clock
   lClock = new LogicalClock();

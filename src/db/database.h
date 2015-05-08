@@ -70,7 +70,7 @@ string getDB(const string key);
 
 bool deleteDB(const string key);
 
-list< pair< pair<string, string>, long long> > resyncDB(const string section);
+void resyncDB(list< pair< pair<string, string>, long long> >& ret, const string section);
 
 void test();
 

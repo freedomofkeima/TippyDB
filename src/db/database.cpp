@@ -75,7 +75,7 @@ int getMetadataValue() {
 	string temp_value;
 	local_status = db->Get(read_options, metadata_key, &temp_value);
 	if (!local_status.ok()) {	// initialize metadata if it hasn't been initialized
-		db->Put(write_options, metadata_key, "0");
+		db->Put(write_options, metadata_key, "-1");
 		return -1;
 	} else {
 		return stoi(temp_value);
@@ -227,9 +227,8 @@ bool deleteDB(const string key) {
 	return true;
 }
 
-list< pair< pair<string, string>, long long> > resyncDB(const string section) {
-	list< pair< pair<string, string>, long long> > ret;
-	return ret;
+void resyncDB(list< pair< pair<string, string>, long long> >& ret, const string section) {
+
 }
 
 void test() {

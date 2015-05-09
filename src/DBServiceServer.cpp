@@ -64,6 +64,7 @@ struct Member {
   string ip;
   int port;
   vector<int> distance;
+  int active; // 1 = active, 0 = fail
 };
 
 struct SKey {
@@ -77,11 +78,6 @@ map<string, int> member_pos;
 map<string, SKey> skeys;
 string identity;
 string metadata;
-
-// Write JSON to file
-void writeMetadata(const std::string& m) {
-  metadata = m;
-} 
 
 // Decode JSON to skeys
 void decodeKeys(map<string, SKey> &ret, const char* json) {
@@ -98,6 +94,11 @@ void decodeKeys(map<string, SKey> &ret, const char* json) {
       const Value& primary = data["primary"];
       sk.primary.first = (int) primary[0]["region"].GetInt();
       sk.primary.second = (int) primary[0]["node"].GetInt();
+
+      // Update failure detection information
+      int idx = member_pos[constructShardKey(sk.primary.first, sk.primary.second)];
+      members[idx].active = 1;
+
       const Value& secondary = data["secondary"];
       for (SizeType j = 0; j < secondary.Size(); j++) {
           pair<int, int> secval;
@@ -110,8 +111,16 @@ void decodeKeys(map<string, SKey> &ret, const char* json) {
   }
 }
 
+// Write JSON to file
+void writeMetadata(const std::string& m) {
+  metadata = m;
+  const char* json = metadata.c_str();
+
+  decodeKeys(skeys, json); // update volatile memory
+} 
+
 // TODO: Create a metadata
-string createMetadata(vector<int> active_nodes) {
+string createMetadata() {
   string ret;
 
   return ret;
@@ -235,6 +244,10 @@ public:
     votes_for_me.clear(); // reset voters
     logWriter->writeLog("Become a candidate: leaderRequest to all nodes");
 
+	bool* isSent;
+	isSent = (bool*) malloc (num_nodes * sizeof(bool));
+	for(int i = 0; i < num_nodes; i++) isSent[i] = false;
+
     vector<thread> workers;
 
     for (int i = 0; i < num_nodes; i++) { // broadcast to all nodes
@@ -262,6 +275,7 @@ public:
     				votes_for_me.push_back(i); // node which has voted for this node
     				logWriter->writeLog("Receive leader vote from " + nodes[i].ip + ":" + to_string(nodes[i].port));
     			}
+    			isSent[i] = true;
     		} catch (TException& tx) {
     			cout << "ERROR: " << tx.what() << endl;
     		}
@@ -271,9 +285,14 @@ public:
     	t.join();
     });
 
+	for (int i = 0; i < num_nodes; i++) {
+		if (isSent[i]) members[i].active = 1;
+		else members[i].active = 0;
+	}
+
     if ((int) votes_for_me.size() >= required) { // become a leader
     	// Send newest metadata based on all active nodes
-    	string new_entry = createMetadata(votes_for_me);
+    	string new_entry = createMetadata();
     	if (voted_for == node_id) appendRequest(new_entry); // propagate metadata
     	logWriter->writeLog("Become a leader: send newest metadata to all nodes");
     } else return false;
@@ -444,6 +463,7 @@ void loadMembers() {
       members[i].node = (int) info["node"].GetInt();
       members[i].ip = info["ip"].GetString();
       members[i].port = info["port"].GetInt();
+      members[i].active = 1; // assume all nodes are active
      // add additional info for self
      if (info["own"].GetBool()) {
          own_id = (int) i;
@@ -479,11 +499,9 @@ void loadSKeys() {
 
 	  /** Convert string to json */
 	  metadata = str; // initialize metadata
-	  const char* json = str.c_str();
+	  const char* json = metadata.c_str();
 
-	  skeys.clear();
-	  decodeKeys(skeys, json);
-
+	  decodeKeys(skeys, json);	
   }
 }
 
@@ -546,7 +564,11 @@ void backgroundTask(const std::string& key, const std::string& value, long long 
 	vector< pair<int, int> > secondary = skeys[identifier].secondary;
 	bool* isSent;
 	isSent = (bool*) malloc ((int) secondary.size() * sizeof(bool));
-	for(int i = 0; i < (int) secondary.size(); i++) isSent[i] = false;
+	for(int i = 0; i < (int) secondary.size(); i++) {
+		int idx = member_pos[constructShardKey(secondary[i].first, secondary[i].second)];
+		if (members[idx].active == 1) isSent[i] = false;
+		else isSent[i] = true; // failed node
+	}
 	while (timer <= 30) {
 		vector<thread> workers;
 		for(int i = 0; i < (int) secondary.size(); i++) { // broadcast to all secondaries
@@ -592,7 +614,69 @@ void backgroundTask(const std::string& key, const std::string& value, long long 
 		timer += 10;
 	}
 	for (int i = 0; i < (int) secondary.size(); i++)
-		if (!isSent[i]) failureTask(secondary[i].first, secondary[i].second);
+		if (!isSent[i]) {
+			int idx = member_pos[constructShardKey(secondary[i].first, secondary[i].second)];
+			members[idx].active = 0; // declare failure
+			failureTask(secondary[i].first, secondary[i].second);
+		}
+}
+
+void broadcastMetadata() {
+	int timer = 10; // initial timer, in seconds
+
+	bool* isSent;
+	isSent = (bool*) malloc ((int) members.size() * sizeof(bool));
+	for(int i = 0; i < (int) members.size(); i++) {
+		if (members[i].active == 1)	isSent[i] = false;
+		else isSent[i] = true; // failed node
+	}
+	isSent[own_id] = true; // exclude own id
+	while (timer <= 30) {
+		vector<thread> workers;
+
+		for (int i = 0; i < (int) members.size(); i++) { // broadcast to all nodes
+			if (!isSent[i]) {
+				workers.push_back(thread([&]() {
+					boost::shared_ptr<TTransport> socket(new TSocket(members[i].ip, members[i].port));
+					cout << "Broadcast metadata to " << members[i].ip << ":" << members[i].port;
+
+					boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+					boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+					DBServiceClient client(protocol);
+
+					try {
+						transport->open();
+						AppendRequest request;
+
+						request.term = raft->getTerm();
+						request.commit_idx = raft->getCommitIdx();
+						request.entry = raft->getLog();
+
+						client.followerAppend(request); // RPC FollowerAppend
+					} catch (TException& tx) {
+						cout << "ERROR: " << tx.what() << endl;
+					}
+				})); // end of thread
+			}
+			for_each(workers.begin(), workers.end(), [](thread &t) {
+				t.join();
+			});
+		}
+		bool globalSent = true;
+		for (int i = 0; i < (int) members.size(); i++)
+			if (!isSent[i]) globalSent = false;
+		if (globalSent) break;
+		else {
+			// Sleep for timer seconds here
+			if (timer <= 30) this_thread::sleep_for(chrono::seconds(timer));
+		}
+		timer += 10;
+	}
+	for (int i = 0; i < (int) members.size(); i++)
+		if (!isSent[i]) {
+			members[i].active = 0;
+			failureTask(members[i].region, members[i].node);
+		}
 }
 
 /***** END OF SECONDARY SECTION *****/
@@ -618,7 +702,6 @@ class DBServiceHandler : virtual public DBServiceIf {
 	} else {
 		// TODO: shard limit, check other secondary partitions
 		vector< pair<int, int> > secondary = skeys[identity].secondary;
-
 		// if exist, send putDataForce
 
 		// if doesn't exist, force to putDB
@@ -790,6 +873,7 @@ class DBServiceHandler : virtual public DBServiceIf {
 	cout << "resyncData is called" << endl;
 	list< pair< pair<string, string>, long long> > data; // (key, value, ts)
 	resyncDB(data, constructShardKey(remote_region, remote_node));
+	// TODO
   }
 
   /**
@@ -824,8 +908,9 @@ class DBServiceHandler : virtual public DBServiceIf {
 		if (raft->getCommitIdx() < request.commit_idx) {
 			succeeds = raft->commit(request.entry, request.commit_idx); // commit
 			if (succeeds) {
-				// TODO: Send metadata / state to all followers (exclude own id)
-				
+				// Send metadata / state to all followers (exclude own id)
+				thread t(broadcastMetadata);
+				t.detach();
 			}
 		}
 	}
@@ -873,8 +958,8 @@ class DBServiceHandler : virtual public DBServiceIf {
    */
   bool followerAppend(const AppendRequest& request) {
 	if (request.commit_idx < raft->getCommitIdx()) return false;
-
-	return true;
+	if (raft->getTerm() < request.term) raft->setTerm(request.term);
+	return raft->commit(request.entry, request.commit_idx); // commit
   }
 
   void zip() {

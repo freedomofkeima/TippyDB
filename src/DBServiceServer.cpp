@@ -22,6 +22,7 @@
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
+#include "rapidjson/filewritestream.h"
 
 #include <cstdio>
 #include <iostream>
@@ -115,8 +116,21 @@ void decodeKeys(map<string, SKey> &ret, const char* json) {
 void writeMetadata(const std::string& m) {
   metadata = m;
   const char* json = metadata.c_str();
-
   decodeKeys(skeys, json); // update volatile memory
+
+  Document d;
+  d.Parse(json);
+
+  FILE* fp = fopen("data/metadata.tmp", "w");
+
+  char* writeBuffer;
+  writeBuffer = (char*) malloc((m.length() + 1) * sizeof(char));
+  FileWriteStream os (fp, writeBuffer, sizeof(writeBuffer));
+
+  Writer<FileWriteStream> writer(os);
+  d.Accept(writer);
+
+  fclose(fp);
 } 
 
 // TODO: Create a metadata

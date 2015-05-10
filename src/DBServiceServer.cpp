@@ -373,7 +373,7 @@ public:
 			}
 		}
 		// At this point, we are not deleting the actual data (only metadata)
-		if (isExistPrimary) {
+		if (isExistPrimary && idx != node_id) { // idx == node_id when metadata doesn't have any changes
 			boost::shared_ptr<TTransport> socket(new TSocket(nodes[idx].ip, nodes[idx].port));
 			boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
 			boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
@@ -552,7 +552,6 @@ public:
   }
 
   /** Getter & Setter */
-
   int getTerm() {
 	return current_term;
   }

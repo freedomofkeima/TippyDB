@@ -1,1 +1,1 @@
-{"shardedkeys":[{"id":"00010001","primary":[{"region":1,"node":1}],"secondary":[{"region":2,"node":1}]},{"id":"00020001","primary":[{"region":2,"node":1}],"secondary":[{"region":1,"node":1}]}]}
+{"shardedkeys":[{"id":"00010001","primary":[{"region":1,"node":1}],"secondary":[{"region":2,"node":1}]},{"id":"00020001","primary":[{"region":2,"node":1}],"secondary":[{"region":2,"node":1}]}]}

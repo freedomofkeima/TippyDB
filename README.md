@@ -1,5 +1,7 @@
 # TippyDB
 
+TippyDB is a geographically-aware distributed NoSQL written in C++. This NoSQL database is designed to store data at the nearest location with the data's writer. One of the main advantage is to provide lower latency in average, which is based on a scientific research (Backstrom, Sun, & Marlow, 2010) that the location of data's reader is usually located near the original writer (70% in 100 miles range).
+
 By: Iskandar Setiadi (freedomofkeima)
 
 ## Development Environment
@@ -65,4 +67,4 @@ The above copyright notice and this permission notice shall be included in all c
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-Last Updated: April 10, 2015
+Last Updated: May 11, 2015

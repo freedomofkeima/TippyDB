@@ -964,7 +964,14 @@ class DBServiceHandler : virtual public DBServiceIf {
 	cout << "resyncData is called" << endl;
 	list< pair< pair<string, string>, long long> > data; // (key, value, ts)
 	resyncDB(data, constructShardKey(remote_region, remote_node));
-	// TODO
+	cout << "Size: " << data.size() << endl;
+	for (list< pair< pair<string, string>, long long> >::iterator it=data.begin(); it != data.end(); ++it) {
+		Data t;
+		t.key = (*it).first.first;
+		t.value = (*it).first.second;
+		t.ts = (*it).second;
+		_return.data.push_back(t); // append result
+	}
   }
 
   /**

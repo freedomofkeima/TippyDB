@@ -228,7 +228,25 @@ bool deleteDB(const string key) {
 }
 
 void resyncDB(list< pair< pair<string, string>, long long> >& ret, const string section) {
-
+	leveldb::Iterator* it = db->NewIterator(read_options);
+	int total_data = 0;
+	for(it->SeekToFirst(); it->Valid(); it->Next()) {
+		leveldb::Slice k = it->key();
+		leveldb::Slice v = it->value();
+		string key = k.ToString();
+		string value = v.ToString();
+		if (key.substr(0, 8) == section) {
+			pair< pair<string, string>, long long> data;
+			data.first.first = key;
+			data.first.second = value;
+			data.second = getLClock(key);
+			ret.push_back(data);
+			total_data++;
+			if (total_data % 100 == 0) cout << "resyncDB (total data): " << total_data << endl; // monitor total data
+		}
+	}
+	delete it;
+	cout << "resyncDB (total data): " << total_data << endl;
 }
 
 void test() {

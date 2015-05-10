@@ -186,6 +186,13 @@ int main(int argc, char** argv) {
     else cout << "Get FAILED" << endl;
     /** End of GETDATA operation **/
 
+    /** RESYNCDATA operation **/
+    cout << "--RESYNCDATA (correctness)--" << endl;
+    ShardContent ds;
+    client.resyncData(ds, 1, 1);
+    cout << "Size: " << ds.data.size() << endl;
+    /** End of RESYNCDATA operation **/
+
   } catch (TException& tx) {
     cout << "ERROR: " << tx.what() << endl;
   }

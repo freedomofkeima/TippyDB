@@ -791,11 +791,40 @@ class DBServiceHandler : virtual public DBServiceIf {
 		thread t(backgroundTask, _return, value, clock, 0);
 		t.detach();
 	} else {
-		// TODO: shard limit, check other secondary partitions
-		vector< pair<int, int> > secondary = skeys[identity].secondary;
-		// if exist, send putDataForce
+		// shard limit, check other partitions
+		bool isExist = false;
+		for (int i = 0; i < (int) members.size(); i++) {
+			if (i == own_id) continue;
+			if (members[i].active == 1 && members[i].region == server_region) {
+				// send putDataForce
+				// long long psize_value = getPsizeValue();
+				boost::shared_ptr<TTransport> socket(new TSocket(members[i].ip, members[i].port));
+				boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+				boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+				DBServiceClient client(protocol);
 
-		// if doesn't exist, force to putDB
+				try {
+					transport->open();
+					client.putDataForce(_return, value, server_region, server_node);
+				} catch (TException& tx) {
+					cout << "ERROR: " << tx.what() << endl;
+				}
+
+				if (_return.length() == 16) isExist = true;
+				else isExist = false;
+				break;
+			}
+		}
+		// secondary is dead or not found
+		if (!isExist) {
+			_return = putDB(value, server_region, server_node, true); // force
+			if (_return.length() == 16) {
+				// replicate data to secondary nodes
+				long long clock = lClock->incrementLClock(_return);
+				thread t(backgroundTask, _return, value, clock, 0);
+				t.detach();
+			}
+		}
 	}
   }
 

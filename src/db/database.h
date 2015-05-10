@@ -48,6 +48,9 @@ int getMetadataValue();
 // Update metadata version
 void putMetadataValue(int version);
 
+// Get psize value
+long long getPsizeValue();
+
 // Retrieve logical clock counter
 long long getLClock(const string key);
 

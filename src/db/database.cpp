@@ -87,6 +87,11 @@ void putMetadataValue(int version) {
 	db->Put(write_options, metadata_key, to_string(version));
 }
 
+// Get psize value
+long long getPsizeValue() {
+	return psize_value;
+}
+
 // Retrieve logical clock counter
 long long getLClock(const string key) {
 	leveldb::Status local_status;

@@ -131,13 +131,65 @@ void writeMetadata(const std::string& m) {
   d.Accept(writer);
 
   fclose(fp);
-} 
+}
 
-// TODO: Create a metadata
-string createMetadata() {
+string convertShardedMaptoJSON(map<string, SKey> m) {
   string ret;
-
+  map<string,SKey>::iterator iter;
+  ret = "{\"shardedkeys\":[";
+  int ctx = 0;
+  for (iter = m.begin(); iter != m.end(); iter++) {
+      if (ctx != 0) ret = ret + ",";
+      ctx++;
+      ret = ret + "{";
+      // Insert ID
+      ret = ret + "\"id\":\"" + iter->first + "\",";
+      // Insert Primary
+      ret = ret + "\"primary\":[{\"region\":" + to_string(iter->second.primary.first) + ",\"node\":" + to_string(iter->second.primary.second) + "}],";
+      // Insert Secondary
+      ret = ret + "\"secondary\":[";
+      int sec_size = (int) iter->second.secondary.size();
+      for (int j = 0; j < sec_size; j++) {
+        ret = ret + "{\"region\":" + to_string(iter->second.secondary[j].first) + ",\"node\":" + to_string(iter->second.secondary[j].second) + "}";
+        if (j != sec_size - 1) ret = ret + ",";
+      }
+      ret = ret + "]}";
+  }
+  ret = ret + "]}";
   return ret;
+}
+
+// Create a metadata
+string createMetadata() {
+  int size = replication_factors;
+  map<string, SKey> temp_ret;
+  vector<int> active_members;
+  string ret;
+  for (int i = 0; i < (int) members.size(); i++)
+      if (members[i].active == 1) active_members.push_back(i);
+  if ((int) active_members.size() - 1 < size) size = (int) active_members.size() - 1; // allow replication which is lower than specified if there is not enough number of nodes
+
+  for (int i = 0; i < (int) active_members.size(); i++) {
+      int idx = active_members[i];
+      if (members[idx].active == 1) {
+		  SKey sk;
+		  sk.id = constructShardKey(members[idx].region, members[idx].node);
+		  sk.primary.first = members[idx].region;
+		  sk.primary.second = members[idx].node;
+		  int next_id = i;
+		  for (int j = 0; j < size; j++) { // circular secondaries (can be optimized later, by specifying secondary in exact different region)
+		  	pair<int, int> secval;
+		  	next_id++; // increment
+		  	if (next_id >= (int) active_members.size()) next_id = next_id - active_members.size();
+		  	int next_idx = active_members[next_id];
+		  	secval.first = members[next_idx].region;
+		  	secval.second = members[next_idx].node;
+		  	sk.secondary.push_back(secval);
+		  }
+		  temp_ret[sk.id] = sk;
+      }
+  }
+  return convertShardedMaptoJSON(temp_ret);
 }
 
 // TODO: Tweak current metadata
@@ -188,9 +240,9 @@ public:
     log = _metadata;
     voted_for = -1;
     commit_idx = getMetadataValue();
-    num_nodes = nodes.size();
     timeout_elapsed = (rand() % 500) + 150; // random factor
     nodes = _members;
+    num_nodes = nodes.size();
     node_id = _own_id;
 
     // Recover here (or become candidate if fails)
@@ -199,9 +251,10 @@ public:
 
     for (int i = 0; i < num_nodes; i++) { // broadcast to all nodes except own
     	if (i == node_id) continue;
-    	workers.push_back(thread([&]() {
-    		boost::shared_ptr<TTransport> socket(new TSocket(nodes[i].ip, nodes[i].port));
-    		cout << "Recover Metadata: Check " << nodes[i].ip << ":" << nodes[i].port;
+    	int current_id = i;
+    	workers.push_back(thread([&](int current_id) {
+    		boost::shared_ptr<TTransport> socket(new TSocket(nodes[current_id].ip, nodes[current_id].port));
+    		cout << "Recover Metadata: Check " << nodes[current_id].ip << ":" << nodes[current_id].port << endl;
 
     		boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
     		boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
@@ -213,7 +266,7 @@ public:
     			client.getRecover(data); // RPC Recover
     			if (data.isLeader) {
     				receiveLeader = true;
-    				voted_for = i; // current leader
+    				voted_for = current_id; // current leader
     				current_term = data.term;
     				commit(data.entry, data.commit_idx);
     				logWriter->writeLog("Recovered from node_id (leader) = " + to_string(voted_for));
@@ -221,7 +274,7 @@ public:
     		} catch (TException& tx) {
     			cout << "ERROR: " << tx.what() << endl;
     		}
-    	})); // end of thread
+    	}, current_id)); // end of thread
     }
     for_each(workers.begin(), workers.end(), [](thread &t) {
     	t.join();
@@ -231,14 +284,21 @@ public:
     	string new_entry = tweakMetadata(log);
     	// TODO: Wait until finish resync before updating metadata
 
-    	appendRequest(new_entry);
+    	// appendRequest(new_entry);
     } else {
-    	// ensure a majority leader is chosen
-    	while (voted_for == -1) {
-    		// sleep for timeout_elapsed, declare candidacy
-			this_thread::sleep_for(chrono::milliseconds(timeout_elapsed));
-			if (voted_for == -1) leaderRequest(); // requesting leader (as a candidate)
-    	}
+    	thread t(&RaftConsensus::initElection, this);
+    	t.detach();
+    }
+  }
+
+  void initElection() {
+    // ensure a majority leader is chosen
+	bool result = false;
+    while (voted_for == -1) {
+    	// sleep for timeout_elapsed, declare candidacy
+		this_thread::sleep_for(chrono::milliseconds(timeout_elapsed));
+		if (voted_for == -1) result = leaderRequest(); // requesting leader (as a candidate)
+		if (result) logWriter->writeLog("Leader election finished");
     }
   }
 
@@ -261,13 +321,25 @@ public:
 	bool* isSent;
 	isSent = (bool*) malloc (num_nodes * sizeof(bool));
 	for(int i = 0; i < num_nodes; i++) isSent[i] = false;
+	isSent[node_id] = true;
 
     vector<thread> workers;
 
+    int prev_term = current_term;
+	int prev_commit_idx = commit_idx;
+
+	// Update own information
+	current_term++;
+	commit_idx++;
+	voted_for = node_id;
+	votes_for_me.push_back(node_id);
+
     for (int i = 0; i < num_nodes; i++) { // broadcast to all nodes
-    	workers.push_back(thread([&]() {
-    		boost::shared_ptr<TTransport> socket(new TSocket(nodes[i].ip, nodes[i].port));
-    		cout << "Leader Request: Send to " << nodes[i].ip << ":" << nodes[i].port;
+    	if (i == node_id) continue;
+    	int current_id = i;
+    	workers.push_back(thread([&](int current_id) {
+    		boost::shared_ptr<TTransport> socket(new TSocket(nodes[current_id].ip, nodes[current_id].port));
+    		cout << "Leader Request: Send to " << nodes[current_id].ip << ":" << nodes[current_id].port << endl;
 
     		boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
     		boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
@@ -279,37 +351,40 @@ public:
     			VoteResponse response;
 
     			/** Start next term */
-    			current_term++; // increase term
-    			request.term = current_term;
-    			request.last_commit_idx = commit_idx + 1; // next commit idx
+    			request.term = prev_term + 1; // increment term
+    			request.last_commit_idx = prev_commit_idx + 1; // next commit idx
     			request.peer_id = node_id;
 
     			client.sendVote(response, request); // RPC VoteRequest
     			if (response.granted) {
-    				votes_for_me.push_back(i); // node which has voted for this node
-    				logWriter->writeLog("Receive leader vote from " + nodes[i].ip + ":" + to_string(nodes[i].port));
+    				votes_for_me.push_back(current_id); // node which has voted for this node
+    				logWriter->writeLog("Receive leader vote from " + nodes[current_id].ip + ":" + to_string(nodes[current_id].port));
     			}
-    			isSent[i] = true;
+    			isSent[current_id] = true;
     		} catch (TException& tx) {
     			cout << "ERROR: " << tx.what() << endl;
     		}
-    	})); // end of thread
-    }
-    for_each(workers.begin(), workers.end(), [](thread &t) {
-    	t.join();
-    });
+    	}, current_id)); // end of thread
+	}
+	for_each(workers.begin(), workers.end(), [](thread &t) {
+		t.join();
+	});
 
 	for (int i = 0; i < num_nodes; i++) {
 		if (isSent[i]) members[i].active = 1;
 		else members[i].active = 0;
 	}
 
+
     if ((int) votes_for_me.size() >= required) { // become a leader
     	// Send newest metadata based on all active nodes
     	string new_entry = createMetadata();
-    	if (voted_for == node_id) appendRequest(new_entry); // propagate metadata
     	logWriter->writeLog("Become a leader: send newest metadata to all nodes");
-    } else return false;
+    	if (voted_for == node_id) appendRequest(new_entry); // propagate metadata
+    } else {
+		voted_for = -1; // re-do leader selection
+		return false;
+	}
 
     return true;
   }
@@ -320,7 +395,7 @@ public:
     if (leader_id == -1) return false;
 
     boost::shared_ptr<TTransport> socket(new TSocket(nodes[leader_id].ip, nodes[leader_id].port));
-    cout << "Append Request: Send to " << nodes[leader_id].ip << ":" << nodes[leader_id].port;
+    cout << "Append Request: Send to " << nodes[leader_id].ip << ":" << nodes[leader_id].port << endl;
 
     boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
     boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
@@ -333,11 +408,11 @@ public:
     	transport->open();
 
     	/** Start next term */
-    	current_term++; // increase term
+    	request.term = current_term + 1; // increase term
+    	request.commit_idx = commit_idx + 1;
+    	request.entry = entry;
+
     	logWriter->writeLog("send appendRequest to leader (term " + to_string(current_term) + ")");
-    	request.term = current_term;
-    	request.commit_idx = commit_idx;
-    	request.entry = log;
 
     	client.sendAppend(response, request); // RPC AppendRequest
     } catch (TException& tx) {
@@ -587,8 +662,9 @@ void backgroundTask(const std::string& key, const std::string& value, long long 
 		vector<thread> workers;
 		for(int i = 0; i < (int) secondary.size(); i++) { // broadcast to all secondaries
 			if (!isSent[i]) {
-				workers.push_back(thread([&]() {
-					int idx = member_pos[constructShardKey(secondary[i].first, secondary[i].second)];
+				int current_id = i;
+				workers.push_back(thread([&](int current_id) {
+					int idx = member_pos[constructShardKey(secondary[current_id].first, secondary[current_id].second)];
 					boost::shared_ptr<TTransport> socket(new TSocket(members[idx].ip, members[idx].port));
 
 					if (code == 0) cout << "Replicate " << d.key << " to " << members[idx].ip << ":" << members[idx].port;
@@ -604,19 +680,19 @@ void backgroundTask(const std::string& key, const std::string& value, long long 
 					try {
 						transport->open();
 
-						if(code == 0) isSent[i] = client.replicateData(d, server_region, server_node); // RPC Replicate
-						else if (code == 1) isSent[i] = client.updateSecondaryData(d, server_region, server_node); // RPC Update
-						else if (code == 2) isSent[i] = client.deleteSecondaryData(d.key, server_region, server_node); // RPC Delete
+						if(code == 0) isSent[current_id] = client.replicateData(d, server_region, server_node); // RPC Replicate
+						else if (code == 1) isSent[current_id] = client.updateSecondaryData(d, server_region, server_node); // RPC Update
+						else if (code == 2) isSent[current_id] = client.deleteSecondaryData(d.key, server_region, server_node); // RPC Delete
 
 					} catch (TException& tx) {
 						cout << "ERROR: " << tx.what() << endl;
 					}
-				})); // end of thread
+				}, current_id)); // end of thread
 			}
-			for_each(workers.begin(), workers.end(), [](thread &t) {
-				t.join();
-			});
 		}
+		for_each(workers.begin(), workers.end(), [](thread &t) {
+			t.join();
+		});
 		bool globalSent = true;
 		for (int i = 0; i < (int) secondary.size(); i++)
 			if (!isSent[i]) globalSent = false;
@@ -635,7 +711,7 @@ void backgroundTask(const std::string& key, const std::string& value, long long 
 		}
 }
 
-void broadcastMetadata() {
+void broadcastMetadata(const std::string& entry, int commit_idx, int term) {
 	int timer = 10; // initial timer, in seconds
 
 	bool* isSent;
@@ -650,9 +726,10 @@ void broadcastMetadata() {
 
 		for (int i = 0; i < (int) members.size(); i++) { // broadcast to all nodes
 			if (!isSent[i]) {
-				workers.push_back(thread([&]() {
-					boost::shared_ptr<TTransport> socket(new TSocket(members[i].ip, members[i].port));
-					cout << "Broadcast metadata to " << members[i].ip << ":" << members[i].port;
+				int current_id = i;
+				workers.push_back(thread([&](int current_id) {
+					boost::shared_ptr<TTransport> socket(new TSocket(members[current_id].ip, members[current_id].port));
+					cout << "Broadcast metadata to " << members[current_id].ip << ":" << members[current_id].port << " (After Timeout: " << timer <<  " second(s))" << endl;
 
 					boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
 					boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
@@ -662,20 +739,20 @@ void broadcastMetadata() {
 						transport->open();
 						AppendRequest request;
 
-						request.term = raft->getTerm();
-						request.commit_idx = raft->getCommitIdx();
-						request.entry = raft->getLog();
+						request.term = term;
+						request.commit_idx = commit_idx;
+						request.entry = entry;
 
-						client.followerAppend(request); // RPC FollowerAppend
+						isSent[current_id] = client.followerAppend(request); // RPC FollowerAppend
 					} catch (TException& tx) {
 						cout << "ERROR: " << tx.what() << endl;
 					}
-				})); // end of thread
+				}, current_id)); // end of thread
 			}
-			for_each(workers.begin(), workers.end(), [](thread &t) {
-				t.join();
-			});
 		}
+		for_each(workers.begin(), workers.end(), [](thread &t) {
+			t.join();
+		});
 		bool globalSent = true;
 		for (int i = 0; i < (int) members.size(); i++)
 			if (!isSent[i]) globalSent = false;
@@ -923,7 +1000,7 @@ class DBServiceHandler : virtual public DBServiceIf {
 			succeeds = raft->commit(request.entry, request.commit_idx); // commit
 			if (succeeds) {
 				// Send metadata / state to all followers (exclude own id)
-				thread t(broadcastMetadata);
+				thread t(broadcastMetadata, request.entry, request.commit_idx, request.term);
 				t.detach();
 			}
 		}
@@ -973,6 +1050,7 @@ class DBServiceHandler : virtual public DBServiceIf {
   bool followerAppend(const AppendRequest& request) {
 	if (request.commit_idx < raft->getCommitIdx()) return false;
 	if (raft->getTerm() < request.term) raft->setTerm(request.term);
+	logWriter->writeLog("receive followerAppend");
 	return raft->commit(request.entry, request.commit_idx); // commit
   }
 
@@ -1019,11 +1097,12 @@ int main(int argc, char **argv) {
   // Load shared keys configuration (metadata.tmp)
   loadSKeys();
   printSKeys();
-  // Create RAFT object
-  raft = new RaftConsensus(members, metadata, own_id);
 
   // Load logical clock
   lClock = new LogicalClock();
+
+  // Create RAFT object
+  raft = new RaftConsensus(members, metadata, own_id);
 
   cout << "** Starting the server **" << endl;
   server.serve();

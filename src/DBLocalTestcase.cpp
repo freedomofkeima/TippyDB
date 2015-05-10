@@ -32,29 +32,29 @@ uint64_t rdtscp_cycle = 50;
 # error unknown platform
 #endif
 
-#define RDTSC_START(cycles)                                \
-    do {                                                   \
-        register unsigned cyc_high, cyc_low;               \
-        asm volatile("CPUID\n\t"                           \
-                     "RDTSC\n\t"                           \
-                     "mov %%edx, %0\n\t"                   \
-                     "mov %%eax, %1\n\t"                   \
-                     : "=r" (cyc_high), "=r" (cyc_low)     \
-                     :: RDTSC_DIRTY);                      \
-        (cycles) = ((uint64_t)cyc_high << 32) | cyc_low;   \
-    } while (0)
+#define RDTSC_START(cycles)								\
+	do {												   \
+		register unsigned cyc_high, cyc_low;			   \
+		asm volatile("CPUID\n\t"						   \
+					 "RDTSC\n\t"						   \
+					 "mov %%edx, %0\n\t"				   \
+					 "mov %%eax, %1\n\t"				   \
+					 : "=r" (cyc_high), "=r" (cyc_low)	 \
+					 :: RDTSC_DIRTY);					  \
+		(cycles) = ((uint64_t)cyc_high << 32) | cyc_low;   \
+	} while (0)
 
-#define RDTSC_STOP(cycles)                                 \
-    do {                                                   \
-        register unsigned cyc_high, cyc_low;               \
-        asm volatile("RDTSCP\n\t"                          \
-                     "mov %%edx, %0\n\t"                   \
-                     "mov %%eax, %1\n\t"                   \
-                     "CPUID\n\t"                           \
-                     : "=r" (cyc_high), "=r" (cyc_low)     \
-                     :: RDTSC_DIRTY);                      \
-        (cycles) = ((uint64_t)cyc_high << 32) | cyc_low;   \
-    } while(0)
+#define RDTSC_STOP(cycles)								 \
+	do {												   \
+		register unsigned cyc_high, cyc_low;			   \
+		asm volatile("RDTSCP\n\t"						  \
+					 "mov %%edx, %0\n\t"				   \
+					 "mov %%eax, %1\n\t"				   \
+					 "CPUID\n\t"						   \
+					 : "=r" (cyc_high), "=r" (cyc_low)	 \
+					 :: RDTSC_DIRTY);					  \
+		(cycles) = ((uint64_t)cyc_high << 32) | cyc_low;   \
+	} while(0)
 
 void print_result(uint64_t cycle) {
 	cout << "Number of iteration: " << max_iteration << endl;
@@ -73,8 +73,8 @@ void init() {
 
 int main(int argc, char** argv) {
   if (argc != 2) {
-    cout << "Usage: ./application_name db_path" << endl;
-    return 1;
+	cout << "Usage: ./application_name db_path" << endl;
+	return 1;
   }
   cout << "DB path: " << argv[1] << endl;
 
@@ -102,9 +102,9 @@ int main(int argc, char** argv) {
   cout << "--FILL (local)--" << endl;
   counter = 10000000; total = 0;
   while (counter < max_iteration + 10000000) {
-    value = "val" + boost::lexical_cast<std::string>(counter);
+	value = "val" + boost::lexical_cast<std::string>(counter);
 	leveldb::Slice key("key" + boost::lexical_cast<std::string>(counter));
-    // cout << "Key: " << key.ToString() << " ; " << "Value: " << value << endl;
+	// cout << "Key: " << key.ToString() << " ; " << "Value: " << value << endl;
 	RDTSC_START(t1); // start operation
 	status = db->Put(write_options, key, value);
 	RDTSC_STOP(t2); // stop operation
@@ -120,9 +120,9 @@ int main(int argc, char** argv) {
   cout << "--FILLSYNC (local)--" << endl;
   counter = 10000000; total = 0;
   while (counter < max_iteration + 10000000) {
-    value = "val" + boost::lexical_cast<std::string>(counter);
+	value = "val" + boost::lexical_cast<std::string>(counter);
 	leveldb::Slice key("keys" + boost::lexical_cast<std::string>(counter));
-    // cout << "Key: " << key.ToString() << " ; " << "Value: " << value << endl;
+	// cout << "Key: " << key.ToString() << " ; " << "Value: " << value << endl;
 	RDTSC_START(t1); // start operation
 	status = db->Put(write_options2, key, value);
 	RDTSC_STOP(t2); // stop operation
@@ -138,9 +138,9 @@ int main(int argc, char** argv) {
   cout << "--OVERWRITE (local)--" << endl;
   counter = 10000000; total = 0;
   while (counter < max_iteration + 10000000) {
-    value = "val" + boost::lexical_cast<std::string>(counter);
+	value = "val" + boost::lexical_cast<std::string>(counter);
 	leveldb::Slice key("key" + boost::lexical_cast<std::string>(counter));
-    // cout << "Key: " << key.ToString() << " ; " << "Value: " << value << endl;
+	// cout << "Key: " << key.ToString() << " ; " << "Value: " << value << endl;
 	RDTSC_START(t1); // start operation
 	status = db->Put(write_options, key, value);
 	RDTSC_STOP(t2); // stop operation
@@ -156,11 +156,11 @@ int main(int argc, char** argv) {
   cout << "--READ (local)--" << endl;
   counter = 10000000; total = 0;
   while (counter < max_iteration + 10000000) {
-    leveldb::Slice key("key" + boost::lexical_cast<std::string>(counter));
+	leveldb::Slice key("key" + boost::lexical_cast<std::string>(counter));
 	RDTSC_START(t1); // start operation
 	status = db->Get(read_options, key, &value);
 	RDTSC_STOP(t2); // stop operation
-    // cout << "Key: " << key.ToString() << " ; " << "Value: " << value << endl;
+	// cout << "Key: " << key.ToString() << " ; " << "Value: " << value << endl;
 	total += t2 - t1 - rdtscp_cycle;
 	counter++;
   }

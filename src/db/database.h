@@ -73,7 +73,9 @@ string getDB(const string key);
 
 bool deleteDB(const string key);
 
-void resyncDB(list< pair< pair<string, string>, long long> >& ret, const string section);
+void getResyncDB(list< pair< pair<string, string>, long long> >& ret, const string section);
+
+void putResyncDB(list< pair< pair<string, string>, long long> > ret, bool isPrimary);
 
 void test();
 

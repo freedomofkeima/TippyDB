@@ -1,9 +1,9 @@
-2015-May-11 00:25:13.289545 | DBServiceServer is started
-2015-May-11 00:25:13.838831 | Become a candidate: leaderRequest to all nodes
-2015-May-11 00:25:13.943721 | getRecover rejected (this node is not a leader)
-2015-May-11 00:25:14.373828 | Become a candidate: leaderRequest to all nodes
-2015-May-11 00:25:14.375593 | Receive leader vote from 127.0.0.1:9091
-2015-May-11 00:25:14.376109 | Become a leader: send newest metadata to all nodes
-2015-May-11 00:25:14.409408 | send appendRequest to leader (term 2)
-2015-May-11 00:25:14.414238 | sendAppend accepted (term 3)
-2015-May-11 00:25:14.414681 | Leader election finished
+2015-May-11 02:21:17.283481 | DBServiceServer is started
+2015-May-11 02:21:17.832094 | Become a candidate: leaderRequest to all nodes
+2015-May-11 02:21:18.037662 | getRecover rejected (this node is not a leader)
+2015-May-11 02:21:18.366976 | Become a candidate: leaderRequest to all nodes
+2015-May-11 02:21:18.368199 | Receive leader vote from 127.0.0.1:9091
+2015-May-11 02:21:18.368563 | Become a leader: send newest metadata to all nodes
+2015-May-11 02:21:18.369045 | send appendRequest to leader (term 2)
+2015-May-11 02:21:18.370585 | sendAppend accepted (term 3)
+2015-May-11 02:21:18.370864 | Leader election finished

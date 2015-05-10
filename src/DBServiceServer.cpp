@@ -89,26 +89,26 @@ void decodeKeys(map<string, SKey> &ret, const char* json) {
   assert(shardedkeys.IsArray());
   // Iterate over all values in shardedkeys
   for (SizeType i = 0; i < shardedkeys.Size(); i++) {
-      SKey sk;
-      const Value& data = shardedkeys[i];
-      sk.id = data["id"].GetString();
-      const Value& primary = data["primary"];
-      sk.primary.first = (int) primary[0]["region"].GetInt();
-      sk.primary.second = (int) primary[0]["node"].GetInt();
+	  SKey sk;
+	  const Value& data = shardedkeys[i];
+	  sk.id = data["id"].GetString();
+	  const Value& primary = data["primary"];
+	  sk.primary.first = (int) primary[0]["region"].GetInt();
+	  sk.primary.second = (int) primary[0]["node"].GetInt();
 
-      // Update failure detection information
-      int idx = member_pos[constructShardKey(sk.primary.first, sk.primary.second)];
-      members[idx].active = 1;
+	  // Update failure detection information
+	  int idx = member_pos[constructShardKey(sk.primary.first, sk.primary.second)];
+	  members[idx].active = 1;
 
-      const Value& secondary = data["secondary"];
-      for (SizeType j = 0; j < secondary.Size(); j++) {
-          pair<int, int> secval;
-          const Value& data2 = secondary[j];
-          secval.first = (int) data2["region"].GetInt();
-          secval.second = (int) data2["node"].GetInt();
-          sk.secondary.push_back(secval);
-      }
-     ret[sk.id] = sk;
+	  const Value& secondary = data["secondary"];
+	  for (SizeType j = 0; j < secondary.Size(); j++) {
+		  pair<int, int> secval;
+		  const Value& data2 = secondary[j];
+		  secval.first = (int) data2["region"].GetInt();
+		  secval.second = (int) data2["node"].GetInt();
+		  sk.secondary.push_back(secval);
+	  }
+	 ret[sk.id] = sk;
   }
 }
 
@@ -139,21 +139,21 @@ string convertShardedMaptoJSON(map<string, SKey> m) {
   ret = "{\"shardedkeys\":[";
   int ctx = 0;
   for (iter = m.begin(); iter != m.end(); iter++) {
-      if (ctx != 0) ret = ret + ",";
-      ctx++;
-      ret = ret + "{";
-      // Insert ID
-      ret = ret + "\"id\":\"" + iter->first + "\",";
-      // Insert Primary
-      ret = ret + "\"primary\":[{\"region\":" + to_string(iter->second.primary.first) + ",\"node\":" + to_string(iter->second.primary.second) + "}],";
-      // Insert Secondary
-      ret = ret + "\"secondary\":[";
-      int sec_size = (int) iter->second.secondary.size();
-      for (int j = 0; j < sec_size; j++) {
-        ret = ret + "{\"region\":" + to_string(iter->second.secondary[j].first) + ",\"node\":" + to_string(iter->second.secondary[j].second) + "}";
-        if (j != sec_size - 1) ret = ret + ",";
-      }
-      ret = ret + "]}";
+	  if (ctx != 0) ret = ret + ",";
+	  ctx++;
+	  ret = ret + "{";
+	  // Insert ID
+	  ret = ret + "\"id\":\"" + iter->first + "\",";
+	  // Insert Primary
+	  ret = ret + "\"primary\":[{\"region\":" + to_string(iter->second.primary.first) + ",\"node\":" + to_string(iter->second.primary.second) + "}],";
+	  // Insert Secondary
+	  ret = ret + "\"secondary\":[";
+	  int sec_size = (int) iter->second.secondary.size();
+	  for (int j = 0; j < sec_size; j++) {
+		ret = ret + "{\"region\":" + to_string(iter->second.secondary[j].first) + ",\"node\":" + to_string(iter->second.secondary[j].second) + "}";
+		if (j != sec_size - 1) ret = ret + ",";
+	  }
+	  ret = ret + "]}";
   }
   ret = ret + "]}";
   return ret;
@@ -166,12 +166,12 @@ string createMetadata() {
   vector<int> active_members;
   string ret;
   for (int i = 0; i < (int) members.size(); i++)
-      if (members[i].active == 1) active_members.push_back(i);
+	  if (members[i].active == 1) active_members.push_back(i);
   if ((int) active_members.size() - 1 < size) size = (int) active_members.size() - 1; // allow replication which is lower than specified if there is not enough number of nodes
 
   for (int i = 0; i < (int) active_members.size(); i++) {
-      int idx = active_members[i];
-      if (members[idx].active == 1) {
+	  int idx = active_members[i];
+	  if (members[idx].active == 1) {
 		  SKey sk;
 		  sk.id = constructShardKey(members[idx].region, members[idx].node);
 		  sk.primary.first = members[idx].region;
@@ -187,32 +187,109 @@ string createMetadata() {
 		  	sk.secondary.push_back(secval);
 		  }
 		  temp_ret[sk.id] = sk;
-      }
+	  }
   }
   return convertShardedMaptoJSON(temp_ret);
 }
 
-// TODO: Tweak current metadata
-string tweakMetadata(const std::string& m) {
-  string ret;
+// Tweak current metadata
+string tweakMetadata(const std::string& m, int idx, int remote_region, int remote_node) {
+  map<string, SKey> remote_skeys;
+  const char* json = m.c_str();
 
-  return ret;
+  decodeKeys(remote_skeys, json);
+
+  int secondary_size = remote_skeys[identity].secondary.size();
+  if (idx != -1) {
+	  pair<int, int> sk;
+	  sk.first = remote_skeys[identity].primary.first;
+	  sk.second = remote_skeys[identity].primary.second;
+	  if (replication_factors > secondary_size + 1) { // append current primary to secondary
+	  	pair<int, int> sk;
+	  	sk.first = remote_skeys[identity].primary.first;
+	  	sk.second = remote_skeys[identity].primary.second;
+	  	remote_skeys[identity].secondary.push_back(sk);
+	  } else { // replace one secondary with primary
+	  	remote_skeys[identity].secondary[secondary_size-1].first = sk.first;
+	  	remote_skeys[identity].secondary[secondary_size-1].second = sk.second;
+	  }
+  }
+
+  remote_skeys[identity].primary.first = server_region;
+  remote_skeys[identity].primary.second = server_node;
+
+  if (replication_factors > secondary_size + 1) {
+	  // Add new secondary based on active members, if possible. Send resync signal
+	  bool* isAble = (bool*) malloc((int) members.size() * sizeof(bool));
+	  for (int i = 0; i < (int) members.size(); i++) {
+	  	if (members[i].active == 1 && i != own_id) isAble[i] = true;
+	  	else isAble[i] = false;
+	  	for (int j = 0; j < secondary_size; j++) { // O(total_node^2) complexity
+	  		if (members[i].region == remote_skeys[identity].secondary[j].first && members[i].node == remote_skeys[identity].secondary[j].second) {
+	  			isAble[i] = false;
+	  		}
+	  	}
+	  }
+
+	  int needed = replication_factors - (secondary_size + 1);
+	  for (int i = 0; i < (int) members.size(); i++) {
+	  	ShardContent ds;
+
+	  	list< pair< pair<string, string>, long long> > data; // (key, value, ts)
+	  	getResyncDB(data, identity);
+	  	for (list< pair< pair<string, string>, long long> >::iterator it=data.begin(); it != data.end(); ++it) {
+	  		Data t;
+	  		t.key = (*it).first.first;
+	  		t.value = (*it).first.second;
+	  		t.ts = (*it).second;
+	  		ds.data.push_back(t); // append result
+	  	}
+
+	  	if (isAble[i]) {
+	  		pair<int, int> sk2;
+	  		sk2.first = members[i].region;
+	  		sk2.second = members[i].node;
+	  		// Update metadata
+	  		remote_skeys[identity].secondary.push_back(sk2);
+	  		// Push resyncData
+			boost::shared_ptr<TTransport> socket(new TSocket(members[i].ip, members[i].port));
+			boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+			boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+			DBServiceClient client(protocol);
+
+			cout << "Push resyncData to " << members[i].ip << ":" << members[i].port << endl;
+			bool isSuccess = false;
+			try {
+				transport->open();
+				isSuccess = client.pushResyncData(ds);
+			} catch (TException& tx) {
+				cout << "ERROR: " << tx.what() << endl;
+			}
+	  		// Decrement needed counter
+	  		if (isSuccess) needed--;
+	  	}
+	  	if (needed == 0) break;
+	  }
+
+  }
+
+  return convertShardedMaptoJSON(remote_skeys);
 }
 
 /***** LOG WRITER SECTION *****/
 class LogWriter {
 public:
   LogWriter() {
-    file = "data/app.log";
-    facet = new time_facet("%Y-%m-%d-%H:%M:$S.%f");
+	file = "data/app.log";
+	facet = new time_facet("%Y-%m-%d-%H:%M:$S.%f");
   }
 
   void writeLog(const std::string& message) {
-    log_mutex.lock();
-    ofstream log_file(file, ios_base::out | ios_base::app);
-    cout.imbue(locale(cout.getloc(), facet));
-    log_file << microsec_clock::local_time() << " | " << message << endl;
-    log_mutex.unlock();
+	log_mutex.lock();
+	ofstream log_file(file, ios_base::out | ios_base::app);
+	cout.imbue(locale(cout.getloc(), facet));
+	log_file << microsec_clock::local_time() << " | " << message << endl;
+	log_mutex.unlock();
   }
 
 private:
@@ -236,96 +313,139 @@ enum {
 class RaftConsensus {
 public:
   RaftConsensus(vector<Member> _members, string _metadata, int _own_id) {
-    current_term = 0;
-    log = _metadata;
-    voted_for = -1;
-    commit_idx = getMetadataValue();
-    timeout_elapsed = (rand() % 500) + 150; // random factor
-    nodes = _members;
-    num_nodes = nodes.size();
-    node_id = _own_id;
+	current_term = 0;
+	log = _metadata;
+	voted_for = -1;
+	commit_idx = getMetadataValue();
+	timeout_elapsed = (rand() % 500) + 150; // random factor
+	nodes = _members;
+	num_nodes = nodes.size();
+	node_id = _own_id;
 
-    // Recover here (or become candidate if fails)
-    bool receiveLeader = false;
-    vector<thread> workers;
+	// Recover here (or become candidate if fails)
+	bool receiveLeader = false;
+	vector<thread> workers;
 
-    for (int i = 0; i < num_nodes; i++) { // broadcast to all nodes except own
-    	if (i == node_id) continue;
-    	int current_id = i;
-    	workers.push_back(thread([&](int current_id) {
-    		boost::shared_ptr<TTransport> socket(new TSocket(nodes[current_id].ip, nodes[current_id].port));
-    		cout << "Recover Metadata: Check " << nodes[current_id].ip << ":" << nodes[current_id].port << endl;
+	for (int i = 0; i < num_nodes; i++) { // broadcast to all nodes except own
+		if (i == node_id) continue;
+		int current_id = i;
+		workers.push_back(thread([&](int current_id) {
+			boost::shared_ptr<TTransport> socket(new TSocket(nodes[current_id].ip, nodes[current_id].port));
+			cout << "Recover Metadata: Check " << nodes[current_id].ip << ":" << nodes[current_id].port << endl;
 
-    		boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
-    		boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
-    		DBServiceClient client(protocol);
+			boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+			boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+			DBServiceClient client(protocol);
 
-    		try {
-    			transport->open();
-    			GetRecover data;
-    			client.getRecover(data); // RPC Recover
-    			if (data.isLeader) {
-    				receiveLeader = true;
-    				voted_for = current_id; // current leader
-    				current_term = data.term;
-    				commit(data.entry, data.commit_idx);
-    				logWriter->writeLog("Recovered from node_id (leader) = " + to_string(voted_for));
-    			}
-    		} catch (TException& tx) {
-    			cout << "ERROR: " << tx.what() << endl;
-    		}
-    	}, current_id)); // end of thread
-    }
-    for_each(workers.begin(), workers.end(), [](thread &t) {
-    	t.join();
-    });
+			try {
+				transport->open();
+				GetRecover data;
+				client.getRecover(data); // RPC Recover
+				if (data.isLeader) {
+					receiveLeader = true;
+					voted_for = current_id; // current leader
+					current_term = data.term;
+					commit(data.entry, data.commit_idx);
+					logWriter->writeLog("Recovered from node_id (leader) = " + to_string(voted_for));
+				}
+			} catch (TException& tx) {
+				cout << "ERROR: " << tx.what() << endl;
+			}
+		}, current_id)); // end of thread
+	}
+	for_each(workers.begin(), workers.end(), [](thread &t) {
+		t.join();
+	});
 
-    if (receiveLeader) { // Tweak only own primary (change old primary to secondary, drop one secondary)
-    	string new_entry = tweakMetadata(log);
-    	// TODO: Wait until finish resync before updating metadata
+	if (receiveLeader) { // Tweak only own primary (change old primary to secondary, drop one secondary)
+		// Wait until finish resync before updating metadata
+		bool isExistPrimary = false;
+		int idx = -1, remote_region = -1, remote_node = -1;
+		map<string, SKey>::iterator iter;
+		for (iter = skeys.begin(); iter != skeys.end(); iter++) {
+			string _id = iter->first;
+			if (_id == identity) {
+				isExistPrimary = true;
+				idx = member_pos[constructShardKey(iter->second.primary.first, iter->second.primary.second)];
+				remote_region = iter->second.primary.first;
+				remote_node = iter->second.primary.second;
+				break;
+			}
+		}
+		// At this point, we are not deleting the actual data (only metadata)
+		if (isExistPrimary) {
+			boost::shared_ptr<TTransport> socket(new TSocket(nodes[idx].ip, nodes[idx].port));
+			boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+			boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+			DBServiceClient client(protocol);
 
-    	// appendRequest(new_entry);
-    } else {
-    	thread t(&RaftConsensus::initElection, this);
-    	t.detach();
-    }
+			ShardContent ds;
+
+			cout << "ResyncData from " << nodes[idx].ip << ":" << nodes[idx].port << endl;
+
+			try {
+				transport->open();
+				client.resyncData(ds, server_region, server_node);
+			} catch (TException& tx) {
+				cout << "ERROR: " << tx.what() << endl;
+			}
+
+			if (ds.data.size() != 0) {
+				list< pair< pair<string, string>, long long> > data; // (key, value, ts)
+				for (int pos = 0; pos < (int) ds.data.size(); pos++) {
+					pair< pair<string, string>, long long> d;
+					d.first.first = ds.data[pos].key;
+					d.first.second = ds.data[pos].value;
+					d.second = ds.data[pos].ts;
+					data.push_back(d);
+				}
+
+				putResyncDB(data, true); // insert to database
+			}
+		}
+		string new_entry = tweakMetadata(log, idx, remote_region, remote_node);
+		appendRequest(new_entry);
+	} else {
+		thread t(&RaftConsensus::initElection, this);
+		t.detach();
+	}
   }
 
   void initElection() {
-    // ensure a majority leader is chosen
+	// ensure a majority leader is chosen
 	bool result = false;
-    while (voted_for == -1) {
-    	// sleep for timeout_elapsed, declare candidacy
+	while (voted_for == -1) {
+		// sleep for timeout_elapsed, declare candidacy
 		this_thread::sleep_for(chrono::milliseconds(timeout_elapsed));
 		if (voted_for == -1) result = leaderRequest(); // requesting leader (as a candidate)
 		if (result) logWriter->writeLog("Leader election finished");
-    }
+	}
   }
 
   bool commit(const std::string& entry, int _commit_idx) {
-    if (commit_idx < _commit_idx) commit_idx = _commit_idx;
-    else return false;
-    // update log
-    log = entry;
-    putMetadataValue(commit_idx);
-    writeMetadata(log);
-    return true;
+	if (commit_idx < _commit_idx) commit_idx = _commit_idx;
+	else return false;
+	// update log
+	log = entry;
+	putMetadataValue(commit_idx);
+	writeMetadata(log);
+	return true;
   }
 
   // Send vote request
   bool leaderRequest() {
-    int required = (num_nodes / 2) + 1;
-    votes_for_me.clear(); // reset voters
-    logWriter->writeLog("Become a candidate: leaderRequest to all nodes");
+	int required = (num_nodes / 2) + 1;
+	votes_for_me.clear(); // reset voters
+	logWriter->writeLog("Become a candidate: leaderRequest to all nodes");
 
 	bool* isSent;
 	isSent = (bool*) malloc (num_nodes * sizeof(bool));
 	for(int i = 0; i < num_nodes; i++) isSent[i] = false;
 	isSent[node_id] = true;
 
-    vector<thread> workers;
+	vector<thread> workers;
 
-    int prev_term = current_term;
+	int prev_term = current_term;
 	int prev_commit_idx = commit_idx;
 
 	// Update own information
@@ -334,37 +454,37 @@ public:
 	voted_for = node_id;
 	votes_for_me.push_back(node_id);
 
-    for (int i = 0; i < num_nodes; i++) { // broadcast to all nodes
-    	if (i == node_id) continue;
-    	int current_id = i;
-    	workers.push_back(thread([&](int current_id) {
-    		boost::shared_ptr<TTransport> socket(new TSocket(nodes[current_id].ip, nodes[current_id].port));
-    		cout << "Leader Request: Send to " << nodes[current_id].ip << ":" << nodes[current_id].port << endl;
+	for (int i = 0; i < num_nodes; i++) { // broadcast to all nodes
+		if (i == node_id) continue;
+		int current_id = i;
+		workers.push_back(thread([&](int current_id) {
+			boost::shared_ptr<TTransport> socket(new TSocket(nodes[current_id].ip, nodes[current_id].port));
+			cout << "Leader Request: Send to " << nodes[current_id].ip << ":" << nodes[current_id].port << endl;
 
-    		boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
-    		boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
-    		DBServiceClient client(protocol);
+			boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+			boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+			DBServiceClient client(protocol);
 
-    		try {
-    			transport->open();
-    			VoteRequest request;
-    			VoteResponse response;
+			try {
+				transport->open();
+				VoteRequest request;
+				VoteResponse response;
 
-    			/** Start next term */
-    			request.term = prev_term + 1; // increment term
-    			request.last_commit_idx = prev_commit_idx + 1; // next commit idx
-    			request.peer_id = node_id;
+				/** Start next term */
+				request.term = prev_term + 1; // increment term
+				request.last_commit_idx = prev_commit_idx + 1; // next commit idx
+				request.peer_id = node_id;
 
-    			client.sendVote(response, request); // RPC VoteRequest
-    			if (response.granted) {
-    				votes_for_me.push_back(current_id); // node which has voted for this node
-    				logWriter->writeLog("Receive leader vote from " + nodes[current_id].ip + ":" + to_string(nodes[current_id].port));
-    			}
-    			isSent[current_id] = true;
-    		} catch (TException& tx) {
-    			cout << "ERROR: " << tx.what() << endl;
-    		}
-    	}, current_id)); // end of thread
+				client.sendVote(response, request); // RPC VoteRequest
+				if (response.granted) {
+					votes_for_me.push_back(current_id); // node which has voted for this node
+					logWriter->writeLog("Receive leader vote from " + nodes[current_id].ip + ":" + to_string(nodes[current_id].port));
+				}
+				isSent[current_id] = true;
+			} catch (TException& tx) {
+				cout << "ERROR: " << tx.what() << endl;
+			}
+		}, current_id)); // end of thread
 	}
 	for_each(workers.begin(), workers.end(), [](thread &t) {
 		t.join();
@@ -376,89 +496,89 @@ public:
 	}
 
 
-    if ((int) votes_for_me.size() >= required) { // become a leader
-    	// Send newest metadata based on all active nodes
-    	string new_entry = createMetadata();
-    	logWriter->writeLog("Become a leader: send newest metadata to all nodes");
-    	if (voted_for == node_id) appendRequest(new_entry); // propagate metadata
-    } else {
+	if ((int) votes_for_me.size() >= required) { // become a leader
+		// Send newest metadata based on all active nodes
+		string new_entry = createMetadata();
+		logWriter->writeLog("Become a leader: send newest metadata to all nodes");
+		if (voted_for == node_id) appendRequest(new_entry); // propagate metadata
+	} else {
 		voted_for = -1; // re-do leader selection
 		return false;
 	}
 
-    return true;
+	return true;
   }
 
   // Send append request
   bool appendRequest(const std::string& entry) {
-    int leader_id = voted_for;
-    if (leader_id == -1) return false;
+	int leader_id = voted_for;
+	if (leader_id == -1) return false;
 
-    boost::shared_ptr<TTransport> socket(new TSocket(nodes[leader_id].ip, nodes[leader_id].port));
-    cout << "Append Request: Send to " << nodes[leader_id].ip << ":" << nodes[leader_id].port << endl;
+	boost::shared_ptr<TTransport> socket(new TSocket(nodes[leader_id].ip, nodes[leader_id].port));
+	cout << "Append Request: Send to " << nodes[leader_id].ip << ":" << nodes[leader_id].port << endl;
 
-    boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
-    boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
-    DBServiceClient client(protocol);
+	boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+	boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+	DBServiceClient client(protocol);
 
-    AppendRequest request;
-    AppendResponse response;
+	AppendRequest request;
+	AppendResponse response;
 
-    try {
-    	transport->open();
+	try {
+		transport->open();
 
-    	/** Start next term */
-    	request.term = current_term + 1; // increase term
-    	request.commit_idx = commit_idx + 1;
-    	request.entry = entry;
+		/** Start next term */
+		request.term = current_term + 1; // increase term
+		request.commit_idx = commit_idx + 1;
+		request.entry = entry;
 
-    	logWriter->writeLog("send appendRequest to leader (term " + to_string(current_term) + ")");
+		logWriter->writeLog("send appendRequest to leader (term " + to_string(current_term) + ")");
 
-    	client.sendAppend(response, request); // RPC AppendRequest
-    } catch (TException& tx) {
-    	cout << "ERROR: " << tx.what() << endl;
-    }
+		client.sendAppend(response, request); // RPC AppendRequest
+	} catch (TException& tx) {
+		cout << "ERROR: " << tx.what() << endl;
+	}
 
-    return response.succeeds;
+	return response.succeeds;
   }
 
   void checkFailure(int remote_region, int remote_node) {
-    // TODO: Become a raft leader if the failure_node == voted_for
+	// TODO: Become a raft leader if the failure_node == voted_for
 
-    // TODO: Change unavailable nodes primary setup, update metadata (At this point, there will be only replication_factor - 1 nodes for this shard key)
+	// TODO: Change unavailable nodes primary setup, update metadata (At this point, there will be only replication_factor - 1 nodes for this shard key)
 
-    // TODO: Search the next nearest one as the new primary and fill the required number of secondaries (Tell a oneway message to resyncData, add new thrift procedure) -> update metadata for a second time here
+	// TODO: Search the next nearest one as the new primary and fill the required number of secondaries (Tell a oneway message to resyncData, add new thrift procedure) -> update metadata for a second time here
 
   }
 
   /** Getter & Setter */
 
   int getTerm() {
-    return current_term;
+	return current_term;
   }
 
   void setTerm(int _term) {
-    current_term = _term;
+	current_term = _term;
   }
 
   string getLog() {
-    return log;
+	return log;
   }
 
   int getVotedFor() {
-    return voted_for;
+	return voted_for;
   }
 
   void setVotedFor(int _voted_for) {
-    voted_for = _voted_for;
+	voted_for = _voted_for;
   }
 
   int getCommitIdx() {
-    return commit_idx;
+	return commit_idx;
   }
 
   int getNodeId() {
-    return node_id;
+	return node_id;
   }
 
 private:
@@ -482,30 +602,30 @@ RaftConsensus* raft;
 void printMembers() {
   int size = (int) members.size();
   for (int i = 0; i < size; i++) {
-      cout << "Member #" << (i+1) << ": " << endl;
-      cout << "Region: " << members[i].region << endl;
-      cout << "Node: " << members[i].node << endl;
-      cout << "IP: " << members[i].ip << endl;
-      cout << "Port: " << members[i].port << endl;
-      cout << "Distance: ";
-      int size2 = (int) members[i].distance.size();
-      for (int j = 0; j < size2; j++) {
-          cout << members[i].distance[j];
-          if (j != size2 - 1) cout << ", ";
-      }
-      cout << endl << endl;
+	  cout << "Member #" << (i+1) << ": " << endl;
+	  cout << "Region: " << members[i].region << endl;
+	  cout << "Node: " << members[i].node << endl;
+	  cout << "IP: " << members[i].ip << endl;
+	  cout << "Port: " << members[i].port << endl;
+	  cout << "Distance: ";
+	  int size2 = (int) members[i].distance.size();
+	  for (int j = 0; j < size2; j++) {
+		  cout << members[i].distance[j];
+		  if (j != size2 - 1) cout << ", ";
+	  }
+	  cout << endl << endl;
   }
 }
 
 void printSKeys() {
   map<string, SKey>::iterator iter;
   for (iter = skeys.begin(); iter != skeys.end(); iter++) {
-      cout << "Sharded Key ID: " << iter->first << endl;
-      cout << "Primary (Region, Node): (" << iter->second.primary.first << ", " << iter->second.primary.second << ")" << endl;
-      int sec_size = (int) iter->second.secondary.size();
-      for (int j = 0; j < sec_size; j++) {
-        cout << "-- Secondary (Region, Node): (" << iter->second.secondary[j].first << ", " << iter->second.secondary[j].second << ")" << endl;
-      }
+	  cout << "Sharded Key ID: " << iter->first << endl;
+	  cout << "Primary (Region, Node): (" << iter->second.primary.first << ", " << iter->second.primary.second << ")" << endl;
+	  int sec_size = (int) iter->second.secondary.size();
+	  for (int j = 0; j < sec_size; j++) {
+		cout << "-- Secondary (Region, Node): (" << iter->second.secondary[j].first << ", " << iter->second.secondary[j].second << ")" << endl;
+	  }
   }
   cout << endl;
 }
@@ -537,33 +657,33 @@ void loadMembers() {
   const Value& distances = d["distance"];
 
   for (SizeType i = 0; i < num_members; i++) {
-      Member m;
-      const Value& distance = distances[i];
-      for (SizeType j = 0; j < num_members; j++) {
-           m.distance.push_back(distance[SizeType(j)].GetInt());
-      }
-      members.push_back(m); // add new member
+	  Member m;
+	  const Value& distance = distances[i];
+	  for (SizeType j = 0; j < num_members; j++) {
+		   m.distance.push_back(distance[SizeType(j)].GetInt());
+	  }
+	  members.push_back(m); // add new member
   }
 
   const Value& ms = d["members"];
   for (SizeType i = 0; i < num_members; i++) {
-      const Value& info = ms[i];
-      members[i].region = (int) info["region"].GetInt();
-      members[i].node = (int) info["node"].GetInt();
-      members[i].ip = info["ip"].GetString();
-      members[i].port = info["port"].GetInt();
-      members[i].active = 1; // assume all nodes are active
-     // add additional info for self
-     if (info["own"].GetBool()) {
-         own_id = (int) i;
-         server_ip = members[i].ip;
-         server_port = members[i].port;
-         server_region = members[i].region;
-         server_node = members[i].node;
-         identity = constructShardKey(server_region, server_node);
-     }
-     // construct map
-      member_pos[constructShardKey(members[i].region, members[i].node)] = i;
+	  const Value& info = ms[i];
+	  members[i].region = (int) info["region"].GetInt();
+	  members[i].node = (int) info["node"].GetInt();
+	  members[i].ip = info["ip"].GetString();
+	  members[i].port = info["port"].GetInt();
+	  members[i].active = 1; // assume all nodes are active
+	 // add additional info for self
+	 if (info["own"].GetBool()) {
+		 own_id = (int) i;
+		 server_ip = members[i].ip;
+		 server_port = members[i].port;
+		 server_region = members[i].region;
+		 server_node = members[i].node;
+		 identity = constructShardKey(server_region, server_node);
+	 }
+	 // construct map
+	  member_pos[constructShardKey(members[i].region, members[i].node)] = i;
   }
 
   // StringBuffer buffer;
@@ -604,18 +724,18 @@ public:
   }
 
   long long incrementLClock(const std::string& key) {
-    ts_mutex.lock();
-    long long c = getLClock(key);
-    c++;
-    putLClock(key, c);
-    ts_mutex.unlock();
-    return c;
+	ts_mutex.lock();
+	long long c = getLClock(key);
+	c++;
+	putLClock(key, c);
+	ts_mutex.unlock();
+	return c;
   }
 
   bool tsCheck(const std::string& key, int64_t ts) {
-    long long db_ts = getLClock(key);
-    if (db_ts < (long long) ts) return true;
-    else return false;
+	long long db_ts = getLClock(key);
+	if (db_ts < (long long) ts) return true;
+	else return false;
   }
 
 private:
@@ -779,12 +899,12 @@ class DBServiceHandler : virtual public DBServiceIf {
   DBServiceHandler() {}
 
   void ping() {
-    // Do nothing
+	// Do nothing
   }
 
   // First come first serve basis
   void putData(std::string& _return, const std::string& value) {
-    _return = putDB(value, server_region, server_node, false);
+	_return = putDB(value, server_region, server_node, false);
 	if (_return.length() == 16) {
 		// replicate data to secondary nodes
 		long long clock = lClock->incrementLClock(_return);
@@ -835,7 +955,7 @@ class DBServiceHandler : virtual public DBServiceIf {
    * @param value
    */
   void putDataForce(std::string& _return, const std::string& value, const int32_t remote_region, const int32_t remote_node) {
-    _return = putDB(value, server_region, server_node, true); // return by force
+	_return = putDB(value, server_region, server_node, true); // return by force
 	if (_return.length() == 16) {
 		// replicate data to secondary nodes
 		long long clock = lClock->incrementLClock(_return);
@@ -848,15 +968,15 @@ class DBServiceHandler : virtual public DBServiceIf {
   bool updateData(const Data& d) {
 	string identifier = d.key.substr(0, 8); // first 8 characters
 	pair<int, int> location = skeys[identifier].primary;
-    if (location.first == server_region && location.second == server_node) {
-    bool isSuccess = updateDB(d.key, d.value);
+	if (location.first == server_region && location.second == server_node) {
+	bool isSuccess = updateDB(d.key, d.value);
 		if (isSuccess) {
 			long long clock = lClock->incrementLClock(d.key);
 			thread t(backgroundTask, d.key, d.value, clock, 1);
 			t.detach();
 		}
-    	return isSuccess;
-    } else {
+		return isSuccess;
+	} else {
 			// search at specified region and node
 			int idx = member_pos[constructShardKey(location.first, location.second)];
 
@@ -872,8 +992,8 @@ class DBServiceHandler : virtual public DBServiceIf {
 				cout << "ERROR: " << tx.what() << endl;
 				return false;
 			}
-    }
-    return false;
+	}
+	return false;
   }
 
   /**
@@ -893,16 +1013,16 @@ class DBServiceHandler : virtual public DBServiceIf {
 			putLClock(d.key, d.ts);
 		}
 	}
-    return true;
+	return true;
   }
 
   // First come first serve basis (return empty string if sharded_key != exists)
   void getData(std::string& _return, const std::string& sharded_key) {
 	string identifier = sharded_key.substr(0, 8); // first 8 characters
 	pair<int, int> location = skeys[identifier].primary;
-    if (location.first == server_region && location.second == server_node) {
+	if (location.first == server_region && location.second == server_node) {
 		_return = getDB(sharded_key);
-    } else {
+	} else {
 			// search at specified region and node
 			int idx = member_pos[constructShardKey(location.first, location.second)];
 			boost::shared_ptr<TTransport> socket(new TSocket(members[idx].ip, members[idx].port));
@@ -916,21 +1036,21 @@ class DBServiceHandler : virtual public DBServiceIf {
 			} catch (TException& tx) {
 				cout << "ERROR: " << tx.what() << endl;
 			}
-    }
+	}
   }
 
   // First come first serve basis
   bool deleteData(const std::string& sharded_key) {
 	string identifier = sharded_key.substr(0, 8); // first 8 characters
 	pair<int, int> location = skeys[identifier].primary;
-    if (location.first == server_region && location.second == server_node) {
+	if (location.first == server_region && location.second == server_node) {
 		bool isSuccess = deleteDB(sharded_key);
 		if (isSuccess) {
 			thread t(backgroundTask, sharded_key, "", 0, 2);
 			t.detach();
 		}
 		return isSuccess;
-    } else {
+	} else {
 			// search at specified region and node
 			int idx = member_pos[constructShardKey(location.first, location.second)];
 			boost::shared_ptr<TTransport> socket(new TSocket(members[idx].ip, members[idx].port));
@@ -944,8 +1064,8 @@ class DBServiceHandler : virtual public DBServiceIf {
 			} catch (TException& tx) {
 				cout << "ERROR: " << tx.what() << endl;
 			}
-    }
-    return false;
+	}
+	return false;
   }
 
   /**
@@ -959,7 +1079,7 @@ class DBServiceHandler : virtual public DBServiceIf {
   bool deleteSecondaryData(const std::string& sharded_key, const int32_t remote_region, const int32_t remote_node) {
 	cout << "deleteSecondaryData is called" << endl;
 	deleteDB(sharded_key);
-    return true;
+	return true;
   }
 
   /**
@@ -979,7 +1099,7 @@ class DBServiceHandler : virtual public DBServiceIf {
 			putLClock(d.key, d.ts);
 		}
 	}
-    return true;
+	return true;
   }
 
   /**
@@ -992,7 +1112,7 @@ class DBServiceHandler : virtual public DBServiceIf {
   void resyncData(ShardContent& _return, const int32_t remote_region, const int32_t remote_node) {
 	cout << "resyncData is called" << endl;
 	list< pair< pair<string, string>, long long> > data; // (key, value, ts)
-	resyncDB(data, constructShardKey(remote_region, remote_node));
+	getResyncDB(data, constructShardKey(remote_region, remote_node));
 	cout << "Size: " << data.size() << endl;
 	for (list< pair< pair<string, string>, long long> >::iterator it=data.begin(); it != data.end(); ++it) {
 		Data t;
@@ -1001,6 +1121,24 @@ class DBServiceHandler : virtual public DBServiceIf {
 		t.ts = (*it).second;
 		_return.data.push_back(t); // append result
 	}
+  }
+
+  /**
+   * pushResyncData
+   * Push ShardContent from primary node to other node
+   * 
+   * @param contents
+   */
+  bool pushResyncData(const ShardContent& contents) {
+	list< pair< pair<string, string>, long long> > data; // (key, value, ts)
+	for (int i = 0; i < (int) contents.data.size(); i++) {
+		pair< pair<string, string>, long long> d;
+		d.first.first = contents.data[i].key;
+		d.first.second = contents.data[i].value;
+		d.second = contents.data[i].ts;
+	}
+	putResyncDB(data, false);
+	return true;
   }
 
   /**
@@ -1091,7 +1229,7 @@ class DBServiceHandler : virtual public DBServiceIf {
   }
 
   void zip() {
-    // Do nothing
+	// Do nothing
   }
 
 };
@@ -1100,8 +1238,8 @@ class DBServiceHandler : virtual public DBServiceIf {
 
 int main(int argc, char **argv) {
   if (argc != 3) {
-    cout << "Usage: ./application_name port_number db_path" << endl;
-    return 1;
+	cout << "Usage: ./application_name port_number db_path" << endl;
+	return 1;
   }
   cout << "Port number: " << argv[1] << endl;
   cout << "DB path: " << argv[2] << endl;
@@ -1115,9 +1253,9 @@ int main(int argc, char **argv) {
 
   /** Create Threaded server */
   TThreadedServer server(processor,
-                         serverTransport,
-                         transportFactory,
-                         protocolFactory);
+						 serverTransport,
+						 transportFactory,
+						 protocolFactory);
 
   // Load members configuration (db.config)
   loadMembers();

@@ -112,6 +112,17 @@ class DBServiceHandler : virtual public DBServiceIf {
   }
 
   /**
+   * pushResyncData
+   * Push ShardContent from primary node to other node
+   * 
+   * @param contents
+   */
+  bool pushResyncData(const ShardContent& contents) {
+    // Your implementation goes here
+    printf("pushResyncData\n");
+  }
+
+  /**
    * getRecover
    * Get newest metadata (recovery phase)
    */

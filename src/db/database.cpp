@@ -50,7 +50,7 @@ void initDB(string path, int shard_size) {
 	size = (long long) shard_size * 943718; // (1 MB size, allow 10% free for other operations)
 
 	leveldb::Status local_status;
-    string temp_value;
+	string temp_value;
 	local_status = db->Get(read_options, counter_key, &temp_value);
 	if (!local_status.ok()) { // initialize counter if it hasn't been initialized
 		db->Put(write_options, counter_key, to_string(counter_value));
@@ -64,7 +64,7 @@ void initDB(string path, int shard_size) {
 	} else {
 		psize_value = stoll(temp_value);
 	}
-    cout << "Psize Value: " << psize_value << endl;
+	cout << "Psize Value: " << psize_value << endl;
 
 	write_options2.sync = true;
 }
@@ -95,8 +95,8 @@ long long getPsizeValue() {
 // Retrieve logical clock counter
 long long getLClock(const string key) {
 	leveldb::Status local_status;
-    string temp_value;
-    string t_key = lclock_key + key;
+	string temp_value;
+	string t_key = lclock_key + key;
 	leveldb::Slice l_key = t_key;
 	local_status = db->Get(read_options, l_key, &temp_value);
 	if (!local_status.ok()) { // initialize lclock if it hasn't been initialized
@@ -109,7 +109,7 @@ long long getLClock(const string key) {
 
 // Update logical clock counter
 void putLClock(const string key, long long logical_clock) {
-    string t_key = lclock_key + key;
+	string t_key = lclock_key + key;
 	leveldb::Slice l_key = t_key;
 	db->Put(write_options, l_key, to_string(logical_clock));
 }
@@ -225,14 +225,14 @@ bool deleteDB(const string key) {
 	db->Put(write_options, psize_key, to_string(psize_value));
 	put_mutex.unlock();
 
-    string t_key = lclock_key + key;
+	string t_key = lclock_key + key;
 	leveldb::Slice l_key = t_key;
 	db->Delete(write_options, l_key); // remove logical clock
 
 	return true;
 }
 
-void resyncDB(list< pair< pair<string, string>, long long> >& ret, const string section) {
+void getResyncDB(list< pair< pair<string, string>, long long> >& ret, const string section) {
 	leveldb::Iterator* it = db->NewIterator(read_options);
 	int total_data = 0;
 	for(it->SeekToFirst(); it->Valid(); it->Next()) {
@@ -252,6 +252,25 @@ void resyncDB(list< pair< pair<string, string>, long long> >& ret, const string 
 	}
 	delete it;
 	cout << "resyncDB (total data): " << total_data << endl;
+}
+
+void putResyncDB(list< pair< pair<string, string>, long long> > data, bool isPrimary) {
+	put_mutex.lock(); // lock entire process
+	for (list< pair< pair<string, string>, long long> >::iterator it=data.begin(); it != data.end(); ++it) {
+		string key = (*it).first.first;
+		string value = (*it).first.second;
+		long long ts = (*it).second;
+		// Update counter_value based on max found
+		if (isPrimary) counter_value = max(counter_value, stoi(key.substr(8, 8)));
+		// Update psize's value
+		psize_value = 16 + value.length();
+		db->Put(write_options, key, value);
+		// Update timestamp
+		putLClock(key, ts);
+	}
+	if (isPrimary) db->Put(write_options, counter_key, to_string(counter_value));
+	db->Put(write_options, psize_key, to_string(psize_value));
+	put_mutex.unlock();
 }
 
 void test() {

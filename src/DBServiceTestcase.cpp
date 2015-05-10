@@ -48,29 +48,29 @@ uint64_t rdtscp_cycle = 50;
 # error unknown platform
 #endif
 
-#define RDTSC_START(cycles)                                \
-    do {                                                   \
-        register unsigned cyc_high, cyc_low;               \
-        asm volatile("CPUID\n\t"                           \
-                     "RDTSC\n\t"                           \
-                     "mov %%edx, %0\n\t"                   \
-                     "mov %%eax, %1\n\t"                   \
-                     : "=r" (cyc_high), "=r" (cyc_low)     \
-                     :: RDTSC_DIRTY);                      \
-        (cycles) = ((uint64_t)cyc_high << 32) | cyc_low;   \
-    } while (0)
+#define RDTSC_START(cycles)								\
+	do {												   \
+		register unsigned cyc_high, cyc_low;			   \
+		asm volatile("CPUID\n\t"						   \
+					 "RDTSC\n\t"						   \
+					 "mov %%edx, %0\n\t"				   \
+					 "mov %%eax, %1\n\t"				   \
+					 : "=r" (cyc_high), "=r" (cyc_low)	 \
+					 :: RDTSC_DIRTY);					  \
+		(cycles) = ((uint64_t)cyc_high << 32) | cyc_low;   \
+	} while (0)
 
-#define RDTSC_STOP(cycles)                                 \
-    do {                                                   \
-        register unsigned cyc_high, cyc_low;               \
-        asm volatile("RDTSCP\n\t"                          \
-                     "mov %%edx, %0\n\t"                   \
-                     "mov %%eax, %1\n\t"                   \
-                     "CPUID\n\t"                           \
-                     : "=r" (cyc_high), "=r" (cyc_low)     \
-                     :: RDTSC_DIRTY);                      \
-        (cycles) = ((uint64_t)cyc_high << 32) | cyc_low;   \
-    } while(0)
+#define RDTSC_STOP(cycles)								 \
+	do {												   \
+		register unsigned cyc_high, cyc_low;			   \
+		asm volatile("RDTSCP\n\t"						  \
+					 "mov %%edx, %0\n\t"				   \
+					 "mov %%eax, %1\n\t"				   \
+					 "CPUID\n\t"						   \
+					 : "=r" (cyc_high), "=r" (cyc_low)	 \
+					 :: RDTSC_DIRTY);					  \
+		(cycles) = ((uint64_t)cyc_high << 32) | cyc_low;   \
+	} while(0)
 
 void print_result(uint64_t cycle) {
 	cout << "Number of iteration: " << max_iteration << endl;
@@ -89,8 +89,8 @@ void init() {
 
 int main(int argc, char** argv) {
   if (argc != 3) {
-    cout << "Usage: ./application_name ip_address port_number" << endl;
-    return 1;
+	cout << "Usage: ./application_name ip_address port_number" << endl;
+	return 1;
   }
   cout << "IP Address: " << argv[1] << endl;
   cout << "Port number: " << argv[2] << endl;
@@ -104,97 +104,97 @@ int main(int argc, char** argv) {
 
   cout << "** Starting the client **" << endl << endl;
   try {
-    transport->open();
+	transport->open();
 	max_iteration = 10;
 
-    /** PING operation **/
-    cout << "--PING--" << endl;
+	/** PING operation **/
+	cout << "--PING--" << endl;
 	counter = 0; total = 0;
-    while (counter < max_iteration) {
+	while (counter < max_iteration) {
 		RDTSC_START(t1); // start operation
 		client.ping();
 		RDTSC_STOP(t2); // stop operation
 		total += t2 - t1 - rdtscp_cycle;
 		counter++;
 	}
-    print_result(total);
-    /** End of PING operation **/
+	print_result(total);
+	/** End of PING operation **/
 
 	usleep(50000); // cooldown 50 ms
 
-    /** ZIP operation **/
-    cout << "--ZIP (oneway sending)--" << endl;
+	/** ZIP operation **/
+	cout << "--ZIP (oneway sending)--" << endl;
 	counter = 0; total = 0;
-    while (counter < max_iteration) {
+	while (counter < max_iteration) {
 		RDTSC_START(t1); // start operation
 		client.zip();
 		RDTSC_STOP(t2); // stop operation
 		total += t2 - t1 - rdtscp_cycle;
 		counter++;
 	}
-    print_result(total);
-    /** End of ZIP operation **/
+	print_result(total);
+	/** End of ZIP operation **/
 
 	usleep(50000); // cooldown 50 ms
 
-    /** PUTDATA operation */
-    cout << "--PUTDATA (correctness)--" << endl;
-    Data d;
-    d.value = "{key :\"dummy\", value: \"test\"}";
-    cout << d.value << endl;
-    client.putData(d.key, d.value);
-    cout << "Sharded key: " << d.key << endl;
-    /** End of PUTDATA operation **/
+	/** PUTDATA operation */
+	cout << "--PUTDATA (correctness)--" << endl;
+	Data d;
+	d.value = "{key :\"dummy\", value: \"test\"}";
+	cout << d.value << endl;
+	client.putData(d.key, d.value);
+	cout << "Sharded key: " << d.key << endl;
+	/** End of PUTDATA operation **/
 
 	usleep(50000); // cooldown 50 ms
 
-    /** PUTDATA (FORCE) operation */
-    cout << "--PUTDATA FORCE (correctness)--" << endl;
-    client.putDataForce(d.key, d.value, 2, 1);
-    cout << "Sharded key: " << d.key << endl;
-    /** End of PUTDATA (FORCE) operation **/
+	/** PUTDATA (FORCE) operation */
+	cout << "--PUTDATA FORCE (correctness)--" << endl;
+	client.putDataForce(d.key, d.value, 2, 1);
+	cout << "Sharded key: " << d.key << endl;
+	/** End of PUTDATA (FORCE) operation **/
 
 	usleep(50000); // cooldown 50 ms
 
-    /** DELETEDATA operation */
-    cout << "--DELETEDATA (correctness)--" << endl;
+	/** DELETEDATA operation */
+	cout << "--DELETEDATA (correctness)--" << endl;
 	bool isSuccess = client.deleteData(d.key);
-    if (isSuccess) cout << "Delete OK" << endl;
-    else cout << "Delete FAILED" << endl;
-    /** End of DELETEDATA operation **/
+	if (isSuccess) cout << "Delete OK" << endl;
+	else cout << "Delete FAILED" << endl;
+	/** End of DELETEDATA operation **/
 
 	usleep(50000); // cooldown 50 ms
 
-    /** UPDATEDATA operation */
-    cout << "--UPDATEDATA (correctness)--" << endl;
+	/** UPDATEDATA operation */
+	cout << "--UPDATEDATA (correctness)--" << endl;
 	d.key = "0001000100000001";
-    cout << "Sharded key: " << d.key << endl;
-    d.value = "{key :\"dummy\", value: \"test2\"}";
-    cout << "New value: " << d.value << endl;
-    isSuccess = client.updateData(d);
-    if (isSuccess) cout << "Update OK" << endl;
-    else cout << "Update FAILED" << endl;
-    /** End of UPDATEDATA operation **/
+	cout << "Sharded key: " << d.key << endl;
+	d.value = "{key :\"dummy\", value: \"test2\"}";
+	cout << "New value: " << d.value << endl;
+	isSuccess = client.updateData(d);
+	if (isSuccess) cout << "Update OK" << endl;
+	else cout << "Update FAILED" << endl;
+	/** End of UPDATEDATA operation **/
 
 	usleep(50000); // cooldown 50 ms
 
-    /** GETDATA operation */
-    cout << "--GETDATA (correctness)--" << endl;
-    cout << "Sharded key: " << d.key << endl;
-    client.getData(d.value, d.key);
-    if (d.value != "") cout << "New value: " << d.value << endl;
-    else cout << "Get FAILED" << endl;
-    /** End of GETDATA operation **/
+	/** GETDATA operation */
+	cout << "--GETDATA (correctness)--" << endl;
+	cout << "Sharded key: " << d.key << endl;
+	client.getData(d.value, d.key);
+	if (d.value != "") cout << "New value: " << d.value << endl;
+	else cout << "Get FAILED" << endl;
+	/** End of GETDATA operation **/
 
-    /** RESYNCDATA operation **/
-    cout << "--RESYNCDATA (correctness)--" << endl;
-    ShardContent ds;
-    client.resyncData(ds, 1, 1);
-    cout << "Size: " << ds.data.size() << endl;
-    /** End of RESYNCDATA operation **/
+	/** RESYNCDATA operation **/
+	cout << "--RESYNCDATA (correctness)--" << endl;
+	ShardContent ds;
+	client.resyncData(ds, 1, 1);
+	cout << "Size: " << ds.data.size() << endl;
+	/** End of RESYNCDATA operation **/
 
   } catch (TException& tx) {
-    cout << "ERROR: " << tx.what() << endl;
+	cout << "ERROR: " << tx.what() << endl;
   }
 
   cout << endl;

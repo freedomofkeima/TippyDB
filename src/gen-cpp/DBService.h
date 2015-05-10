@@ -71,6 +71,14 @@ class DBServiceIf {
   virtual void resyncData(ShardContent& _return, const int32_t remote_region, const int32_t remote_node) = 0;
 
   /**
+   * pushResyncData
+   * Push ShardContent from primary node to other node
+   * 
+   * @param contents
+   */
+  virtual bool pushResyncData(const ShardContent& contents) = 0;
+
+  /**
    * getRecover
    * Get newest metadata (recovery phase)
    */
@@ -163,6 +171,10 @@ class DBServiceNull : virtual public DBServiceIf {
   }
   void resyncData(ShardContent& /* _return */, const int32_t /* remote_region */, const int32_t /* remote_node */) {
     return;
+  }
+  bool pushResyncData(const ShardContent& /* contents */) {
+    bool _return = false;
+    return _return;
   }
   void getRecover(GetRecover& /* _return */) {
     return;
@@ -1415,6 +1427,126 @@ class DBService_resyncData_presult {
   friend std::ostream& operator<<(std::ostream& out, const DBService_resyncData_presult& obj);
 };
 
+typedef struct _DBService_pushResyncData_args__isset {
+  _DBService_pushResyncData_args__isset() : contents(false) {}
+  bool contents :1;
+} _DBService_pushResyncData_args__isset;
+
+class DBService_pushResyncData_args {
+ public:
+
+  static const char* ascii_fingerprint; // = "05CE488D06E20A699F7B3DE4E6921232";
+  static const uint8_t binary_fingerprint[16]; // = {0x05,0xCE,0x48,0x8D,0x06,0xE2,0x0A,0x69,0x9F,0x7B,0x3D,0xE4,0xE6,0x92,0x12,0x32};
+
+  DBService_pushResyncData_args(const DBService_pushResyncData_args&);
+  DBService_pushResyncData_args& operator=(const DBService_pushResyncData_args&);
+  DBService_pushResyncData_args() {
+  }
+
+  virtual ~DBService_pushResyncData_args() throw();
+  ShardContent contents;
+
+  _DBService_pushResyncData_args__isset __isset;
+
+  void __set_contents(const ShardContent& val);
+
+  bool operator == (const DBService_pushResyncData_args & rhs) const
+  {
+    if (!(contents == rhs.contents))
+      return false;
+    return true;
+  }
+  bool operator != (const DBService_pushResyncData_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const DBService_pushResyncData_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_pushResyncData_args& obj);
+};
+
+
+class DBService_pushResyncData_pargs {
+ public:
+
+  static const char* ascii_fingerprint; // = "05CE488D06E20A699F7B3DE4E6921232";
+  static const uint8_t binary_fingerprint[16]; // = {0x05,0xCE,0x48,0x8D,0x06,0xE2,0x0A,0x69,0x9F,0x7B,0x3D,0xE4,0xE6,0x92,0x12,0x32};
+
+
+  virtual ~DBService_pushResyncData_pargs() throw();
+  const ShardContent* contents;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_pushResyncData_pargs& obj);
+};
+
+typedef struct _DBService_pushResyncData_result__isset {
+  _DBService_pushResyncData_result__isset() : success(false) {}
+  bool success :1;
+} _DBService_pushResyncData_result__isset;
+
+class DBService_pushResyncData_result {
+ public:
+
+  static const char* ascii_fingerprint; // = "D9D3B4421B1F23CB4063C80B484E7909";
+  static const uint8_t binary_fingerprint[16]; // = {0xD9,0xD3,0xB4,0x42,0x1B,0x1F,0x23,0xCB,0x40,0x63,0xC8,0x0B,0x48,0x4E,0x79,0x09};
+
+  DBService_pushResyncData_result(const DBService_pushResyncData_result&);
+  DBService_pushResyncData_result& operator=(const DBService_pushResyncData_result&);
+  DBService_pushResyncData_result() : success(0) {
+  }
+
+  virtual ~DBService_pushResyncData_result() throw();
+  bool success;
+
+  _DBService_pushResyncData_result__isset __isset;
+
+  void __set_success(const bool val);
+
+  bool operator == (const DBService_pushResyncData_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    return true;
+  }
+  bool operator != (const DBService_pushResyncData_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const DBService_pushResyncData_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_pushResyncData_result& obj);
+};
+
+typedef struct _DBService_pushResyncData_presult__isset {
+  _DBService_pushResyncData_presult__isset() : success(false) {}
+  bool success :1;
+} _DBService_pushResyncData_presult__isset;
+
+class DBService_pushResyncData_presult {
+ public:
+
+  static const char* ascii_fingerprint; // = "D9D3B4421B1F23CB4063C80B484E7909";
+  static const uint8_t binary_fingerprint[16]; // = {0xD9,0xD3,0xB4,0x42,0x1B,0x1F,0x23,0xCB,0x40,0x63,0xC8,0x0B,0x48,0x4E,0x79,0x09};
+
+
+  virtual ~DBService_pushResyncData_presult() throw();
+  bool* success;
+
+  _DBService_pushResyncData_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+  friend std::ostream& operator<<(std::ostream& out, const DBService_pushResyncData_presult& obj);
+};
+
 
 class DBService_getRecover_args {
  public:
@@ -1983,6 +2115,9 @@ class DBServiceClient : virtual public DBServiceIf {
   void resyncData(ShardContent& _return, const int32_t remote_region, const int32_t remote_node);
   void send_resyncData(const int32_t remote_region, const int32_t remote_node);
   void recv_resyncData(ShardContent& _return);
+  bool pushResyncData(const ShardContent& contents);
+  void send_pushResyncData(const ShardContent& contents);
+  bool recv_pushResyncData();
   void getRecover(GetRecover& _return);
   void send_getRecover();
   void recv_getRecover(GetRecover& _return);
@@ -2022,6 +2157,7 @@ class DBServiceProcessor : public ::apache::thrift::TDispatchProcessor {
   void process_deleteSecondaryData(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_replicateData(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_resyncData(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_pushResyncData(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_getRecover(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_sendAppend(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_sendVote(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
@@ -2040,6 +2176,7 @@ class DBServiceProcessor : public ::apache::thrift::TDispatchProcessor {
     processMap_["deleteSecondaryData"] = &DBServiceProcessor::process_deleteSecondaryData;
     processMap_["replicateData"] = &DBServiceProcessor::process_replicateData;
     processMap_["resyncData"] = &DBServiceProcessor::process_resyncData;
+    processMap_["pushResyncData"] = &DBServiceProcessor::process_pushResyncData;
     processMap_["getRecover"] = &DBServiceProcessor::process_getRecover;
     processMap_["sendAppend"] = &DBServiceProcessor::process_sendAppend;
     processMap_["sendVote"] = &DBServiceProcessor::process_sendVote;
@@ -2165,6 +2302,15 @@ class DBServiceMultiface : virtual public DBServiceIf {
     }
     ifaces_[i]->resyncData(_return, remote_region, remote_node);
     return;
+  }
+
+  bool pushResyncData(const ShardContent& contents) {
+    size_t sz = ifaces_.size();
+    size_t i = 0;
+    for (; i < (sz - 1); ++i) {
+      ifaces_[i]->pushResyncData(contents);
+    }
+    return ifaces_[i]->pushResyncData(contents);
   }
 
   void getRecover(GetRecover& _return) {

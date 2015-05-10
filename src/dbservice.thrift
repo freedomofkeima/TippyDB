@@ -68,18 +68,18 @@ service DBService {
 	string putData(1:string value),
 
    /**
-      * putDataForce
-      * Write a new data by force (due to partition limitation)
-      */
+	  * putDataForce
+	  * Write a new data by force (due to partition limitation)
+	  */
 	string putDataForce(1: string value, 2:i32 remote_region, 3:i32 remote_node),
 
 	// First come first serve basis
 	bool updateData(1:Data d),
 
    /**
-      * updateSecondaryData
-      * Propagate latest data to secondary nodes where region = remote_region && node == remote_node
-      */
+	  * updateSecondaryData
+	  * Propagate latest data to secondary nodes where region = remote_region && node == remote_node
+	  */
 	bool updateSecondaryData(1: Data d, 2:i32 remote_region, 3:i32 remote_node),
 
 
@@ -90,45 +90,51 @@ service DBService {
 	bool deleteData(1:string sharded_key),
 
    /**
-      * deleteSecondaryData
-      * Remove data from secondary nodes where region = remote_region && node == remote_node
-      */
+	  * deleteSecondaryData
+	  * Remove data from secondary nodes where region = remote_region && node == remote_node
+	  */
 	bool deleteSecondaryData(1: string sharded_key, 2:i32 remote_region, 3:i32 remote_node),
 
    /**
-      * replicateData
-      * Replicate a new data from primary to secondary where region = remote_region && node = remote_node
-      */
-    bool replicateData(1:Data d, 2:i32 remote_region, 3:i32 remote_node),
+	  * replicateData
+	  * Replicate a new data from primary to secondary where region = remote_region && node = remote_node
+	  */
+	bool replicateData(1:Data d, 2:i32 remote_region, 3:i32 remote_node),
 
-    /**
-      * resyncData
-      * Retrieve all newest shard contents where region = remote_region && node = remote_node (choose the nearest one for primary / the smallest db size for secondary)
-      */
-    ShardContent resyncData(1:i32 remote_region, 2:i32 remote_node),
+	/**
+	  * resyncData
+	  * Retrieve all newest shard contents where region = remote_region && node = remote_node (choose the nearest one for primary / the smallest db size for secondary)
+	  */
+	ShardContent resyncData(1:i32 remote_region, 2:i32 remote_node),
 
-    /**
-      * getRecover
-      * Get newest metadata (recovery phase)
-      */
+	/**
+	  * pushResyncData
+	  * Push ShardContent from primary node to other node
+	  */
+	bool pushResyncData(1:ShardContent contents),
+
+	/**
+	  * getRecover
+	  * Get newest metadata (recovery phase)
+	  */
 	GetRecover getRecover(),
 
-    /**
-      * sendAppend
-      * Send append request -> Update metadata (consensus). On the other hand, lock metadata from other R/W operation
-      */
+	/**
+	  * sendAppend
+	  * Send append request -> Update metadata (consensus). On the other hand, lock metadata from other R/W operation
+	  */
 	AppendResponse sendAppend(1: AppendRequest request),
 
-    /**
-      * sendVote
-      * Send vote request
-      */
+	/**
+	  * sendVote
+	  * Send vote request
+	  */
 	VoteResponse sendVote(1: VoteRequest request),
 
-    /**
-      * followerAppend
-      * Append newest committed metadata at follower
-      */
+	/**
+	  * followerAppend
+	  * Append newest committed metadata at follower
+	  */
 	bool followerAppend(1: AppendRequest request),
 
 	oneway void zip()

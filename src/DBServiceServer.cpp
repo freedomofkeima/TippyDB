@@ -79,6 +79,7 @@ map<string, int> member_pos;
 map<string, SKey> skeys;
 string identity;
 string metadata;
+mutex metadata_mutex;
 
 // Decode JSON to skeys
 void decodeKeys(map<string, SKey> &ret, const char* json) {
@@ -276,6 +277,35 @@ string tweakMetadata(const std::string& m, int idx, int remote_region, int remot
   return convertShardedMaptoJSON(remote_skeys);
 }
 
+// Check metadata update on node failure
+void checkMetadataChange(const std::string prev_entry, const std::string next_entry) {
+	metadata_mutex.lock();
+	// prev entries
+	map<string, SKey> prev_skeys;
+	// next entries
+	map<string, SKey> next_skeys;
+	map<string,SKey>::iterator iter;
+
+	const char* json = prev_entry.c_str();
+	const char* json2 = next_entry.c_str();
+	decodeKeys(prev_skeys, json);
+	decodeKeys(next_skeys, json2);
+
+	//If there's a new primary responsibility
+	for (iter = next_skeys.begin(); iter != next_skeys.end(); iter++) {
+		if (iter->second.primary.first == server_region && iter->second.primary.second == server_node) {
+			bool isNew = true;
+			if (prev_skeys.count(iter->first) == 1) {
+				if(prev_skeys[iter->first].primary.first == server_region && prev_skeys[iter->first].primary.second == server_node) isNew = false;
+			}
+			if (isNew) {
+				// TODO: Search the next nearest one as the new primary and fill the required number of secondaries (push resync Data) -> update metadata for a second time here
+			}
+		}
+	}
+	metadata_mutex.unlock();
+}
+
 /***** LOG WRITER SECTION *****/
 class LogWriter {
 public:
@@ -422,9 +452,11 @@ public:
 	}
   }
 
-  bool commit(const std::string& entry, int _commit_idx) {
+  bool commit(const std::string entry, int _commit_idx) {
 	if (commit_idx < _commit_idx) commit_idx = _commit_idx;
 	else return false;
+	thread t(checkMetadataChange, log, entry);
+	t.detach();
 	// update log
 	log = entry;
 	putMetadataValue(commit_idx);
@@ -543,12 +575,33 @@ public:
   }
 
   void checkFailure(int remote_region, int remote_node) {
-	// TODO: Become a raft leader if the failure_node == voted_for
+	// Become a raft leader if the failure_node == voted_for
+	int idx = member_pos[constructShardKey(remote_region, remote_node)];
+	if (idx == voted_for) {
+		voted_for = -1; // reset leader
+		initElection();
+	}
+	// Change unavailable nodes primary setup <may be more than one>, update metadata (At this point, there will be only replication_factor - 1 nodes for this shard key)
+	map<string, SKey> remote_skeys;
+	map<string,SKey>::iterator iter;
+	const char* json = log.c_str();
 
-	// TODO: Change unavailable nodes primary setup, update metadata (At this point, there will be only replication_factor - 1 nodes for this shard key)
+	decodeKeys(remote_skeys, json);
 
-	// TODO: Search the next nearest one as the new primary and fill the required number of secondaries (Tell a oneway message to resyncData, add new thrift procedure) -> update metadata for a second time here
+	for (iter = remote_skeys.begin(); iter != remote_skeys.end(); iter++) {	
+		if (iter->second.primary.first == remote_region && iter->second.primary.second == remote_node) {
+			int secondary_size = iter->second.secondary.size();
+			if (secondary_size > 0) {
+				// change primary identity to current secondary
+				remote_skeys[iter->first].primary.first = remote_skeys[iter->first].secondary[secondary_size-1].first;
+				remote_skeys[iter->first].primary.second = remote_skeys[iter->first].secondary[secondary_size-1].second;
+				remote_skeys[iter->first].secondary.pop_back(); // remove one element
+				secondary_size--; // decrement counter
+			}
+		}
+	}
 
+	appendRequest(convertShardedMaptoJSON(remote_skeys)); // propagate metadata
   }
 
   /** Getter & Setter */

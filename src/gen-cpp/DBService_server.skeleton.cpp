@@ -125,8 +125,11 @@ class DBServiceHandler : virtual public DBServiceIf {
   /**
    * getRecover
    * Get newest metadata (recovery phase)
+   * 
+   * @param remote_region
+   * @param remote_node
    */
-  void getRecover(GetRecover& _return) {
+  void getRecover(GetRecover& _return, const int32_t remote_region, const int32_t remote_node) {
     // Your implementation goes here
     printf("getRecover\n");
   }

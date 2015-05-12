@@ -81,8 +81,11 @@ class DBServiceIf {
   /**
    * getRecover
    * Get newest metadata (recovery phase)
+   * 
+   * @param remote_region
+   * @param remote_node
    */
-  virtual void getRecover(GetRecover& _return) = 0;
+  virtual void getRecover(GetRecover& _return, const int32_t remote_region, const int32_t remote_node) = 0;
 
   /**
    * sendAppend
@@ -176,7 +179,7 @@ class DBServiceNull : virtual public DBServiceIf {
     bool _return = false;
     return _return;
   }
-  void getRecover(GetRecover& /* _return */) {
+  void getRecover(GetRecover& /* _return */, const int32_t /* remote_region */, const int32_t /* remote_node */) {
     return;
   }
   void sendAppend(AppendResponse& /* _return */, const AppendRequest& /* request */) {
@@ -1547,22 +1550,39 @@ class DBService_pushResyncData_presult {
   friend std::ostream& operator<<(std::ostream& out, const DBService_pushResyncData_presult& obj);
 };
 
+typedef struct _DBService_getRecover_args__isset {
+  _DBService_getRecover_args__isset() : remote_region(false), remote_node(false) {}
+  bool remote_region :1;
+  bool remote_node :1;
+} _DBService_getRecover_args__isset;
 
 class DBService_getRecover_args {
  public:
 
-  static const char* ascii_fingerprint; // = "99914B932BD37A50B983C5E7C90AE93B";
-  static const uint8_t binary_fingerprint[16]; // = {0x99,0x91,0x4B,0x93,0x2B,0xD3,0x7A,0x50,0xB9,0x83,0xC5,0xE7,0xC9,0x0A,0xE9,0x3B};
+  static const char* ascii_fingerprint; // = "989D1F1AE8D148D5E2119FFEC4BBBEE3";
+  static const uint8_t binary_fingerprint[16]; // = {0x98,0x9D,0x1F,0x1A,0xE8,0xD1,0x48,0xD5,0xE2,0x11,0x9F,0xFE,0xC4,0xBB,0xBE,0xE3};
 
   DBService_getRecover_args(const DBService_getRecover_args&);
   DBService_getRecover_args& operator=(const DBService_getRecover_args&);
-  DBService_getRecover_args() {
+  DBService_getRecover_args() : remote_region(0), remote_node(0) {
   }
 
   virtual ~DBService_getRecover_args() throw();
+  int32_t remote_region;
+  int32_t remote_node;
 
-  bool operator == (const DBService_getRecover_args & /* rhs */) const
+  _DBService_getRecover_args__isset __isset;
+
+  void __set_remote_region(const int32_t val);
+
+  void __set_remote_node(const int32_t val);
+
+  bool operator == (const DBService_getRecover_args & rhs) const
   {
+    if (!(remote_region == rhs.remote_region))
+      return false;
+    if (!(remote_node == rhs.remote_node))
+      return false;
     return true;
   }
   bool operator != (const DBService_getRecover_args &rhs) const {
@@ -1581,11 +1601,13 @@ class DBService_getRecover_args {
 class DBService_getRecover_pargs {
  public:
 
-  static const char* ascii_fingerprint; // = "99914B932BD37A50B983C5E7C90AE93B";
-  static const uint8_t binary_fingerprint[16]; // = {0x99,0x91,0x4B,0x93,0x2B,0xD3,0x7A,0x50,0xB9,0x83,0xC5,0xE7,0xC9,0x0A,0xE9,0x3B};
+  static const char* ascii_fingerprint; // = "989D1F1AE8D148D5E2119FFEC4BBBEE3";
+  static const uint8_t binary_fingerprint[16]; // = {0x98,0x9D,0x1F,0x1A,0xE8,0xD1,0x48,0xD5,0xE2,0x11,0x9F,0xFE,0xC4,0xBB,0xBE,0xE3};
 
 
   virtual ~DBService_getRecover_pargs() throw();
+  const int32_t* remote_region;
+  const int32_t* remote_node;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
@@ -2118,8 +2140,8 @@ class DBServiceClient : virtual public DBServiceIf {
   bool pushResyncData(const ShardContent& contents);
   void send_pushResyncData(const ShardContent& contents);
   bool recv_pushResyncData();
-  void getRecover(GetRecover& _return);
-  void send_getRecover();
+  void getRecover(GetRecover& _return, const int32_t remote_region, const int32_t remote_node);
+  void send_getRecover(const int32_t remote_region, const int32_t remote_node);
   void recv_getRecover(GetRecover& _return);
   void sendAppend(AppendResponse& _return, const AppendRequest& request);
   void send_sendAppend(const AppendRequest& request);
@@ -2313,13 +2335,13 @@ class DBServiceMultiface : virtual public DBServiceIf {
     return ifaces_[i]->pushResyncData(contents);
   }
 
-  void getRecover(GetRecover& _return) {
+  void getRecover(GetRecover& _return, const int32_t remote_region, const int32_t remote_node) {
     size_t sz = ifaces_.size();
     size_t i = 0;
     for (; i < (sz - 1); ++i) {
-      ifaces_[i]->getRecover(_return);
+      ifaces_[i]->getRecover(_return, remote_region, remote_node);
     }
-    ifaces_[i]->getRecover(_return);
+    ifaces_[i]->getRecover(_return, remote_region, remote_node);
     return;
   }
 

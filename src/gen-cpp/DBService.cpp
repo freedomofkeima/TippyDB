@@ -2169,7 +2169,28 @@ uint32_t DBService_getRecover_args::read(::apache::thrift::protocol::TProtocol* 
     if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
-    xfer += iprot->skip(ftype);
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_I32) {
+          xfer += iprot->readI32(this->remote_region);
+          this->__isset.remote_region = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 2:
+        if (ftype == ::apache::thrift::protocol::T_I32) {
+          xfer += iprot->readI32(this->remote_node);
+          this->__isset.remote_node = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
     xfer += iprot->readFieldEnd();
   }
 
@@ -2182,6 +2203,14 @@ uint32_t DBService_getRecover_args::write(::apache::thrift::protocol::TProtocol*
   uint32_t xfer = 0;
   oprot->incrementRecursionDepth();
   xfer += oprot->writeStructBegin("DBService_getRecover_args");
+
+  xfer += oprot->writeFieldBegin("remote_region", ::apache::thrift::protocol::T_I32, 1);
+  xfer += oprot->writeI32(this->remote_region);
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldBegin("remote_node", ::apache::thrift::protocol::T_I32, 2);
+  xfer += oprot->writeI32(this->remote_node);
+  xfer += oprot->writeFieldEnd();
 
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
@@ -2198,6 +2227,14 @@ uint32_t DBService_getRecover_pargs::write(::apache::thrift::protocol::TProtocol
   uint32_t xfer = 0;
   oprot->incrementRecursionDepth();
   xfer += oprot->writeStructBegin("DBService_getRecover_pargs");
+
+  xfer += oprot->writeFieldBegin("remote_region", ::apache::thrift::protocol::T_I32, 1);
+  xfer += oprot->writeI32((*(this->remote_region)));
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldBegin("remote_node", ::apache::thrift::protocol::T_I32, 2);
+  xfer += oprot->writeI32((*(this->remote_node)));
+  xfer += oprot->writeFieldEnd();
 
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
@@ -3569,18 +3606,20 @@ bool DBServiceClient::recv_pushResyncData()
   throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "pushResyncData failed: unknown result");
 }
 
-void DBServiceClient::getRecover(GetRecover& _return)
+void DBServiceClient::getRecover(GetRecover& _return, const int32_t remote_region, const int32_t remote_node)
 {
-  send_getRecover();
+  send_getRecover(remote_region, remote_node);
   recv_getRecover(_return);
 }
 
-void DBServiceClient::send_getRecover()
+void DBServiceClient::send_getRecover(const int32_t remote_region, const int32_t remote_node)
 {
   int32_t cseqid = 0;
   oprot_->writeMessageBegin("getRecover", ::apache::thrift::protocol::T_CALL, cseqid);
 
   DBService_getRecover_pargs args;
+  args.remote_region = &remote_region;
+  args.remote_node = &remote_node;
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
@@ -4453,7 +4492,7 @@ void DBServiceProcessor::process_getRecover(int32_t seqid, ::apache::thrift::pro
 
   DBService_getRecover_result result;
   try {
-    iface_->getRecover(result.success);
+    iface_->getRecover(result.success, args.remote_region, args.remote_node);
     result.__isset.success = true;
   } catch (const std::exception& e) {
     if (this->eventHandler_.get() != NULL) {

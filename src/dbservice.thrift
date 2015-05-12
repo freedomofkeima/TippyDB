@@ -117,7 +117,7 @@ service DBService {
 	  * getRecover
 	  * Get newest metadata (recovery phase)
 	  */
-	GetRecover getRecover(),
+	GetRecover getRecover(1:i32 remote_region, 2:i32 remote_node),
 
 	/**
 	  * sendAppend

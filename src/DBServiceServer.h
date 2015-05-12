@@ -109,6 +109,10 @@ public:
 
   void setVotedFor(int _voted_for);
 
+  void getVotesForMe(vector<int>& _votes_for_me);
+
+  void setVotesForMe(vector<int> _votes_for_me);
+
   int getCommitIdx();
 
   int getNodeId();
@@ -221,7 +225,7 @@ class DBServiceHandler : virtual public DBServiceIf {
    * getRecover
    * Get newest metadata (recovery phase)
    */
-  void getRecover(GetRecover& _return);
+  void getRecover(GetRecover& _return, const int32_t remote_region, const int32_t remote_node);
 
   /**
    * sendAppend

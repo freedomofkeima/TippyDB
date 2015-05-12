@@ -169,7 +169,7 @@ string createMetadata() {
 		  sk.primary.first = members[idx].region;
 		  sk.primary.second = members[idx].node;
 		  int next_id = i;
-		  for (int j = 0; j < size; j++) { // circular secondaries (can be optimized later, by specifying secondary in exact different region)
+		  for (int j = 0; j < size - 1; j++) { // circular secondaries (can be optimized later, by specifying secondary in exact different region)
 		  	pair<int, int> secval;
 		  	next_id++; // increment
 		  	if (next_id >= (int) active_members.size()) next_id = next_id - active_members.size();
@@ -205,7 +205,6 @@ bool pushResyncTask(ShardContent ds, const std::string ip, int port) {
 // Refresh secondaries
 void refreshSecondary(map<string, SKey>& _skeys) {
   int secondary_size = _skeys[identity].secondary.size();
-
   if (replication_factors > secondary_size + 1) {
 	  // Add new secondary based on active members, if possible. Send resync signal
 	  bool* isAble = (bool*) malloc((int) members.size() * sizeof(bool));
@@ -224,7 +223,7 @@ void refreshSecondary(map<string, SKey>& _skeys) {
 
 	  int needed = replication_factors - (secondary_size + 1);
 
-	  if (needed == 0 || disableCounter == (int) members.size()) return;
+	  if (needed <= 0 || disableCounter == (int) members.size()) return;
 
 	  ShardContent ds;
 
@@ -240,17 +239,19 @@ void refreshSecondary(map<string, SKey>& _skeys) {
 
 	  for (int i = 0; i < (int) members.size(); i++) {
 	  	if (isAble[i]) {
-	  		pair<int, int> sk2;
-	  		sk2.first = members[i].region;
-	  		sk2.second = members[i].node;
-	  		// Update metadata
-	  		_skeys[identity].secondary.push_back(sk2);
 	  		// Push resyncData
 			bool isSuccess = pushResyncTask(ds, members[i].ip, members[i].port);
 	  		// Decrement needed counter
-	  		if (isSuccess) needed--;
+	  		if (isSuccess) {
+		  		pair<int, int> sk2;
+		  		sk2.first = members[i].region;
+		  		sk2.second = members[i].node;
+		  		// Update metadata
+		  		_skeys[identity].secondary.push_back(sk2);
+				needed--;
+			}
 	  	}
-	  	if (needed == 0) break;
+	  	if (needed <= 0) break;
 	  }
 
   }
@@ -269,9 +270,6 @@ string tweakMetadata(const std::string& m, int idx, int remote_region, int remot
 	  sk.first = remote_skeys[identity].primary.first;
 	  sk.second = remote_skeys[identity].primary.second;
 	  if (replication_factors > secondary_size + 1) { // append current primary to secondary
-	  	pair<int, int> sk;
-	  	sk.first = remote_skeys[identity].primary.first;
-	  	sk.second = remote_skeys[identity].primary.second;
 	  	remote_skeys[identity].secondary.push_back(sk);
 	  } else { // replace one secondary with primary
 	  	remote_skeys[identity].secondary[secondary_size-1].first = sk.first;
@@ -281,6 +279,8 @@ string tweakMetadata(const std::string& m, int idx, int remote_region, int remot
 
   remote_skeys[identity].primary.first = server_region;
   remote_skeys[identity].primary.second = server_node;
+
+  cout << identity << " " << remote_skeys[identity].primary.first << " " << remote_skeys[identity].primary.second << endl;
 
   refreshSecondary(remote_skeys); // check secondaries status
 
@@ -308,14 +308,17 @@ void checkMetadataChange(const std::string prev_entry, const std::string next_en
 	//If there's a new primary responsibility
 	for (iter = next_skeys.begin(); iter != next_skeys.end(); iter++) {
 		members[member_pos[constructShardKey(iter->second.primary.first, iter->second.primary.second)]].active = 1; // active
+
 		if (iter->second.primary.first == server_region && iter->second.primary.second == server_node) {
 			bool isNew = true;
 			int idx = -1;
 			if (prev_skeys.count(iter->first) == 1) {
 				if(prev_skeys[iter->first].primary.first == server_region && prev_skeys[iter->first].primary.second == server_node) isNew = false;
-				if (isNew) idx = member_pos[iter->first];
 			}
+
 			if (isNew) {
+				idx = member_pos[iter->first];
+
 				bool* isChosen = (bool*) malloc ((int) members.size() * sizeof(bool));
 				for (int i = 0; i < (int) members.size(); i++) isChosen[i] = false;
 				isChosen[own_id] = true;
@@ -366,11 +369,13 @@ void checkMetadataChange(const std::string prev_entry, const std::string next_en
 
 							next_skeys[iter->first].primary.first = members[current_idx].region;
 							next_skeys[iter->first].primary.second = members[current_idx].node;
+							int secondary_size = next_skeys[iter->first].secondary.size();
+							if (replication_factors < secondary_size + 1) next_skeys[iter->first].secondary.pop_back(); // remove
 						}
 					}
 				}
 
-				int required_nodes = replication_factors - 1;
+				int required_nodes = replication_factors;
 				for (int i = 0; i < (int) members.size(); i++)
 					if (isChosen[i]) required_nodes--;
 
@@ -394,6 +399,12 @@ void checkMetadataChange(const std::string prev_entry, const std::string next_en
 				}
 
 			} // end of isNew
+
+			cout << "Key: " << iter->first << endl;
+			cout << "Primary: " << iter->second.primary.first << " " << iter->second.primary.second << endl;
+			cout << "Secondary: " << iter->second.secondary.size() << endl;
+			for (int i = 0; i < (int) iter->second.secondary.size(); i++)
+				cout << iter->second.secondary[i].first << " " << iter->second.secondary[i].second << endl;
 		}
 
 		// Remove failed secondaries
@@ -408,12 +419,11 @@ void checkMetadataChange(const std::string prev_entry, const std::string next_en
 				secondary_size--;
 			} else ctx++;
 		}
-
 	}
-
 	refreshSecondary(next_skeys); // check secondaries status
 
 	string next_str = convertShardedMaptoJSON(next_skeys);
+
 	//Update metadata for a second time here (sendAppend to leader)
 	if (next_str != prev_entry) raft->appendRequest(next_str);
 
@@ -474,17 +484,17 @@ RaftConsensus::RaftConsensus(vector<Member> _members, string _metadata, int _own
 				try {
 					transport->open();
 					GetRecover data;
-					client.getRecover(data); // RPC Recover
+					client.getRecover(data, server_region, server_node); // RPC Recover
+					current_term = max(current_term, data.term);
+					commit_idx = max(commit_idx, data.commit_idx);
 					if (data.isLeader) {
 						receiveLeader = true;
 						voted_for = current_id; // current leader
-						current_term = data.term;
 						log = data.entry;
-						commit_idx = data.commit_idx;
 						// commit(data.entry, data.commit_idx);
 						logWriter->writeLog("Recovered from node_id (leader) = " + to_string(voted_for));
 					}
-					if (data.term > 0 && !data.isLeader) isAnswered = false;
+					if (data.term > 0 && !data.isLeader) isAnswered = isAnswered | false;
 				} catch (TException& tx) {
 					cout << "ERROR: " << tx.what() << endl;
 				}
@@ -502,6 +512,7 @@ RaftConsensus::RaftConsensus(vector<Member> _members, string _metadata, int _own
 		bool isExistPrimary = false;
 		int idx = -1, remote_region = -1, remote_node = -1;
 		const char* json = log.c_str();
+		skeys.clear(); // cleaning up
 		decodeKeys(skeys, json);
 		map<string, SKey>::iterator iter;
 		for (iter = skeys.begin(); iter != skeys.end(); iter++) {
@@ -565,6 +576,38 @@ void RaftConsensus::initElection() {
 }
 
 bool RaftConsensus::commit(const std::string entry, int _commit_idx) {
+	if (voted_for == own_id) {
+		// Check for all active nodes
+		map<string, SKey> temp_skeys;
+		const char* json = entry.c_str();
+		decodeKeys(temp_skeys, json);
+
+		map<string,SKey>::iterator iter;
+
+		// Remove inactive nodes from voters list
+		int ctx = 0, voters = (int) votes_for_me.size();
+		while (ctx < voters) {
+			bool isExist = false;
+			for (iter = temp_skeys.begin(); iter != temp_skeys.end(); iter++) {
+				int idx = member_pos[constructShardKey(iter->second.primary.first, iter->second.primary.second)];
+				if (votes_for_me[ctx] == idx) isExist = true;
+			}
+			if (!isExist) {
+				votes_for_me[ctx] = votes_for_me[voters-1];
+				votes_for_me.pop_back();
+				voters--;
+			} else ctx++;
+		}
+
+		if ((int) votes_for_me.size() < (num_nodes / 2) + 1) {
+			voted_for = -1;
+			votes_for_me.clear();
+			thread t(&RaftConsensus::initElection, this);
+			t.detach();
+			return false;
+		}
+	}
+
 	if (commit_idx < _commit_idx) commit_idx = _commit_idx;
 	else return false;
 	string temp = log;
@@ -643,7 +686,10 @@ bool RaftConsensus::leaderRequest() {
 
 	if ((int) votes_for_me.size() >= required) { // become a leader
 		// Send newest metadata based on all active nodes
-		string new_entry = createMetadata();
+		string new_entry;
+		// Note: new_entry should be optimized by comparing all versions
+		if (getMetadataValue() == -1) new_entry = createMetadata();
+		else new_entry = log;
 		logWriter->writeLog("Become a leader: send newest metadata to all nodes");
 		if (voted_for == node_id) appendRequest(new_entry); // propagate metadata
 	} else {
@@ -678,7 +724,6 @@ bool RaftConsensus::appendRequest(const std::string& entry) {
 		request.entry = entry;
 
 		logWriter->writeLog("send appendRequest to leader (term " + to_string(request.term) + ")");
-
 		client.sendAppend(response, request); // RPC AppendRequest
 	} catch (TException& tx) {
 		cout << "ERROR: " << tx.what() << endl;
@@ -745,6 +790,14 @@ void RaftConsensus::setVotedFor(int _voted_for) {
 	voted_for = _voted_for;
 }
 
+void RaftConsensus::getVotesForMe(vector<int>& _votes_for_me) {
+	_votes_for_me = votes_for_me;
+}
+
+void RaftConsensus::setVotesForMe(vector<int> _votes_for_me) {
+	votes_for_me = _votes_for_me;
+}
+
 int RaftConsensus::getCommitIdx() {
 	return commit_idx;
 }
@@ -809,7 +862,7 @@ void loadMembers() {
   d.Parse(json);
 
   global_id = d["id"].GetString();
-  uint32_t num_members = d["numberRegions"].GetInt();
+  uint32_t num_members = d["numberNodes"].GetInt();
   replication_factors = (int) d["replicationFactors"].GetInt();
   shard_size = (int) d["shardSize"].GetInt();
   const Value& distances = d["distance"];
@@ -995,7 +1048,6 @@ void broadcastMetadata(const std::string& entry, int commit_idx, int term) {
 					if (members[current_id].active == 0) return;
 					boost::shared_ptr<TTransport> socket(new TSocket(members[current_id].ip, members[current_id].port));
 					cout << "Broadcast metadata to " << members[current_id].ip << ":" << members[current_id].port << " (After Timeout: " << timer <<  " second(s))" << endl;
-
 					boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
 					boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
 					DBServiceClient client(protocol);
@@ -1007,7 +1059,6 @@ void broadcastMetadata(const std::string& entry, int commit_idx, int term) {
 						request.term = term;
 						request.commit_idx = commit_idx;
 						request.entry = entry;
-
 						isSent[current_id] = client.followerAppend(request); // RPC FollowerAppend
 					} catch (TException& tx) {
 						cout << "ERROR: " << tx.what() << endl;
@@ -1285,13 +1336,32 @@ bool DBServiceHandler::pushResyncData(const ShardContent& contents) {
  * getRecover
  * Get newest metadata (recovery phase)
  */
-void DBServiceHandler::getRecover(GetRecover& _return) {
+void DBServiceHandler::getRecover(GetRecover& _return, const int32_t remote_region, const int32_t remote_node) {
+
+	int idx = member_pos[constructShardKey(remote_region, remote_node)];
 	if (raft->getVotedFor() == raft->getNodeId()) {
 		_return.isLeader = true;
-		_return.term = raft->getTerm();
-		_return.commit_idx = raft->getCommitIdx();
 		_return.entry = raft->getLog();
-	} else _return.isLeader = false;
+
+		vector<int> _votes_for_me;
+		raft->getVotesForMe(_votes_for_me);
+
+		bool isExist = false;
+		for (int i = 0; i < (int) _votes_for_me.size(); i++)
+			if (_votes_for_me[i] == idx) isExist = true;
+
+		if (!isExist) { // append the voters list
+			_votes_for_me.push_back(idx);
+			raft->setVotesForMe(_votes_for_me);
+		}
+
+	} else {
+		if (idx == raft->getVotedFor()) raft->setVotedFor(-1); // allow previous leader to recover
+		_return.isLeader = false;
+	}
+
+	_return.term = raft->getTerm();
+	_return.commit_idx = raft->getCommitIdx();
 
 	/** Write to log */
 	string message;
@@ -1363,9 +1433,10 @@ void DBServiceHandler::sendVote(VoteResponse& _return, const VoteRequest& reques
  */
 bool DBServiceHandler::followerAppend(const AppendRequest& request) {
 	logWriter->writeLog("receive followerAppend");
-	if (request.commit_idx < raft->getCommitIdx()) return false;
-	if (raft->getTerm() < request.term) raft->setTerm(request.term);
-	raft->commit(request.entry, request.commit_idx); // commit
+	if (request.commit_idx >= raft->getCommitIdx()) {
+		if (raft->getTerm() < request.term) raft->setTerm(request.term);
+		raft->commit(request.entry, request.commit_idx); // commit
+	}
 	return true;
 }
 

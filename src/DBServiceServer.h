@@ -123,6 +123,7 @@ private:
   int num_nodes; // number of nodes
   int timeout_elapsed; // random timeout, in miliseconds
   int node_id; // my node ID
+  mutex raft_mutex; // mutex
 };
 
 /***** END OF RAFT DEFINITION *****/
@@ -266,6 +267,9 @@ string createMetadata();
 // Push resync data task
 bool pushResyncTask(ShardContent ds, const std::string ip, int port);
 
+// Refresh secondaries
+void refreshSecondary(map<string, SKey>& _skeys);
+
 // Tweak current metadata
 string tweakMetadata(const std::string& m, int idx, int remote_region, int remote_node);
 
@@ -276,7 +280,7 @@ struct compare {
 	}
 };
 
-// Check metadata update on node failure
+// Check metadata update
 void checkMetadataChange(const std::string prev_entry, const std::string next_entry);
 
 /***** MEMBERSHIP SECTION *****/

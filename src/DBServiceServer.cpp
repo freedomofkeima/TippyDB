@@ -202,6 +202,60 @@ bool pushResyncTask(ShardContent ds, const std::string ip, int port) {
 	return isSuccess;
 }
 
+// Refresh secondaries
+void refreshSecondary(map<string, SKey>& _skeys) {
+  int secondary_size = _skeys[identity].secondary.size();
+
+  if (replication_factors > secondary_size + 1) {
+	  // Add new secondary based on active members, if possible. Send resync signal
+	  bool* isAble = (bool*) malloc((int) members.size() * sizeof(bool));
+	  int disableCounter = 0;
+	  for (int i = 0; i < (int) members.size(); i++) {
+	  	if (members[i].active == 1 && i != own_id) isAble[i] = true;
+	  	else isAble[i] = false;
+	  	for (int j = 0; j < secondary_size; j++) { // O(total_node^2) complexity
+	  		if (members[i].region == _skeys[identity].secondary[j].first && members[i].node == _skeys[identity].secondary[j].second) {
+	  			isAble[i] = false;
+	  		}
+	  	}
+	  }
+	  for (int i = 0; i < (int) members.size(); i++)
+	  	if (!isAble[i]) disableCounter++;
+
+	  int needed = replication_factors - (secondary_size + 1);
+
+	  if (needed == 0 || disableCounter == (int) members.size()) return;
+
+	  ShardContent ds;
+
+	  list< pair< pair<string, string>, long long> > data; // (key, value, ts)
+	  getResyncDB(data, identity);
+	  for (list< pair< pair<string, string>, long long> >::iterator it=data.begin(); it != data.end(); ++it) {
+	  	Data t;
+	  	t.key = (*it).first.first;
+	  	t.value = (*it).first.second;
+	  	t.ts = (*it).second;
+	  	ds.data.push_back(t); // append result
+	  }
+
+	  for (int i = 0; i < (int) members.size(); i++) {
+	  	if (isAble[i]) {
+	  		pair<int, int> sk2;
+	  		sk2.first = members[i].region;
+	  		sk2.second = members[i].node;
+	  		// Update metadata
+	  		_skeys[identity].secondary.push_back(sk2);
+	  		// Push resyncData
+			bool isSuccess = pushResyncTask(ds, members[i].ip, members[i].port);
+	  		// Decrement needed counter
+	  		if (isSuccess) needed--;
+	  	}
+	  	if (needed == 0) break;
+	  }
+
+  }
+}
+
 // Tweak current metadata
 string tweakMetadata(const std::string& m, int idx, int remote_region, int remote_node) {
   map<string, SKey> remote_skeys;
@@ -228,56 +282,15 @@ string tweakMetadata(const std::string& m, int idx, int remote_region, int remot
   remote_skeys[identity].primary.first = server_region;
   remote_skeys[identity].primary.second = server_node;
 
-  if (replication_factors > secondary_size + 1) {
-	  // Add new secondary based on active members, if possible. Send resync signal
-	  bool* isAble = (bool*) malloc((int) members.size() * sizeof(bool));
-	  for (int i = 0; i < (int) members.size(); i++) {
-	  	if (members[i].active == 1 && i != own_id) isAble[i] = true;
-	  	else isAble[i] = false;
-	  	for (int j = 0; j < secondary_size; j++) { // O(total_node^2) complexity
-	  		if (members[i].region == remote_skeys[identity].secondary[j].first && members[i].node == remote_skeys[identity].secondary[j].second) {
-	  			isAble[i] = false;
-	  		}
-	  	}
-	  }
-
-	  int needed = replication_factors - (secondary_size + 1);
-	  for (int i = 0; i < (int) members.size(); i++) {
-	  	ShardContent ds;
-
-	  	list< pair< pair<string, string>, long long> > data; // (key, value, ts)
-	  	getResyncDB(data, identity);
-	  	for (list< pair< pair<string, string>, long long> >::iterator it=data.begin(); it != data.end(); ++it) {
-	  		Data t;
-	  		t.key = (*it).first.first;
-	  		t.value = (*it).first.second;
-	  		t.ts = (*it).second;
-	  		ds.data.push_back(t); // append result
-	  	}
-
-	  	if (isAble[i]) {
-	  		pair<int, int> sk2;
-	  		sk2.first = members[i].region;
-	  		sk2.second = members[i].node;
-	  		// Update metadata
-	  		remote_skeys[identity].secondary.push_back(sk2);
-	  		// Push resyncData
-			bool isSuccess = pushResyncTask(ds, members[i].ip, members[i].port);
-	  		// Decrement needed counter
-	  		if (isSuccess) needed--;
-	  	}
-	  	if (needed == 0) break;
-	  }
-
-  }
+  refreshSecondary(remote_skeys); // check secondaries status
 
   return convertShardedMaptoJSON(remote_skeys);
 }
 
-// Check metadata update on node failure
+// Check metadata update
 void checkMetadataChange(const std::string prev_entry, const std::string next_entry) {
 	metadata_mutex.lock();
-
+	cout << "checkMetadataChange is called" << endl;
 	// prev entries
 	map<string, SKey> prev_skeys;
 	// next entries
@@ -294,6 +307,7 @@ void checkMetadataChange(const std::string prev_entry, const std::string next_en
 
 	//If there's a new primary responsibility
 	for (iter = next_skeys.begin(); iter != next_skeys.end(); iter++) {
+		members[member_pos[constructShardKey(iter->second.primary.first, iter->second.primary.second)]].active = 1; // active
 		if (iter->second.primary.first == server_region && iter->second.primary.second == server_node) {
 			bool isNew = true;
 			int idx = -1;
@@ -309,7 +323,7 @@ void checkMetadataChange(const std::string prev_entry, const std::string next_en
 
 				// <member_id, distance>
 				priority_queue<pair<int,int>, vector<pair<int,int>>, compare> pq;
-				for (int i = 0; i < (int) members[idx].distance.size(); i++) {
+				for (int i = 0; i < (int) members.size(); i++) {
 					pair<int, int> data;
 					data.first = i;
 					data.second = members[idx].distance[i];
@@ -329,9 +343,12 @@ void checkMetadataChange(const std::string prev_entry, const std::string next_en
 			  	}
 
 				// Search the next nearest one as the new primary
+				cout << "Now checking priority queue" << endl;
 				bool isFound = false;
 				while (!pq.empty() && !isFound) {
 					int current_idx = pq.top().first;
+					pq.pop(); // check next pq
+					cout << "Current idx: " << current_idx << endl;
 					if (current_idx == own_id) isFound = true; // this node is the nearest one
 					else if (members[current_idx].active == 1 && !isChosen[current_idx]) {
 				  		// Push resyncData (this node will be the new primary)
@@ -351,7 +368,6 @@ void checkMetadataChange(const std::string prev_entry, const std::string next_en
 							next_skeys[iter->first].primary.second = members[current_idx].node;
 						}
 					}
-					pq.pop(); // check next pq
 				}
 
 				int required_nodes = replication_factors - 1;
@@ -380,11 +396,12 @@ void checkMetadataChange(const std::string prev_entry, const std::string next_en
 			} // end of isNew
 		}
 
+		// Remove failed secondaries
 		int secondary_size = iter->second.secondary.size();
 		int ctx = 0;
 		while (ctx < secondary_size) {
 			int idx = member_pos[constructShardKey(iter->second.secondary[ctx].first, iter->second.secondary[ctx].second)];
-			cout << "Tweak: " << idx << " (active = " << members[idx].active << ")" << endl;
+			cout << "checkMetadataChange Node: " << idx << " (active = " << members[idx].active << ")" << endl;
 			if (members[idx].active == 0) {
 				next_skeys[iter->first].secondary[ctx] = next_skeys[iter->first].secondary[secondary_size-1]; // replace
 				next_skeys[iter->first].secondary.pop_back(); // remove secondary
@@ -394,8 +411,9 @@ void checkMetadataChange(const std::string prev_entry, const std::string next_en
 
 	}
 
-	string next_str = convertShardedMaptoJSON(next_skeys);
+	refreshSecondary(next_skeys); // check secondaries status
 
+	string next_str = convertShardedMaptoJSON(next_skeys);
 	//Update metadata for a second time here (sendAppend to leader)
 	if (next_str != prev_entry) raft->appendRequest(next_str);
 
@@ -431,18 +449,17 @@ RaftConsensus::RaftConsensus(vector<Member> _members, string _metadata, int _own
 	log = _metadata;
 	voted_for = -1;
 	commit_idx = getMetadataValue();
-	timeout_elapsed = (rand() % 500) + 150; // random factor
+	timeout_elapsed = (rand() % 2000) + 1000; // random factor (1 - 3 sec)
 	nodes = _members;
 	num_nodes = nodes.size();
 	node_id = _own_id;
 
 	// Recover here (or become candidate if fails)
-	bool receiveLeader = false, isAnswered = true;
+	bool receiveLeader = false, isAnswered = false;
 	vector<thread> workers;
 
-	while (isAnswered) { // If there's an answer, there should exist a leader
-		isAnswered = false;
-		this_thread::sleep_for(chrono::milliseconds(timeout_elapsed));
+	while (!isAnswered) { // If there's an answer, there should exist a leader
+		isAnswered = true;
 		for (int i = 0; i < num_nodes; i++) { // broadcast to all nodes except own
 			if (i == node_id) continue;
 			int current_id = i;
@@ -462,10 +479,12 @@ RaftConsensus::RaftConsensus(vector<Member> _members, string _metadata, int _own
 						receiveLeader = true;
 						voted_for = current_id; // current leader
 						current_term = data.term;
-						commit(data.entry, data.commit_idx);
+						log = data.entry;
+						commit_idx = data.commit_idx;
+						// commit(data.entry, data.commit_idx);
 						logWriter->writeLog("Recovered from node_id (leader) = " + to_string(voted_for));
 					}
-					if (data.term > 0) isAnswered = true;
+					if (data.term > 0 && !data.isLeader) isAnswered = false;
 				} catch (TException& tx) {
 					cout << "ERROR: " << tx.what() << endl;
 				}
@@ -474,12 +493,16 @@ RaftConsensus::RaftConsensus(vector<Member> _members, string _metadata, int _own
 		for_each(workers.begin(), workers.end(), [](thread &t) {
 			t.join();
 		});
+		if (isAnswered) break;
+		this_thread::sleep_for(chrono::milliseconds(timeout_elapsed));
 	}
 
 	if (receiveLeader) { // Tweak only own primary (change old primary to secondary, drop one secondary)
 		// Wait until finish resync before updating metadata
 		bool isExistPrimary = false;
 		int idx = -1, remote_region = -1, remote_node = -1;
+		const char* json = log.c_str();
+		decodeKeys(skeys, json);
 		map<string, SKey>::iterator iter;
 		for (iter = skeys.begin(); iter != skeys.end(); iter++) {
 			string _id = iter->first;
@@ -523,7 +546,7 @@ RaftConsensus::RaftConsensus(vector<Member> _members, string _metadata, int _own
 			}
 		}
 		string new_entry = tweakMetadata(log, idx, remote_region, remote_node);
-		if (new_entry != log) appendRequest(new_entry);
+		appendRequest(new_entry);
 	} else {
 		thread t(&RaftConsensus::initElection, this);
 		t.detach();
@@ -544,12 +567,13 @@ void RaftConsensus::initElection() {
 bool RaftConsensus::commit(const std::string entry, int _commit_idx) {
 	if (commit_idx < _commit_idx) commit_idx = _commit_idx;
 	else return false;
-	thread t(checkMetadataChange, log, entry);
-	t.detach();
+	string temp = log;
 	// update log
 	log = entry;
 	putMetadataValue(commit_idx);
 	writeMetadata(log);
+	thread t(checkMetadataChange, temp, entry);
+	t.detach();
 	return true;
 }
 
@@ -664,15 +688,17 @@ bool RaftConsensus::appendRequest(const std::string& entry) {
 }
 
 void RaftConsensus::checkFailure(int remote_region, int remote_node) {
+	raft_mutex.lock();
 	// Become a raft leader if the failure_node == voted_for
 	int idx = member_pos[constructShardKey(remote_region, remote_node)];
 
 	if (members[idx].active == 1) members[idx].active = 0; // declare failure
 	else return;
-
+	cout << "checkFailure is called" << endl;
 	if (idx == voted_for) {
 		voted_for = -1; // reset leader
-		initElection();
+		thread t(&RaftConsensus::initElection, this);
+		t.detach();
 	}
 	// Change unavailable nodes primary setup <may be more than one>, update metadata (At this point, there will be only replication_factor - 1 nodes for this shard key)
 	map<string, SKey> remote_skeys;
@@ -695,6 +721,7 @@ void RaftConsensus::checkFailure(int remote_region, int remote_node) {
 	}
 
 	appendRequest(convertShardedMaptoJSON(remote_skeys)); // propagate metadata
+	raft_mutex.unlock();
 }
 
   /** Getter & Setter */
@@ -1338,7 +1365,8 @@ bool DBServiceHandler::followerAppend(const AppendRequest& request) {
 	logWriter->writeLog("receive followerAppend");
 	if (request.commit_idx < raft->getCommitIdx()) return false;
 	if (raft->getTerm() < request.term) raft->setTerm(request.term);
-	return raft->commit(request.entry, request.commit_idx); // commit
+	raft->commit(request.entry, request.commit_idx); // commit
+	return true;
 }
 
 void DBServiceHandler::zip() {

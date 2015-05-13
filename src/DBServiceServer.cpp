@@ -307,7 +307,7 @@ void checkMetadataChange(const std::string prev_entry, const std::string next_en
 
 	//If there's a new primary responsibility
 	for (iter = next_skeys.begin(); iter != next_skeys.end(); iter++) {
-		members[member_pos[constructShardKey(iter->second.primary.first, iter->second.primary.second)]].active = 1; // active
+		// members[member_pos[constructShardKey(iter->second.primary.first, iter->second.primary.second)]].active = 1; // active
 
 		if (iter->second.primary.first == server_region && iter->second.primary.second == server_node) {
 			bool isNew = true;
@@ -1339,6 +1339,7 @@ bool DBServiceHandler::pushResyncData(const ShardContent& contents) {
 void DBServiceHandler::getRecover(GetRecover& _return, const int32_t remote_region, const int32_t remote_node) {
 
 	int idx = member_pos[constructShardKey(remote_region, remote_node)];
+	members[idx].active = 1; // active
 	if (raft->getVotedFor() == raft->getNodeId()) {
 		_return.isLeader = true;
 		_return.entry = raft->getLog();

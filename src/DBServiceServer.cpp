@@ -39,6 +39,12 @@
 #include "./db/database.h"
 #include "DBServiceServer.h"
 
+
+/**
+  * IS_DEBUG: Cout messages to stdin (1 = Yes, 2 = No)
+  */
+#define IS_DEBUG 1
+
 using namespace std;
 using namespace apache::thrift;
 using namespace apache::thrift::protocol;
@@ -191,13 +197,13 @@ bool pushResyncTask(ShardContent ds, const std::string ip, int port) {
 	boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
 	DBServiceClient client(protocol);
 
-	cout << "Push resyncData to " << ip << ":" << port << endl;
+	if (IS_DEBUG) cout << "Push resyncData to " << ip << ":" << port << endl;
 	bool isSuccess = false;
 	try {
 		transport->open();
 		isSuccess = client.pushResyncData(ds);
 	} catch (TException& tx) {
-		cout << "ERROR: " << tx.what() << endl;
+		if (IS_DEBUG) cout << "ERROR: " << tx.what() << endl;
 	}
 	return isSuccess;
 }
@@ -280,7 +286,7 @@ string tweakMetadata(const std::string& m, int idx, int remote_region, int remot
   remote_skeys[identity].primary.first = server_region;
   remote_skeys[identity].primary.second = server_node;
 
-  cout << identity << " " << remote_skeys[identity].primary.first << " " << remote_skeys[identity].primary.second << endl;
+  if (IS_DEBUG) cout << identity << " " << remote_skeys[identity].primary.first << " " << remote_skeys[identity].primary.second << endl;
 
   refreshSecondary(remote_skeys); // check secondaries status
 
@@ -290,7 +296,7 @@ string tweakMetadata(const std::string& m, int idx, int remote_region, int remot
 // Check metadata update
 void checkMetadataChange(const std::string prev_entry, const std::string next_entry) {
 	metadata_mutex.lock();
-	cout << "checkMetadataChange is called" << endl;
+	if (IS_DEBUG) cout << "checkMetadataChange is called" << endl;
 	// prev entries
 	map<string, SKey> prev_skeys;
 	// next entries
@@ -346,12 +352,12 @@ void checkMetadataChange(const std::string prev_entry, const std::string next_en
 			  	}
 
 				// Search the next nearest one as the new primary
-				cout << "Now checking priority queue" << endl;
+				if (IS_DEBUG) cout << "Now checking priority queue" << endl;
 				bool isFound = false;
 				while (!pq.empty() && !isFound) {
 					int current_idx = pq.top().first;
 					pq.pop(); // check next pq
-					cout << "Current idx: " << current_idx << endl;
+					if (IS_DEBUG) cout << "Current idx: " << current_idx << endl;
 					if (current_idx == own_id) isFound = true; // this node is the nearest one
 					else if (members[current_idx].active == 1 && !isChosen[current_idx]) {
 				  		// Push resyncData (this node will be the new primary)
@@ -400,11 +406,13 @@ void checkMetadataChange(const std::string prev_entry, const std::string next_en
 
 			} // end of isNew
 
-			cout << "Key: " << iter->first << endl;
-			cout << "Primary: " << iter->second.primary.first << " " << iter->second.primary.second << endl;
-			cout << "Secondary: " << iter->second.secondary.size() << endl;
-			for (int i = 0; i < (int) iter->second.secondary.size(); i++)
-				cout << iter->second.secondary[i].first << " " << iter->second.secondary[i].second << endl;
+			if (IS_DEBUG) {
+				cout << "Key: " << iter->first << endl;
+				cout << "Primary: " << iter->second.primary.first << " " << iter->second.primary.second << endl;
+				cout << "Secondary: " << iter->second.secondary.size() << endl;
+				for (int i = 0; i < (int) iter->second.secondary.size(); i++)
+					cout << iter->second.secondary[i].first << " " << iter->second.secondary[i].second << endl;
+			}
 		}
 
 		// Remove failed secondaries
@@ -412,7 +420,7 @@ void checkMetadataChange(const std::string prev_entry, const std::string next_en
 		int ctx = 0;
 		while (ctx < secondary_size) {
 			int idx = member_pos[constructShardKey(iter->second.secondary[ctx].first, iter->second.secondary[ctx].second)];
-			cout << "checkMetadataChange Node: " << idx << " (active = " << members[idx].active << ")" << endl;
+			if (IS_DEBUG) cout << "checkMetadataChange Node: " << idx << " (active = " << members[idx].active << ")" << endl;
 			if (members[idx].active == 0) {
 				next_skeys[iter->first].secondary[ctx] = next_skeys[iter->first].secondary[secondary_size-1]; // replace
 				next_skeys[iter->first].secondary.pop_back(); // remove secondary
@@ -475,7 +483,7 @@ RaftConsensus::RaftConsensus(vector<Member> _members, string _metadata, int _own
 			int current_id = i;
 			workers.push_back(thread([&](int current_id) {
 				boost::shared_ptr<TTransport> socket(new TSocket(nodes[current_id].ip, nodes[current_id].port));
-				cout << "Recover Metadata: Check " << nodes[current_id].ip << ":" << nodes[current_id].port << endl;
+				if (IS_DEBUG) cout << "Recover Metadata: Check " << nodes[current_id].ip << ":" << nodes[current_id].port << endl;
 
 				boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
 				boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
@@ -496,7 +504,7 @@ RaftConsensus::RaftConsensus(vector<Member> _members, string _metadata, int _own
 					}
 					if (data.term > 0 && !data.isLeader) isAnswered = isAnswered | false;
 				} catch (TException& tx) {
-					cout << "ERROR: " << tx.what() << endl;
+					if (IS_DEBUG) cout << "ERROR: " << tx.what() << endl;
 				}
 			}, current_id)); // end of thread
 		}
@@ -534,13 +542,13 @@ RaftConsensus::RaftConsensus(vector<Member> _members, string _metadata, int _own
 
 			ShardContent ds;
 
-			cout << "ResyncData from " << nodes[idx].ip << ":" << nodes[idx].port << endl;
+			if (IS_DEBUG) cout << "ResyncData from " << nodes[idx].ip << ":" << nodes[idx].port << endl;
 
 			try {
 				transport->open();
 				client.resyncData(ds, server_region, server_node);
 			} catch (TException& tx) {
-				cout << "ERROR: " << tx.what() << endl;
+				if (IS_DEBUG) cout << "ERROR: " << tx.what() << endl;
 			}
 
 			if (ds.data.size() != 0) {
@@ -647,7 +655,7 @@ bool RaftConsensus::leaderRequest() {
 		int current_id = i;
 		workers.push_back(thread([&](int current_id) {
 			boost::shared_ptr<TTransport> socket(new TSocket(nodes[current_id].ip, nodes[current_id].port));
-			cout << "Leader Request: Send to " << nodes[current_id].ip << ":" << nodes[current_id].port << endl;
+			if (IS_DEBUG) cout << "Leader Request: Send to " << nodes[current_id].ip << ":" << nodes[current_id].port << endl;
 
 			boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
 			boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
@@ -670,7 +678,7 @@ bool RaftConsensus::leaderRequest() {
 				}
 				isSent[current_id] = true;
 			} catch (TException& tx) {
-				cout << "ERROR: " << tx.what() << endl;
+				if (IS_DEBUG) cout << "ERROR: " << tx.what() << endl;
 			}
 		}, current_id)); // end of thread
 	}
@@ -706,7 +714,7 @@ bool RaftConsensus::appendRequest(const std::string& entry) {
 	if (leader_id == -1) return false;
 
 	boost::shared_ptr<TTransport> socket(new TSocket(nodes[leader_id].ip, nodes[leader_id].port));
-	cout << "Append Request: Send to " << nodes[leader_id].ip << ":" << nodes[leader_id].port << endl;
+	if (IS_DEBUG) cout << "Append Request: Send to " << nodes[leader_id].ip << ":" << nodes[leader_id].port << endl;
 
 	boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
 	boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
@@ -726,7 +734,7 @@ bool RaftConsensus::appendRequest(const std::string& entry) {
 		logWriter->writeLog("send appendRequest to leader (term " + to_string(request.term) + ")");
 		client.sendAppend(response, request); // RPC AppendRequest
 	} catch (TException& tx) {
-		cout << "ERROR: " << tx.what() << endl;
+		if (IS_DEBUG) cout << "ERROR: " << tx.what() << endl;
 	}
 
 	return response.succeeds;
@@ -739,7 +747,7 @@ void RaftConsensus::checkFailure(int remote_region, int remote_node) {
 
 	if (members[idx].active == 1) members[idx].active = 0; // declare failure
 	else return;
-	cout << "checkFailure is called" << endl;
+	if (IS_DEBUG) cout << "checkFailure is called" << endl;
 	if (idx == voted_for) {
 		voted_for = -1; // reset leader
 		thread t(&RaftConsensus::initElection, this);
@@ -896,11 +904,6 @@ void loadMembers() {
 	 // construct map
 	  member_pos[constructShardKey(members[i].region, members[i].node)] = i;
   }
-
-  // StringBuffer buffer;
-  // Writer<StringBuffer> writer(buffer);
-  // d.Accept(writer);
-  // cout << buffer.GetString() << endl;
 }
 
 void loadSKeys() {
@@ -964,10 +967,12 @@ void backgroundTask(const std::string& key, const std::string& value, long long 
 	d.value = value;
 	d.ts = ts;
 
-	if (code == 0) cout << "Replicate task: " << d.key << " " << d.value << " (ts : " << ts << ")" << endl;
-	else if (code == 1) cout << "Update task: " << d.key << " " << d.value << " (ts : " << ts << ")" << endl;
-	else if (code == 2) cout << "Delete task: " << d.key << endl;
-	else return;
+	if (IS_DEBUG) {
+		if (code == 0) cout << "Replicate task: " << d.key << " " << d.value << " (ts : " << ts << ")" << endl;
+		else if (code == 1) cout << "Update task: " << d.key << " " << d.value << " (ts : " << ts << ")" << endl;
+		else if (code == 2) cout << "Delete task: " << d.key << endl;
+		else return;
+	}
 
 	string identifier = d.key.substr(0, 8); // first 8 characters
 	vector< pair<int, int> > secondary = skeys[identifier].secondary;
@@ -987,12 +992,14 @@ void backgroundTask(const std::string& key, const std::string& value, long long 
 					int idx = member_pos[constructShardKey(secondary[current_id].first, secondary[current_id].second)];
 					boost::shared_ptr<TTransport> socket(new TSocket(members[idx].ip, members[idx].port));
 
-					if (code == 0) cout << "Replicate " << d.key << " to " << members[idx].ip << ":" << members[idx].port;
-					else if (code == 1) cout << "Update " << d.key << " to " << members[idx].ip << ":" << members[idx].port;
-					else if (code == 2) cout << "Delete " << d.key << " from " << members[idx].ip << ":" << members[idx].port;
+					if (IS_DEBUG) {
+						if (code == 0) cout << "Replicate " << d.key << " to " << members[idx].ip << ":" << members[idx].port;
+						else if (code == 1) cout << "Update " << d.key << " to " << members[idx].ip << ":" << members[idx].port;
+						else if (code == 2) cout << "Delete " << d.key << " from " << members[idx].ip << ":" << members[idx].port;
 
-					if (timer <= 30) cout << " (After Timeout: " << timer <<  " second(s))" << endl;
-					else cout << endl;
+						if (timer <= 30) cout << " (After Timeout: " << timer <<  " second(s))" << endl;
+						else cout << endl;
+					}
 					boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
 					boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
 					DBServiceClient client(protocol);
@@ -1005,7 +1012,7 @@ void backgroundTask(const std::string& key, const std::string& value, long long 
 						else if (code == 2) isSent[current_id] = client.deleteSecondaryData(d.key, server_region, server_node); // RPC Delete
 
 					} catch (TException& tx) {
-						cout << "ERROR: " << tx.what() << endl;
+						if (IS_DEBUG) cout << "ERROR: " << tx.what() << endl;
 					}
 				}, current_id)); // end of thread
 			}
@@ -1047,7 +1054,7 @@ void broadcastMetadata(const std::string& entry, int commit_idx, int term) {
 				workers.push_back(thread([&](int current_id) {
 					if (members[current_id].active == 0) return;
 					boost::shared_ptr<TTransport> socket(new TSocket(members[current_id].ip, members[current_id].port));
-					cout << "Broadcast metadata to " << members[current_id].ip << ":" << members[current_id].port << " (After Timeout: " << timer <<  " second(s))" << endl;
+					if (IS_DEBUG) cout << "Broadcast metadata to " << members[current_id].ip << ":" << members[current_id].port << " (After Timeout: " << timer <<  " second(s))" << endl;
 					boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
 					boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
 					DBServiceClient client(protocol);
@@ -1061,7 +1068,7 @@ void broadcastMetadata(const std::string& entry, int commit_idx, int term) {
 						request.entry = entry;
 						isSent[current_id] = client.followerAppend(request); // RPC FollowerAppend
 					} catch (TException& tx) {
-						cout << "ERROR: " << tx.what() << endl;
+						if (IS_DEBUG) cout << "ERROR: " << tx.what() << endl;
 					}
 				}, current_id)); // end of thread
 			}
@@ -1118,7 +1125,7 @@ void DBServiceHandler::putData(std::string& _return, const std::string& value) {
 					transport->open();
 					client.putDataForce(_return, value, server_region, server_node);
 				} catch (TException& tx) {
-					cout << "ERROR: " << tx.what() << endl;
+					if (IS_DEBUG) cout << "ERROR: " << tx.what() << endl;
 				}
 
 				if (_return.length() == 16) isExist = true;
@@ -1180,7 +1187,7 @@ bool DBServiceHandler::updateData(const Data& d) {
 				transport->open();
 				return client.updateData(d);	
 			} catch (TException& tx) {
-				cout << "ERROR: " << tx.what() << endl;
+				if (IS_DEBUG) cout << "ERROR: " << tx.what() << endl;
 				return false;
 			}
 	}
@@ -1196,7 +1203,7 @@ bool DBServiceHandler::updateData(const Data& d) {
  * @param remote_node
  */
 bool DBServiceHandler::updateSecondaryData(const Data& d, const int32_t remote_region, const int32_t remote_node) {
-	cout << "updateSecondaryData is called" << endl;
+	if (IS_DEBUG) cout << "updateSecondaryData is called" << endl;
 	bool check = lClock->tsCheck(d.key, d.ts);
 	if (check) { // update if logical clock 'ts' is higher (ts > lclock)
 		bool isSuccess = updateDB(d.key, d.value);
@@ -1225,7 +1232,7 @@ void DBServiceHandler::getData(std::string& _return, const std::string& sharded_
 				transport->open();
 				client.getData(_return, sharded_key);	
 			} catch (TException& tx) {
-				cout << "ERROR: " << tx.what() << endl;
+				if (IS_DEBUG) cout << "ERROR: " << tx.what() << endl;
 			}
 	}
 }
@@ -1253,7 +1260,7 @@ bool DBServiceHandler::deleteData(const std::string& sharded_key) {
 				transport->open();
 				return client.deleteData(sharded_key);	
 			} catch (TException& tx) {
-				cout << "ERROR: " << tx.what() << endl;
+				if (IS_DEBUG) cout << "ERROR: " << tx.what() << endl;
 			}
 	}
 	return false;
@@ -1268,7 +1275,7 @@ bool DBServiceHandler::deleteData(const std::string& sharded_key) {
  * @param remote_node
  */
 bool DBServiceHandler::deleteSecondaryData(const std::string& sharded_key, const int32_t remote_region, const int32_t remote_node) {
-	cout << "deleteSecondaryData is called" << endl;
+	if (IS_DEBUG) cout << "deleteSecondaryData is called" << endl;
 	deleteDB(sharded_key);
 	return true;
 }
@@ -1282,7 +1289,7 @@ bool DBServiceHandler::deleteSecondaryData(const std::string& sharded_key, const
  * @param remote_node
  */
 bool DBServiceHandler::replicateData(const Data& d, const int32_t remote_region, const int32_t remote_node) {
-	cout << "replicateData is called" << endl;
+	if (IS_DEBUG) cout << "replicateData is called" << endl;
 	bool check = lClock->tsCheck(d.key, d.ts);
 	if (check) {
 		bool isSuccess = updateDB(d.key, d.value); // same behavior with update
@@ -1301,10 +1308,10 @@ bool DBServiceHandler::replicateData(const Data& d, const int32_t remote_region,
  * @param remote_node
  */
 void DBServiceHandler::resyncData(ShardContent& _return, const int32_t remote_region, const int32_t remote_node) {
-	cout << "resyncData is called" << endl;
+	if (IS_DEBUG) cout << "resyncData is called" << endl;
 	list< pair< pair<string, string>, long long> > data; // (key, value, ts)
 	getResyncDB(data, constructShardKey(remote_region, remote_node));
-	cout << "Size: " << data.size() << endl;
+	if (IS_DEBUG) cout << "Size: " << data.size() << endl;
 	for (list< pair< pair<string, string>, long long> >::iterator it=data.begin(); it != data.end(); ++it) {
 		Data t;
 		t.key = (*it).first.first;

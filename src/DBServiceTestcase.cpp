@@ -23,6 +23,13 @@
 
 #include "./gen-cpp/DBService.h"
 
+/**
+  * TEST_PERFORMANCE: Check for Service Performance (1 = Yes, 2 = No)
+  * TEST_CORRECTNESS: Check for Service Correctness (1 = Yes, 2 = No)
+  */
+#define TEST_PERFORMANCE 1
+#define TEST_CORRECTNESS 1
+
 using namespace std;
 using namespace apache::thrift;
 using namespace apache::thrift::protocol;
@@ -34,7 +41,7 @@ using namespace rapidjson;
 
 using namespace dbservice;
 
-long long max_iteration, counter;
+long long max_iteration, max_iteration2, counter;
 uint64_t t1, t2, total, one_second, one_us;
 // Constants, the minimum number of cycles required for calling RDTSC_START and RDTSC_STOP
 uint64_t rdtscp_cycle = 50;
@@ -106,92 +113,103 @@ int main(int argc, char** argv) {
   try {
 	transport->open();
 	max_iteration = 10;
+	max_iteration2 = 100000;
 
-	/** PING operation **/
-	cout << "--PING--" << endl;
-	counter = 0; total = 0;
-	while (counter < max_iteration) {
-		RDTSC_START(t1); // start operation
-		client.ping();
-		RDTSC_STOP(t2); // stop operation
-		total += t2 - t1 - rdtscp_cycle;
-		counter++;
+	if (TEST_PERFORMANCE) {
+
+		/** PING operation **/
+		cout << "--PING--" << endl;
+		counter = 0; total = 0;
+		while (counter < max_iteration) {
+			RDTSC_START(t1); // start operation
+			client.ping();
+			RDTSC_STOP(t2); // stop operation
+			total += t2 - t1 - rdtscp_cycle;
+			counter++;
+		}
+		print_result(total);
+		/** End of PING operation **/
+
+		usleep(50000); // cooldown 50 ms
+
+		/** ZIP operation **/
+		cout << "--ZIP (oneway sending)--" << endl;
+		counter = 0; total = 0;
+		while (counter < max_iteration) {
+			RDTSC_START(t1); // start operation
+			client.zip();
+			RDTSC_STOP(t2); // stop operation
+			total += t2 - t1 - rdtscp_cycle;
+			counter++;
+		}
+		print_result(total);
+		/** End of ZIP operation **/
+
+
+
 	}
-	print_result(total);
-	/** End of PING operation **/
 
 	usleep(50000); // cooldown 50 ms
 
-	/** ZIP operation **/
-	cout << "--ZIP (oneway sending)--" << endl;
-	counter = 0; total = 0;
-	while (counter < max_iteration) {
-		RDTSC_START(t1); // start operation
-		client.zip();
-		RDTSC_STOP(t2); // stop operation
-		total += t2 - t1 - rdtscp_cycle;
-		counter++;
+	if (TEST_CORRECTNESS) {
+
+		/** PUTDATA operation */
+		cout << "--PUTDATA (correctness)--" << endl;
+		Data d;
+		d.value = "{key :\"dummy\", value: \"test\"}";
+		cout << d.value << endl;
+		client.putData(d.key, d.value);
+		cout << "Sharded key: " << d.key << endl;
+		/** End of PUTDATA operation **/
+
+		usleep(50000); // cooldown 50 ms
+
+		/** PUTDATA (FORCE) operation */
+		cout << "--PUTDATA FORCE (correctness)--" << endl;
+		client.putDataForce(d.key, d.value, 2, 1);
+		cout << "Sharded key: " << d.key << endl;
+		/** End of PUTDATA (FORCE) operation **/
+
+		usleep(50000); // cooldown 50 ms
+
+		/** DELETEDATA operation */
+		cout << "--DELETEDATA (correctness)--" << endl;
+		bool isSuccess = client.deleteData(d.key);
+		if (isSuccess) cout << "Delete OK" << endl;
+		else cout << "Delete FAILED" << endl;
+		/** End of DELETEDATA operation **/
+
+		usleep(50000); // cooldown 50 ms
+
+		/** UPDATEDATA operation */
+		cout << "--UPDATEDATA (correctness)--" << endl;
+		d.key = "0001000100000001";
+		cout << "Sharded key: " << d.key << endl;
+		d.value = "{key :\"dummy\", value: \"test2\"}";
+		cout << "New value: " << d.value << endl;
+		isSuccess = client.updateData(d);
+		if (isSuccess) cout << "Update OK" << endl;
+		else cout << "Update FAILED" << endl;
+		/** End of UPDATEDATA operation **/
+
+		usleep(50000); // cooldown 50 ms
+
+		/** GETDATA operation */
+		cout << "--GETDATA (correctness)--" << endl;
+		cout << "Sharded key: " << d.key << endl;
+		client.getData(d.value, d.key);
+		if (d.value != "") cout << "New value: " << d.value << endl;
+		else cout << "Get FAILED" << endl;
+		/** End of GETDATA operation **/
+
+		/** RESYNCDATA operation **/
+		cout << "--RESYNCDATA (correctness)--" << endl;
+		ShardContent ds;
+		client.resyncData(ds, 1, 1);
+		cout << "Size: " << ds.data.size() << endl;
+		/** End of RESYNCDATA operation **/
+
 	}
-	print_result(total);
-	/** End of ZIP operation **/
-
-	usleep(50000); // cooldown 50 ms
-
-	/** PUTDATA operation */
-	cout << "--PUTDATA (correctness)--" << endl;
-	Data d;
-	d.value = "{key :\"dummy\", value: \"test\"}";
-	cout << d.value << endl;
-	client.putData(d.key, d.value);
-	cout << "Sharded key: " << d.key << endl;
-	/** End of PUTDATA operation **/
-
-	usleep(50000); // cooldown 50 ms
-
-	/** PUTDATA (FORCE) operation */
-	cout << "--PUTDATA FORCE (correctness)--" << endl;
-	client.putDataForce(d.key, d.value, 2, 1);
-	cout << "Sharded key: " << d.key << endl;
-	/** End of PUTDATA (FORCE) operation **/
-
-	usleep(50000); // cooldown 50 ms
-
-	/** DELETEDATA operation */
-	cout << "--DELETEDATA (correctness)--" << endl;
-	bool isSuccess = client.deleteData(d.key);
-	if (isSuccess) cout << "Delete OK" << endl;
-	else cout << "Delete FAILED" << endl;
-	/** End of DELETEDATA operation **/
-
-	usleep(50000); // cooldown 50 ms
-
-	/** UPDATEDATA operation */
-	cout << "--UPDATEDATA (correctness)--" << endl;
-	d.key = "0001000100000001";
-	cout << "Sharded key: " << d.key << endl;
-	d.value = "{key :\"dummy\", value: \"test2\"}";
-	cout << "New value: " << d.value << endl;
-	isSuccess = client.updateData(d);
-	if (isSuccess) cout << "Update OK" << endl;
-	else cout << "Update FAILED" << endl;
-	/** End of UPDATEDATA operation **/
-
-	usleep(50000); // cooldown 50 ms
-
-	/** GETDATA operation */
-	cout << "--GETDATA (correctness)--" << endl;
-	cout << "Sharded key: " << d.key << endl;
-	client.getData(d.value, d.key);
-	if (d.value != "") cout << "New value: " << d.value << endl;
-	else cout << "Get FAILED" << endl;
-	/** End of GETDATA operation **/
-
-	/** RESYNCDATA operation **/
-	cout << "--RESYNCDATA (correctness)--" << endl;
-	ShardContent ds;
-	client.resyncData(ds, 1, 1);
-	cout << "Size: " << ds.data.size() << endl;
-	/** End of RESYNCDATA operation **/
 
   } catch (TException& tx) {
 	cout << "ERROR: " << tx.what() << endl;

@@ -96,7 +96,7 @@ int main(int argc, char** argv) {
   cout << "** Starting local benchmarking **" << endl << endl;
   cout << "Key length: " << 10 << " byte(s)" << endl;
   cout << "Value length: " << 10 << " byte(s)" << endl << endl;
-  max_iteration = 10; //TODO: Change to 100000
+  max_iteration = 10;
 
   /** FILL (local) operation **/
   cout << "--FILL (local)--" << endl;

@@ -43,7 +43,7 @@
 /**
   * IS_DEBUG: Cout messages to stdin (1 = Yes, 2 = No)
   */
-#define IS_DEBUG 1
+#define IS_DEBUG 0
 
 using namespace std;
 using namespace apache::thrift;

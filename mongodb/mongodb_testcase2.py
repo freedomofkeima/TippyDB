@@ -3,7 +3,7 @@
 # Iskandar Setiadi 13511073@std.stei.itb.ac.id
 # Institut Teknologi Bandung (ITB) - Indonesia
 # Final Project (c) 2015
-# mongodb_testcase.py
+# mongodb_testcase2.py
 
 __author__ = 'freedomofkeima'
 
@@ -15,14 +15,12 @@ def main(args):
     client = MongoClient('52.74.132.58', 27017) # Nearest Server location
     db = client['tests_database']
     tests = db['tests_collection']
-    max_iteration = 2000
+    max_iteration = 10
     key_size = 10
-    value_size = 100 * 1024
+    value_size = 10
 
     print '** Starting benchmarking **'
     print '** Length key + value: %d byte(s)**' % (key_size + value_size)
-    
-    item_id = []
     
     print '--EMPTY TIMER--'
     tx = 0 # time counter
@@ -34,22 +32,41 @@ def main(args):
     print 'Number of iteration: %d' % (max_iteration)
     empty_timer = tx / max_iteration * 1000000
     print 'Average elapsed time: %.10f us' % (empty_timer)
-    
-    print '--INSERT--'
+
+    item_id = item_id = tests.distinct('_id')
+
+    print '--UPDATE--'
     tx = 0 # time counter
-    counter = 0
-    while counter < max_iteration:
-        value = "a" * value_size
-        data = {}
-        data['mongodbval'] = value
+    counter = 1
+    for item in item_id:
         t0 = time.time()
-        id = tests.insert_one(data).inserted_id
+        tests.update_one({"_id": item}, {'$set': {'mongodbkey' : ('upd' + str(counter))}})
         tx = tx + (time.time() - t0)
-        item_id.append(id)
         counter = counter + 1
     print 'Number of iteration: %d' % (max_iteration)
     print 'Average elapsed time: %.10f us' % (tx / max_iteration * 1000000 - empty_timer)
-
+    
+    print '--READ--'
+    tx = 0 # time counter
+    counter = 1
+    for item in item_id:
+        t0 = time.time()
+        res = tests.find_one({"_id": item})
+        tx = tx + (time.time() - t0)
+        counter = counter + 1
+    print 'Number of iteration: %d' % (max_iteration)
+    print 'Average elapsed time: %.10f us' % (tx / max_iteration * 1000000 - empty_timer)
+    
+    print '--DELETE--'
+    tx = 0 # time counter
+    counter = 1
+    for item in item_id:
+        t0 = time.time()
+        tests.delete_one({"_id": item})
+        tx = tx + (time.time() - t0)
+        counter = counter + 1
+    print 'Number of iteration: %d' % (max_iteration)
+    print 'Average elapsed time: %.10f us' % (tx / max_iteration * 1000000 - empty_timer)
     client.close()
 
 if __name__ == '__main__':

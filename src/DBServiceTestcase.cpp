@@ -24,8 +24,8 @@
 #include "./gen-cpp/DBService.h"
 
 /**
-  * TEST_PERFORMANCE: Check for Service Performance (1 = Yes, 2 = No)
-  * TEST_CORRECTNESS: Check for Service Correctness (1 = Yes, 2 = No)
+  * TEST_PERFORMANCE: Check for Service Performance (1 = Yes, 0 = No)
+  * TEST_CORRECTNESS: Check for Service Correctness (1 = Yes, 0 = No)
   */
 #define TEST_PERFORMANCE 1
 #define TEST_CORRECTNESS 1

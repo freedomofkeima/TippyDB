@@ -41,7 +41,7 @@
 
 
 /**
-  * IS_DEBUG: Cout messages to stdin (1 = Yes, 2 = No)
+  * IS_DEBUG: Cout messages to stdin (1 = Yes, 0 = No)
   */
 #define IS_DEBUG 0
 

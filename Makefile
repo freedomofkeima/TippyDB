@@ -33,7 +33,7 @@ GEN_INC    = -I$(SOURCEDIR)/gen-cpp
 #--------------------------------------------
 # target
 #--------------------------------------------
-default: mkdir server testcase local_testcase
+default: mkdir server testcase testcase2 local_testcase
 
 mkdir:
 	mkdir -p $(BINDIR)
@@ -43,6 +43,9 @@ server: $(SOURCEDIR)/DBServiceServer.cpp
 
 testcase: $(SOURCEDIR)/DBServiceTestcase.cpp
 	g++ ${CPP_OPTS} ${CPP_DEFS} -o $(BINDIR)/testcase ${GEN_INC} ${INCS_DIRS} $(SOURCEDIR)/DBServiceTestcase.cpp ${GEN_SRC} ${LIBS_DIRS} ${LIBS}
+
+testcase2: $(SOURCEDIR)/DBServiceTestcase2.cpp
+	g++ ${CPP_OPTS} ${CPP_DEFS} -o $(BINDIR)/testcase2 ${GEN_INC} ${INCS_DIRS} $(SOURCEDIR)/DBServiceTestcase2.cpp ${GEN_SRC} ${LIBS_DIRS} ${LIBS}
 
 local_testcase: $(SOURCEDIR)/DBLocalTestcase.cpp
 	g++ ${CPP_OPTS} ${CPP_DEFS} -o $(BINDIR)/local_testcase ${INCS_DIRS} ${LEVELDB_INCS_DIRS} $(SOURCEDIR)/DBLocalTestcase.cpp ${LIBS_DIRS} ${LEVELDB_LIBS_DIRS} ${LEVELDB_LIBS}

@@ -1,6 +1,6 @@
 # TippyDB
 
-TippyDB is a geographically-aware distributed NoSQL written in C++. This NoSQL database is designed to store data at the nearest location with the data's writer. One of the main advantage is to provide lower latency in average, which is based on a scientific research (Backstrom, Sun, & Marlow, 2010) that the location of data's reader is usually located near the original writer (70% in 100 miles range).
+TippyDB is a geographically-aware distributed NoSQL written in C++. This NoSQL database is designed to store data at the nearest location with the data's writer. One of the main advantage is to provide lower latency in average, which is based on a scientific research (Backstrom, Sun, & Marlow, 2010) that the location of data's reader is usually located near the original writer (70% in 100 miles range, 80% in 500 miles range).
 
 By: Iskandar Setiadi (freedomofkeima)
 
@@ -41,14 +41,14 @@ By: Iskandar Setiadi (freedomofkeima)
 
 - Set your distributed database environments by specifying all machines at ```db.config```. You should set ```own``` as ```true``` for the specified machine's address. The value of ```replicationFactors``` should be smaller than or equal to the number of running nodes. Caution: Do not change the orderings of the existing members.
 
-- To run the prototype server, you could simply use ```./application_name port_number db_path```, such as ```bin/server 9090 /tmp/testdb```. You could also use ```./application_name ip_address port_number```, such as ```bin/testcase 127.0.0.1 9090``` which provides several testcases.
+- To run the prototype server, you could simply use ```./application_name port_number db_path```, such as ```bin/server 9090 /tmp/testdb```. You could also use ```./application_name ip_address port_number```, such as ```bin/testcase 127.0.0.1 9090``` and ```bin/testcase2 127.0.0.1 9090``` which provides several testcases.
 
 
 ** Benchmark **
 
 - To run the benchmarking for LevelDB, you could simply use ```./application_name db_path```, such as ```bin/local_testcase /tmp/testdb```.
 
-- To run the benchmarking for MongoDB, you could simply use ```python mongodb/mongodb_testcase.py```. See http://docs.mongodb.org/manual/tutorial/deploy-replica-set to have a better understanding in deploying multiple nodes with MongoDB.
+- To run the benchmarking for MongoDB, you could simply use ```python mongodb/mongodb_testcase.py``` and ```python mongodb/mongodb_testcase2.py```. See http://docs.mongodb.org/manual/tutorial/deploy-replica-set to have a better understanding in deploying multiple nodes with MongoDB.
 
 ## Additional Information
 
@@ -67,4 +67,4 @@ The above copyright notice and this permission notice shall be included in all c
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-Last Updated: May 11, 2015
+Last Updated: May 19, 2015

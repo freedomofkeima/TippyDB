@@ -139,7 +139,7 @@ In this experiment, we will compare the basic performance of TippyDB and MongoDB
 |Read     |479.97                       |197.99                       |
 |Delete   |553.04                       |223.19                       |
 
-TippyDB is built with the support of LevelDB and Apache Thrift. From our experimentation, TippyDB is fast since it is only contributed to 1-5% of total time. However, Apache Thrift (RPC) is quite costly, which an empty RPC needs 466 usec/op in average (~80% of total time).
+TippyDB is built with the support of LevelDB and Apache Thrift. From our experimentation, LevelDB is fast since it is only contributed to 1-5% of total time. However, Apache Thrift (RPC) is quite costly, which an empty RPC needs 466 usec/op in average (~80% of total time).
 
 ### Third Experiment
 
